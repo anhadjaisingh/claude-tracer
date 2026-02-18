@@ -67,9 +67,18 @@ npm run typecheck    # TypeScript type checking
 
 ## Agent Team Workflow
 
-- **Sub-agents and teammates must drive their work to PR submission.** The TL agent coordinates, but each agent is responsible for committing, pushing, and opening PRs for their workstream.
-- **Blocked or stuck agents must surface immediately** to the TL agent. If the issue is non-trivial or needs a decision, the TL escalates to the human reviewer via GitHub PR comment or direct conversation.
-- **The TL agent is the integration point.** After parallel agent work completes, the TL verifies integration (tests pass, typecheck clean, visual verification), commits, and opens the PR.
+### Team Lead (TL) Role
+
+The TL agent's primary job is to **stay available to the human** for planning, design, and decision-making. The TL should:
+- **Delegate implementation and fix work to sub-agents/teammates.** Don't do coding, lint fixing, CI debugging, or test repairs yourself -- fire off an agent for that.
+- **Coordinate and integrate.** After parallel agent work completes, verify integration, open PRs, and monitor CI. If CI fails, dispatch a sub-agent to fix it.
+- **Escalate, don't block.** If something needs human judgment, tag @anhad on the PR or surface it in conversation. Don't sit on blockers.
+
+### Teammate / Sub-agent Responsibilities
+
+- **Drive work to PR submission.** Each agent is responsible for committing, pushing, and opening PRs for their workstream.
+- **Monitor CI after pushing.** If CI fails on your PR, investigate and fix. Don't leave broken CI for someone else.
+- **Surface blockers immediately** to the TL agent. If the issue is non-trivial or needs a decision, the TL escalates to the human reviewer via GitHub PR comment or direct conversation.
 
 ## Permissions Note
 
