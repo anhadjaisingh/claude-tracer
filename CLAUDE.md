@@ -50,6 +50,12 @@ npm run typecheck    # TypeScript type checking
 - **Run E2E tests** (`npm run test:e2e`) when changes might break integration or when additional testing confidence is needed
 - For UI changes, include before/after screenshots of the affected flow in the PR description
 
+## Git Workflow
+
+- **Push significant changes upstream.** Don't let work sit only locally -- if no one else can see it, it doesn't count. After committing meaningful work, push to the remote or open a PR.
+- For feature work, create a branch and open a PR for review.
+- For smaller changes (docs, config, fixes), pushing directly to main is fine.
+
 ## Permissions Note
 
 If you find yourself repeatedly needing permission for a specific command pattern, ask me to add a permanent permission for it rather than asking each time. I prefer to grant broad permissions for safe development commands within this project.
