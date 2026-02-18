@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-claude-orange: #f97316;
+  --color-claude-peach: #ffedd5;
+  --color-claude-cream: #fff7ed;
+
+  --color-agent-bg: #374151;
+  --color-agent-text: #f3f4f6;
+  --color-user-bg: #f9fafb;
+  --color-user-text: #111827;
+  --color-tool-bg: #0f0f0f;
+  --color-tool-text: #e5e5e5;
+
+  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+}
+
+body {
+  font-family: var(--font-mono);
+  background-color: var(--color-claude-peach);
+}

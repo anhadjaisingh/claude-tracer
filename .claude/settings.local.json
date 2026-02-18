@@ -1,0 +1,34 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Skill(superpowers:*)",
+      "Bash(npm init*)",
+      "Bash(npm install*)",
+      "Bash(npm uninstall*)",
+      "Bash(npm run*)",
+      "Bash(npm test*)",
+      "Bash(npm audit*)",
+      "Bash(npx tsx*)",
+      "Bash(npx vitest*)",
+      "Bash(npx playwright*)",
+      "Bash(npx eslint*)",
+      "Bash(npx prettier*)",
+      "Bash(npx tsc*)",
+      "Bash(mkdir*)",
+      "Bash(ls*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git branch*)",
+      "Bash(git checkout*)",
+      "Bash(git worktree*)",
+      "Bash(git stash*)",
+      "Bash(git merge*)"
+    ]
+  }
+}

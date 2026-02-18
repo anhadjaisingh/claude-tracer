@@ -1,0 +1,52 @@
+# Claude Code Project Instructions
+
+## Project Overview
+
+claude-tracer is a standalone trace visualization and debugging tool for Claude Code sessions. It runs locally, parses session JSONL files, and generates an interactive web-based visualizer.
+
+## Tech Stack
+
+- **Language:** TypeScript (strict mode)
+- **UI:** React + Vite + Tailwind CSS v4
+- **Server:** Node.js + Express + WebSocket (ws)
+- **Search:** MiniSearch
+- **Testing:** vitest (unit), Playwright (E2E)
+- **Linting:** ESLint (typescript-eslint strict + stylistic) + Prettier
+
+## Key Architecture
+
+- Single package with module folders: `src/types/`, `src/parser/`, `src/core/`, `src/server/`, `src/ui/`
+- `src/types/` is the shared contract between all modules
+- E2E tests in `e2e/` (Playwright), unit tests co-located in `src/**/__tests__/` (vitest)
+
+## Development Commands
+
+```bash
+npm run dev          # Start dev server (Express + Vite concurrently)
+npm test             # Run unit tests (vitest watch mode)
+npm run test:run     # Run unit tests once
+npm run test:e2e     # Run E2E tests (Playwright)
+npm run lint         # ESLint check
+npm run format       # Prettier format
+npm run typecheck    # TypeScript type checking
+```
+
+## Coding Conventions
+
+- No `I` prefix on interfaces (e.g., `Block` not `IBlock`)
+- Use `as` syntax for type assertions, never angle brackets
+- Prefer `unknown` over `any`
+- PascalCase for types/enums, camelCase for functions/variables
+- Use `enum`, not `const enum`
+- All code formatted with Prettier (see `.prettierrc`)
+
+## Testing
+
+- **TDD approach:** Write tests before implementation
+- Unit test files: `*.test.ts` (vitest)
+- E2E test files: `*.spec.ts` (Playwright)
+- Test fixtures in `e2e/fixtures/sessions/`
+
+## Permissions Note
+
+If you find yourself repeatedly needing permission for a specific command pattern, ask me to add a permanent permission for it rather than asking each time. I prefer to grant broad permissions for safe development commands within this project.

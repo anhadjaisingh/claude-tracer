@@ -1,0 +1,6 @@
+{"type":"user","message":{"role":"user","content":"Hello, can you help me with a simple task?"},"timestamp":"2026-01-15T10:00:00.000Z","sessionId":"test-session-001"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Of course! I'd be happy to help. What would you like me to do?"}]},"timestamp":"2026-01-15T10:00:05.000Z","sessionId":"test-session-001","inputTokens":42,"outputTokens":28,"durationMs":2100}
+{"type":"user","message":{"role":"user","content":"Can you read the file at /tmp/example.txt?"},"timestamp":"2026-01-15T10:00:15.000Z","sessionId":"test-session-001"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"I'll read that file for you."},{"type":"tool_use","id":"toolu_01","name":"Read","input":{"file_path":"/tmp/example.txt"}}]},"timestamp":"2026-01-15T10:00:18.000Z","sessionId":"test-session-001","inputTokens":68,"outputTokens":45,"durationMs":1800}
+{"type":"tool_result","tool_use_id":"toolu_01","content":"Hello from example.txt!","timestamp":"2026-01-15T10:00:19.000Z","sessionId":"test-session-001"}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"The file contains: \"Hello from example.txt!\""}]},"timestamp":"2026-01-15T10:00:22.000Z","sessionId":"test-session-001","inputTokens":95,"outputTokens":22,"durationMs":1500}

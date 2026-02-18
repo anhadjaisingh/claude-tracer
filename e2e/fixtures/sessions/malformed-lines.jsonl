@@ -1,0 +1,6 @@
+{"type":"user","message":{"role":"user","content":"This is a valid line"},"timestamp":"2026-01-15T10:00:00.000Z","sessionId":"test-session-003"}
+not valid json at all
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Valid response"}]},"timestamp":"2026-01-15T10:00:05.000Z","sessionId":"test-session-003","inputTokens":30,"outputTokens":15,"durationMs":1000}
+
+{"incomplete":true
+{"type":"user","message":{"role":"user","content":"Another valid line after garbage"},"timestamp":"2026-01-15T10:00:10.000Z","sessionId":"test-session-003"}

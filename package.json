@@ -1,0 +1,78 @@
+{
+  "name": "claude-tracer",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Trace visualization and debugging tool for Claude Code sessions",
+  "main": "dist/server/index.js",
+  "bin": {
+    "claude-tracer": "./dist/server/index.js"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:ui\"",
+    "dev:server": "tsx watch src/server/index.ts",
+    "dev:ui": "vite",
+    "build": "npm run build:server && npm run build:ui",
+    "build:server": "tsc -p tsconfig.node.json",
+    "build:ui": "vite build",
+    "start": "node dist/server/index.js",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "vitest run && playwright test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/anhadjaisingh/claude-tracer.git"
+  },
+  "keywords": [
+    "claude",
+    "tracer",
+    "visualization",
+    "debugging"
+  ],
+  "author": "Anhad Jai Singh",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/anhadjaisingh/claude-tracer/issues"
+  },
+  "homepage": "https://github.com/anhadjaisingh/claude-tracer#readme",
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "chokidar": "^5.0.0",
+    "express": "^5.2.1",
+    "minisearch": "^7.2.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-window": "^2.2.7",
+    "ws": "^8.19.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.58.2",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.3",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@types/react-window": "^1.8.8",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^5.1.4",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.0",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^4.1.18",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0",
+    "vite": "^7.3.1",
+    "vitest": "^3.2.4"
+  }
+}
