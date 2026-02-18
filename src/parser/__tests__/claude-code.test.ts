@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ClaudeCodeParser } from '../claude-code';
+import type { UserBlock, AgentBlock, ToolBlock } from '@/types';
 
 describe('ClaudeCodeParser', () => {
   let parser: ClaudeCodeParser;
@@ -32,8 +33,8 @@ describe('ClaudeCodeParser', () => {
 
     const block = parser.parseLine(line);
     expect(block).not.toBeNull();
-    expect(block!.type).toBe('user');
-    expect((block as any).content).toBe('Hello Claude');
+    expect(block?.type).toBe('user');
+    expect((block as UserBlock).content).toBe('Hello Claude');
   });
 
   it('parses assistant message', () => {
@@ -48,8 +49,8 @@ describe('ClaudeCodeParser', () => {
 
     const block = parser.parseLine(line);
     expect(block).not.toBeNull();
-    expect(block!.type).toBe('agent');
-    expect((block as any).content).toBe('Hi there!');
+    expect(block?.type).toBe('agent');
+    expect((block as AgentBlock).content).toBe('Hi there!');
   });
 
   it('parses tool use', () => {
@@ -71,7 +72,7 @@ describe('ClaudeCodeParser', () => {
 
     const block = parser.parseLine(line);
     expect(block).not.toBeNull();
-    expect(block!.type).toBe('agent');
+    expect(block?.type).toBe('agent');
   });
 
   it('parses tool result', () => {
@@ -109,8 +110,8 @@ describe('ClaudeCodeParser', () => {
 
     const block = parser.parseLine(resultLine);
     expect(block).not.toBeNull();
-    expect(block!.type).toBe('tool');
-    expect((block as any).toolName).toBeDefined();
+    expect(block?.type).toBe('tool');
+    expect((block as ToolBlock).toolName).toBeDefined();
   });
 
   it('parses complete session', () => {
@@ -191,7 +192,7 @@ describe('ClaudeCodeParser', () => {
       const agentBlocks = session.blocks.filter(b => b.type === 'agent');
       expect(agentBlocks.length).toBe(1);
 
-      const agent = agentBlocks[0] as any;
+      const agent = agentBlocks[0];
       expect(agent.content).toBe('Let me first explore...');
       expect(agent.toolCalls).toContain('toolu_011A');
       expect(agent.toolCalls).toContain('toolu_01Nr');
@@ -225,7 +226,7 @@ describe('ClaudeCodeParser', () => {
       const agentBlocks = session.blocks.filter(b => b.type === 'agent');
       expect(agentBlocks.length).toBe(1);
 
-      const agent = agentBlocks[0] as any;
+      const agent = agentBlocks[0];
       expect(agent.thinking).toBe('Let me think about this...');
       expect(agent.content).toBe('Here is my answer.');
     });
@@ -290,8 +291,8 @@ describe('ClaudeCodeParser', () => {
 
       const block = parser.parseLine(line);
       expect(block).not.toBeNull();
-      expect(block!.tokensIn).toBe(100);
-      expect(block!.tokensOut).toBe(50);
+      expect(block?.tokensIn).toBe(100);
+      expect(block?.tokensOut).toBe(50);
     });
 
     it('accumulates tokens across merged entries', () => {
@@ -318,9 +319,10 @@ describe('ClaudeCodeParser', () => {
       });
 
       const session = parser.parse([entry1, entry2].join('\n'));
-      const agent = session.blocks.find(b => b.type === 'agent')!;
-      expect(agent.tokensIn).toBe(100);
-      expect(agent.tokensOut).toBe(50);
+      const agent = session.blocks.find(b => b.type === 'agent');
+      expect(agent).toBeDefined();
+      expect(agent?.tokensIn).toBe(100);
+      expect(agent?.tokensOut).toBe(50);
     });
   });
 
@@ -338,9 +340,9 @@ describe('ClaudeCodeParser', () => {
 
       const block = parser.parseLine(line);
       expect(block).not.toBeNull();
-      expect(block!.type).toBe('user');
-      expect((block as any).isMeta).toBe(true);
-      expect((block as any).metaLabel).toBeDefined();
+      expect(block?.type).toBe('user');
+      expect((block as UserBlock).isMeta).toBe(true);
+      expect((block as UserBlock).metaLabel).toBeDefined();
     });
 
     it('does not set isMeta on regular user blocks', () => {
@@ -351,7 +353,7 @@ describe('ClaudeCodeParser', () => {
 
       const block = parser.parseLine(line);
       expect(block).not.toBeNull();
-      expect((block as any).isMeta).toBeUndefined();
+      expect((block as UserBlock).isMeta).toBeUndefined();
     });
 
     it('sets metaLabel from content text (truncated to 40 chars)', () => {
@@ -365,9 +367,9 @@ describe('ClaudeCodeParser', () => {
         isMeta: true,
       });
 
-      const block = parser.parseLine(line);
-      expect((block as any).metaLabel.length).toBeLessThanOrEqual(40);
-      expect((block as any).metaLabel).toBe(longText.slice(0, 37) + '...');
+      const block = parser.parseLine(line) as UserBlock;
+      expect(block.metaLabel?.length).toBeLessThanOrEqual(40);
+      expect(block.metaLabel).toBe(longText.slice(0, 37) + '...');
     });
   });
 

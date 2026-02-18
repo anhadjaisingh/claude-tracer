@@ -30,7 +30,7 @@ async function main() {
     const watcher = new SessionWatcher({ parser: new ClaudeCodeParser() });
     let allBlocks: AnyBlock[] = [];
 
-    watcher.watch(args.file, (newBlocks) => {
+    await watcher.watch(args.file, (newBlocks) => {
       // Merge by id (updated blocks replace, new ones append)
       const blockMap = new Map(allBlocks.map(b => [b.id, b]));
       for (const block of newBlocks) {
@@ -43,9 +43,9 @@ async function main() {
     });
   }
 
-  const port = args.port || 3000;
+  const port = args.port ?? 3000;
   server.listen(port, () => {
-    console.log(`Claude Tracer running at http://localhost:${port}`);
+    console.log(`Claude Tracer running at http://localhost:${String(port)}`);
     if (args.file) {
       console.log(`Watching: ${args.file}`);
     }

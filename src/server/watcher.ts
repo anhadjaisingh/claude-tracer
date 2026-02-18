@@ -17,7 +17,7 @@ class SimpleLineParser implements TraceParser {
       if (block) blocks.push(block);
     }
     return {
-      id: `session-${Date.now()}`,
+      id: `session-${String(Date.now())}`,
       filePath: '',
       blocks,
       chunks: [],
@@ -28,7 +28,7 @@ class SimpleLineParser implements TraceParser {
   parseLine(line: string): AnyBlock | null {
     try {
       const data = JSON.parse(line) as Record<string, unknown>;
-      const id = `block-${++this.blockIdCounter}-${Date.now()}`;
+      const id = `block-${String(++this.blockIdCounter)}-${String(Date.now())}`;
       const timestamp = data.timestamp
         ? new Date(data.timestamp as string).getTime()
         : Date.now();
@@ -39,7 +39,7 @@ class SimpleLineParser implements TraceParser {
           id,
           timestamp,
           type: 'user',
-          content: (message?.content as string) ?? '',
+          content: (message?.content as string | undefined) ?? '',
         };
       }
 
@@ -55,7 +55,8 @@ class SimpleLineParser implements TraceParser {
     }
   }
 
-  canParse(_content: string): boolean {
+  canParse(content: string): boolean {
+    void content;
     return true;
   }
 }
@@ -70,7 +71,7 @@ export class SessionWatcher {
   private parser: TraceParser;
   private chokidarOptions: ChokidarOptions;
   private lastPosition = 0;
-  private filePath: string = '';
+  private filePath = '';
 
   constructor(options: SessionWatcherOptions = {}) {
     this.parser = options.parser ?? new SimpleLineParser();
@@ -96,9 +97,10 @@ export class SessionWatcher {
     onBlocks(blocks, true);
 
     // Watch for changes
-    this.watcher = watch(filePath, this.chokidarOptions);
+    const fsWatcher = watch(filePath, this.chokidarOptions);
+    this.watcher = fsWatcher;
 
-    this.watcher.on('change', () => {
+    fsWatcher.on('change', () => {
       const newBlocks = this.readNewContent();
       if (newBlocks.length > 0) {
         onBlocks(newBlocks, false);
@@ -107,7 +109,7 @@ export class SessionWatcher {
 
     // Wait for watcher to be ready before resolving
     await new Promise<void>((resolve) => {
-      this.watcher!.on('ready', resolve);
+      fsWatcher.on('ready', resolve);
     });
   }
 
@@ -148,7 +150,7 @@ export class SessionWatcher {
 
   stop(): void {
     if (this.watcher) {
-      this.watcher.close();
+      void this.watcher.close();
       this.watcher = null;
     }
   }

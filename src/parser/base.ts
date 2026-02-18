@@ -14,7 +14,7 @@ export abstract class BaseParser implements TraceParser {
    * Generate a unique block ID
    */
   generateBlockId(): string {
-    return `block-${++this.blockIdCounter}-${Date.now()}`;
+    return `block-${String(++this.blockIdCounter)}-${String(Date.now())}`;
   }
 
   /**
@@ -49,7 +49,7 @@ export abstract class BaseParser implements TraceParser {
    * Generate a session ID from file path
    */
   private generateSessionId(filePath: string): string {
-    const filename = filePath.split('/').pop() || 'unknown';
-    return `session-${filename}-${Date.now()}`;
+    const filename = filePath.split('/').pop() ?? 'unknown';
+    return `session-${filename}-${String(Date.now())}`;
   }
 }

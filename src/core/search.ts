@@ -19,10 +19,10 @@ interface IndexedBlock {
  */
 export class BlockSearch implements SearchEngine {
   private miniSearch: MiniSearch<IndexedBlock>;
-  private blockTypes: Map<string, string> = new Map();
+  private blockTypes = new Map<string, string>();
 
   constructor() {
-    this.miniSearch = new MiniSearch<IndexedBlock>({
+    this.miniSearch = new MiniSearch({
       fields: ['content', 'toolName'],
       storeFields: ['id', 'type'],
       searchOptions: {
@@ -53,20 +53,18 @@ export class BlockSearch implements SearchEngine {
     // Filter by type if specified
     if (types && types.length > 0) {
       results = results.filter(r => {
-        const blockType = this.blockTypes.get(r.id);
-        return blockType && (types as string[]).includes(blockType);
+        const blockType = this.blockTypes.get(r.id as string);
+        return blockType && (types as readonly string[]).includes(blockType);
       });
     }
 
     return results.slice(0, limit).map(r => ({
-      blockId: r.id,
+      blockId: r.id as string,
       score: r.score,
-      matches: r.match
-        ? Object.entries(r.match).map(([field, terms]) => ({
-            field,
-            snippet: Array.from(terms as unknown as Iterable<string>).join(', '),
-          }))
-        : undefined,
+      matches: Object.entries(r.match).map(([field, terms]: [string, unknown]) => ({
+        field,
+        snippet: Array.from(terms as Iterable<string>).join(', '),
+      })),
     }));
   }
 
