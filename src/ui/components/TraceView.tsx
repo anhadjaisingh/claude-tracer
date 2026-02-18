@@ -14,9 +14,9 @@ export function TraceView({ blocks }: Props) {
   const theme = useTheme();
   const [zoomLevel, setZoomLevel] = useState(1.0);
 
-  const zoomIn = () => setZoomLevel(prev => Math.min(prev + 0.1, 2.0));
-  const zoomOut = () => setZoomLevel(prev => Math.max(prev - 0.1, 0.5));
-  const zoomReset = () => setZoomLevel(1.0);
+  const zoomIn = () => { setZoomLevel(prev => Math.min(prev + 0.1, 2.0)); };
+  const zoomOut = () => { setZoomLevel(prev => Math.max(prev - 0.1, 0.5)); };
+  const zoomReset = () => { setZoomLevel(1.0); };
 
   return (
     <div className="relative">
@@ -58,9 +58,9 @@ export function TraceView({ blocks }: Props) {
       <div
         className="pt-12"
         style={{
-          transform: `scale(${zoomLevel})`,
+          transform: `scale(${String(zoomLevel)})`,
           transformOrigin: 'top left',
-          width: `${100 / zoomLevel}%`,
+          width: `${String(100 / zoomLevel)}%`,
         }}
       >
         {blocks.length === 0 ? (

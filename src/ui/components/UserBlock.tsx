@@ -20,7 +20,7 @@ export function UserBlock({ block }: Props) {
             backgroundColor: theme.colors.userBg + '80',
             color: theme.colors.userText,
           }}
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => { setIsExpanded(!isExpanded); }}
         >
           {isExpanded ? (
             <div className="whitespace-pre-wrap font-mono text-xs max-w-xl">
@@ -28,7 +28,7 @@ export function UserBlock({ block }: Props) {
               {block.content.length > 500 && '...'}
             </div>
           ) : (
-            <span>{block.metaLabel || 'system'}</span>
+            <span>{block.metaLabel ?? 'system'}</span>
           )}
         </div>
       </div>

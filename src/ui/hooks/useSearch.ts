@@ -1,38 +1,28 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { BlockSearch } from '../../core/search';
 import type { AnyBlock, SearchResult } from '../../types';
 
 export function useSearch(blocks: AnyBlock[]) {
-  const searchRef = useRef(new BlockSearch());
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchResult[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Re-index whenever blocks change
-  useEffect(() => {
+  // Build search index whenever blocks change
+  const searchEngine = useMemo(() => {
     const search = new BlockSearch();
     if (blocks.length > 0) {
       search.index(blocks);
     }
-    searchRef.current = search;
+    return search;
+  }, [blocks]);
 
-    // Re-run current query against new index
-    if (query.trim()) {
-      const newResults = search.search(query);
-      setResults(newResults);
-      setCurrentIndex(0);
-    }
-  }, [blocks, query]);
+  // Derive results from query + engine (no setState needed)
+  const results: SearchResult[] = useMemo(() => {
+    if (!query.trim()) return [];
+    return searchEngine.search(query);
+  }, [searchEngine, query]);
 
   const handleSearch = useCallback((newQuery: string) => {
     setQuery(newQuery);
-    if (!newQuery.trim()) {
-      setResults([]);
-      setCurrentIndex(0);
-      return;
-    }
-    const searchResults = searchRef.current.search(newQuery);
-    setResults(searchResults);
     setCurrentIndex(0);
   }, []);
 

@@ -41,10 +41,9 @@ interface ContentBlock {
  * Parser for Claude Code session JSONL files
  */
 export class ClaudeCodeParser extends BaseParser {
-  private pendingToolCalls: Map<string, { name: string; input: unknown; agentBlockId: string }> =
-    new Map();
+  private pendingToolCalls = new Map<string, { name: string; input: unknown; agentBlockId: string }>();
   private currentAgentBlockId: string | null = null;
-  private activeAgentBlocks: Map<string, AgentBlock> = new Map(); // requestId -> AgentBlock
+  private activeAgentBlocks = new Map<string, AgentBlock>(); // requestId -> AgentBlock
 
   /**
    * Reset internal state (used before batch processing)
@@ -67,7 +66,7 @@ export class ClaudeCodeParser extends BaseParser {
         }
       }
       if (!firstLine) return false;
-      const entry = JSON.parse(firstLine);
+      const entry = JSON.parse(firstLine) as Record<string, unknown>;
       return 'type' in entry;
     } catch {
       return false;
@@ -97,7 +96,7 @@ export class ClaudeCodeParser extends BaseParser {
 
   parseLine(line: string): AnyBlock | null {
     try {
-      const entry: ClaudeCodeEntry = JSON.parse(line);
+      const entry = JSON.parse(line) as ClaudeCodeEntry;
       return this.parseEntry(entry);
     } catch {
       return null;
@@ -158,8 +157,9 @@ export class ClaudeCodeParser extends BaseParser {
     // Handle isMeta user entries
     if (entry.isMeta) {
       userBlock.isMeta = true;
-      userBlock.metaLabel = textContent.length > 40 ? textContent.slice(0, 37) + '...' : (textContent || 'System');
-      if (!textContent) {
+      if (textContent) {
+        userBlock.metaLabel = textContent.length > 40 ? textContent.slice(0, 37) + '...' : textContent;
+      } else {
         userBlock.metaLabel = 'System';
       }
     }
@@ -198,8 +198,8 @@ export class ClaudeCodeParser extends BaseParser {
     const tokensOut = entry.message.usage?.output_tokens ?? entry.outputTokens;
 
     // Check if we should merge with an existing block by requestId
-    if (requestId && this.activeAgentBlocks.has(requestId)) {
-      const existing = this.activeAgentBlocks.get(requestId)!;
+    const existing = requestId ? this.activeAgentBlocks.get(requestId) : undefined;
+    if (existing) {
 
       // Merge text content
       if (textContent) {
@@ -227,10 +227,10 @@ export class ClaudeCodeParser extends BaseParser {
 
       // Accumulate tokens
       if (tokensIn !== undefined) {
-        existing.tokensIn = (existing.tokensIn || 0) + tokensIn;
+        existing.tokensIn = (existing.tokensIn ?? 0) + tokensIn;
       }
       if (tokensOut !== undefined) {
-        existing.tokensOut = (existing.tokensOut || 0) + tokensOut;
+        existing.tokensOut = (existing.tokensOut ?? 0) + tokensOut;
       }
 
       this.currentAgentBlockId = existing.id;
@@ -277,7 +277,7 @@ export class ClaudeCodeParser extends BaseParser {
   private extractTextContent(content: ContentBlock[]): string {
     return content
       .filter((block) => block.type === 'text' && block.text)
-      .map((block) => block.text!)
+      .map((block) => block.text ?? '')
       .join('\n');
   }
 }
