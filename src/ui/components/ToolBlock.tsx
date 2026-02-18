@@ -21,7 +21,7 @@ export function ToolBlock({ block }: Props) {
       : JSON.stringify(block.output, null, 2);
 
   return (
-    <div id={`block-${block.id}`} className="flex justify-start ml-8 mb-2">
+    <div id={`block-${block.id}`} className="flex justify-start ml-8 mb-2 pl-3 border-l-2" style={{ borderColor: theme.colors.accent + '60' }}>
       <div
         className="max-w-xl p-3 rounded cursor-pointer transition-all hover:shadow-md font-mono text-xs"
         style={{

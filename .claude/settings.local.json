@@ -30,7 +30,16 @@
       "Bash(git stash*)",
       "Bash(git merge*)",
       "Bash(xargs kill:*)",
-      "mcp__plugin_playwright_playwright__*"
+      "mcp__plugin_playwright_playwright__*",
+      "Bash(wc:*)",
+      "Bash(for f in *.jsonl)",
+      "Bash(do echo \"=== $f ===\")",
+      "Bash(python3 -c \"\nimport json, sys\ntypes = {}\nfor line in open\\(''$f''\\):\n    try:\n        d = json.loads\\(line\\)\n        t = d.get\\(''type'',''?''\\)\n        sub = d.get\\(''subtype'',''''\\)\n        key = f''{t}:{sub}'' if sub else t\n        types[key] = types.get\\(key, 0\\) + 1\n    except: pass\nfor k,v in sorted\\(types.items\\(\\), key=lambda x: -x[1]\\):\n    print\\(f''  {v:4d}  {k}''\\)\n\")",
+      "Bash(done)",
+      "Bash(python3:*)",
+      "Bash(kill:*)",
+      "Bash(lsof*)",
+      "Bash(npx vite*)"
     ]
   }
 }

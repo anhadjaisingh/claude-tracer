@@ -19,6 +19,7 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
   const clients = new Set<WebSocket>();
 
   let latestBlocks: AnyBlock[] = [];
+  let latestChunks: Chunk[] = [];
 
   wss.on('connection', (ws) => {
     clients.add(ws);
@@ -26,7 +27,7 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
 
     // Send current state to new client
     if (latestBlocks.length > 0) {
-      ws.send(JSON.stringify({ type: 'session:init', blocks: latestBlocks }));
+      ws.send(JSON.stringify({ type: 'session:init', blocks: latestBlocks, chunks: latestChunks }));
     }
 
     ws.on('close', () => {
@@ -42,12 +43,16 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
 
   return {
     broadcast(message: WsMessage) {
-      // Track latest blocks state
-      if (message.blocks) {
-        if (message.type === 'blocks:update') {
-          latestBlocks = message.blocks;
-        } else if (message.type === 'blocks:new') {
+      // Track latest blocks and chunks state
+      if (message.type === 'blocks:update') {
+        latestBlocks = message.blocks ?? latestBlocks;
+        latestChunks = message.chunks ?? latestChunks;
+      } else if (message.type === 'blocks:new') {
+        if (message.blocks) {
           latestBlocks = [...latestBlocks, ...message.blocks];
+        }
+        if (message.chunks) {
+          latestChunks = message.chunks;
         }
       }
 

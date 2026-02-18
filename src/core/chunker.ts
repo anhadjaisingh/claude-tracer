@@ -1,4 +1,4 @@
-import type { AnyBlock, Chunk, ChunkLevel } from '@/types';
+import type { AnyBlock, Chunk, ChunkLevel, UserBlock } from '@/types';
 import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock } from '@/types';
 
 /**
@@ -17,6 +17,14 @@ export class Chunker {
 
     for (const block of blocks) {
       if (isUserBlock(block)) {
+        const userBlock = block as UserBlock;
+        if (userBlock.isMeta) {
+          // isMeta user blocks don't start new turns
+          if (currentTurn) {
+            currentTurn.blockIds.push(block.id);
+          }
+          continue;
+        }
         // Start a new turn
         if (currentTurn) {
           this.finalizeChunk(currentTurn, blocks);

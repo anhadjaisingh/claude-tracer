@@ -112,8 +112,11 @@ Team Lead (coordination, review, synthesis)
     ├── Server Teammate
     │   └── Owns: src/server/
     │
-    └── UI Teammate
-        └── Owns: src/ui/
+    ├── UI Teammate
+    │   └── Owns: src/ui/
+    │
+    └── Devtools Teammate
+        └── Owns: developer workflow, CI, hooks, scripts, build tooling
 ```
 
 ### Teammate Responsibilities
@@ -146,6 +149,14 @@ Team Lead (coordination, review, synthesis)
 - Add zoom controls (+/-) for detail level
 - Implement virtual scrolling for large sessions
 - Connect to WebSocket for live updates
+
+#### Devtools Teammate
+- Improve `npm run dev` to accept session file arguments
+- Maintain GitHub Actions CI/CD workflows
+- Set up and improve git hooks, pre-commit checks
+- Optimize build tooling and dev server configuration
+- Improve DX: error messages, startup scripts, onboarding
+- Maintain `.claude/settings.local.json` and project permissions
 
 ### Shared Interface Contract
 
