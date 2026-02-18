@@ -52,17 +52,24 @@ npm run typecheck    # TypeScript type checking
 
 ## Git Workflow
 
-- **Push significant changes upstream.** Don't let work sit only locally -- if no one else can see it, it doesn't count. After committing meaningful work, push to the remote or open a PR.
+- **Nothing is "done" until it's committed, published as a PR, and merged.** Local-only work doesn't count.
 - For feature work, create a branch and open a PR for review.
 - For smaller changes (docs, config, fixes), pushing directly to main is fine.
 
 ## PR and Code Review Process
 
-- **Agent teammates must work on feature branches** and open PRs rather than pushing directly to main.
-- **Track PR status.** Monitor the automated Claude Code Action and Security Review comments on each PR. Address any issues flagged before requesting human review.
-- **When a PR is ready for human review**, notify the team lead with the PR URL. Mention if PRs have dependencies or need to be reviewed/merged in a specific order.
-- **Surface architectural decisions.** If any significant design choices are made during implementation (new patterns, interface changes, dependency additions, structural decisions), explicitly flag them to the team lead. This is critical -- don't bury architectural decisions in commit messages.
+- **Every meaningful change must go through a PR.** Agent teammates and sub-agents must drive work to completion by PR submission -- commit, push, create PR, monitor CI, address review, merge.
+- **All CI/tests must pass before merge.** Tests must pass in both spirit and reality. Never disable or skip tests to land a change. If a test is genuinely wrong, fix the test with an explanation -- don't delete it.
+- **Failing tests need root-cause analysis.** If CI fails, investigate the root cause and add an explanation on the PR. Surface the failure to the team lead (TL) agent, who decides whether to fix or escalate to the human reviewer.
+- **Use the code-review agent** before requesting human review. If both CI and code review pass, merge the PR. If something fails or requires a judgment call that wouldn't pass a senior engineer's smell test, tag the human reviewer (@anhad) on the PR.
+- **Surface architectural decisions.** If any significant design choices are made during implementation (new patterns, interface changes, dependency additions, structural decisions), explicitly flag them to the team lead. Don't bury architectural decisions in commit messages.
 - **Code review feedback must be addressed** before merging. Check PR comments and resolve conversations.
+
+## Agent Team Workflow
+
+- **Sub-agents and teammates must drive their work to PR submission.** The TL agent coordinates, but each agent is responsible for committing, pushing, and opening PRs for their workstream.
+- **Blocked or stuck agents must surface immediately** to the TL agent. If the issue is non-trivial or needs a decision, the TL escalates to the human reviewer via GitHub PR comment or direct conversation.
+- **The TL agent is the integration point.** After parallel agent work completes, the TL verifies integration (tests pass, typecheck clean, visual verification), commits, and opens the PR.
 
 ## Permissions Note
 
