@@ -25,8 +25,5 @@ VITE_PID=$!
 npx tsx watch src/server/index.ts $SERVER_ARGS &
 SERVER_PID=$!
 
-# Wait for either process to exit
-wait -n $VITE_PID $SERVER_PID 2>/dev/null || true
-
-# If one exited, clean up the other
-cleanup
+# Wait for both processes (compatible with bash 3.2 on macOS)
+wait $VITE_PID $SERVER_PID 2>/dev/null || true
