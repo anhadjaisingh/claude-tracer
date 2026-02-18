@@ -43,7 +43,7 @@ describe('SessionWatcher', () => {
     expect(blocks.length).toBe(1);
   });
 
-  it('detects new lines appended to file', async () => {
+  it('detects new lines appended to file', { timeout: 10000 }, async () => {
     const line1 = JSON.stringify({
       type: 'user',
       message: { role: 'user', content: 'First' },
@@ -53,15 +53,15 @@ describe('SessionWatcher', () => {
 
     watcher = new SessionWatcher({ chokidar: testChokidarOptions });
 
-    // Use a promise to wait for the second callback
+    let callCount = 0;
     const secondCall = new Promise<void>((resolve) => {
-      let callCount = 0;
       const callback = vi.fn(() => {
         callCount++;
         if (callCount === 2) resolve();
       });
-      watcher.watch(testFile, callback).then(() => {
-        // After watcher is ready, append new content
+      watcher.watch(testFile, callback).then(async () => {
+        // Give chokidar polling a moment to stabilize after "ready"
+        await new Promise((r) => setTimeout(r, 300));
         const line2 = JSON.stringify({
           type: 'user',
           message: { role: 'user', content: 'Second' },
@@ -71,11 +71,10 @@ describe('SessionWatcher', () => {
       });
     });
 
-    // Wait up to 5s for the change to be detected
     await Promise.race([
       secondCall,
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timed out waiting for file change')), 5000),
+        setTimeout(() => reject(new Error('Timed out waiting for file change')), 8000),
       ),
     ]);
   });

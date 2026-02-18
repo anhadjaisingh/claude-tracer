@@ -4,6 +4,7 @@ import { createServer } from 'http';
 import { createApp } from './app';
 import { createWebSocketServer } from './websocket';
 import { SessionWatcher } from './watcher';
+import { ClaudeCodeParser } from '../parser/claude-code';
 import { parseArgs, printHelp, printVersion } from './cli';
 
 async function main() {
@@ -24,7 +25,7 @@ async function main() {
   const wss = createWebSocketServer(server);
 
   if (args.file) {
-    const watcher = new SessionWatcher();
+    const watcher = new SessionWatcher({ parser: new ClaudeCodeParser() });
     watcher.watch(args.file, (blocks) => {
       wss.broadcast({ type: 'blocks:update', blocks });
     });

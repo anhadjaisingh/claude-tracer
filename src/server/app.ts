@@ -16,8 +16,8 @@ export function createApp() {
     res.json({ status: 'ok' });
   });
 
-  // SPA fallback
-  app.get('*', (req, res) => {
+  // SPA fallback (Express 5 requires named catch-all parameter)
+  app.get('{*path}', (req, res) => {
     res.sendFile(path.join(uiPath, 'index.html'));
   });
 

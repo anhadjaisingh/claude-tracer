@@ -28,7 +28,9 @@
       "Bash(git checkout*)",
       "Bash(git worktree*)",
       "Bash(git stash*)",
-      "Bash(git merge*)"
+      "Bash(git merge*)",
+      "Bash(xargs kill:*)",
+      "mcp__plugin_playwright_playwright__*"
     ]
   }
 }
