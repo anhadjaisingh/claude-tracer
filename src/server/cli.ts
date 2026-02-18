@@ -15,6 +15,8 @@ export function parseArgs(argv: string[]): CliArgs {
       args.help = true;
     } else if (arg === '-v' || arg === '--version') {
       args.version = true;
+    } else if (arg === '-f' || arg === '--file') {
+      args.file = argv[++i];
     } else if (arg === '-p' || arg === '--port') {
       const port = parseInt(argv[++i], 10);
       if (!isNaN(port)) {
@@ -36,6 +38,7 @@ Arguments:
   session-file          Path to .jsonl session file (optional)
 
 Options:
+  -f, --file <path>     Path to .jsonl session file
   -p, --port <number>   Port to run server on (default: 3000)
   -h, --help            Show help
   -v, --version         Show version
@@ -43,6 +46,7 @@ Options:
 Examples:
   claude-tracer                              # Opens session picker
   claude-tracer ./session.jsonl              # Opens specific file in watch mode
+  claude-tracer --file ./session.jsonl       # Same, using --file flag
   npx claude-tracer ./session.jsonl          # Via npx
 `);
 }

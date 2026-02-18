@@ -8,7 +8,7 @@
     "claude-tracer": "./dist/server/index.js"
   },
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:ui\"",
+    "dev": "bash scripts/dev.sh",
     "dev:server": "tsx watch src/server/index.ts",
     "dev:ui": "vite",
     "build": "npm run build:server && npm run build:ui",

@@ -17,6 +17,22 @@ describe('CLI argument parsing', () => {
     expect(args.port).toBe(9000);
   });
 
+  it('parses --file flag', () => {
+    const args = parseArgs(['--file', './session.jsonl']);
+    expect(args.file).toBe('./session.jsonl');
+  });
+
+  it('parses -f shorthand flag', () => {
+    const args = parseArgs(['-f', './session.jsonl']);
+    expect(args.file).toBe('./session.jsonl');
+  });
+
+  it('parses --file flag with port', () => {
+    const args = parseArgs(['--file', './session.jsonl', '-p', '4000']);
+    expect(args.file).toBe('./session.jsonl');
+    expect(args.port).toBe(4000);
+  });
+
   it('parses file with port', () => {
     const args = parseArgs(['./session.jsonl', '-p', '4000']);
     expect(args.file).toBe('./session.jsonl');
