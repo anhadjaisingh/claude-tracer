@@ -15,6 +15,7 @@
 ### Task 0.1: Initialize Project Structure
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `tsconfig.node.json`
@@ -104,6 +105,7 @@ git commit -m "chore: initialize project with TypeScript and dependencies"
 ### Task 0.2: Configure Vite and Tailwind
 
 **Files:**
+
 - Create: `vite.config.ts`
 - Create: `tailwind.config.js`
 - Create: `postcss.config.js`
@@ -211,7 +213,10 @@ body {
     <title>Claude Tracer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>
@@ -232,6 +237,7 @@ git commit -m "chore: configure Vite, Tailwind, and base styles"
 ### Task 0.3: Add npm scripts
 
 **Files:**
+
 - Modify: `package.json`
 
 **Step 1: Update package.json scripts**
@@ -280,6 +286,7 @@ git commit -m "chore: add npm scripts for dev and build"
 ### Task 1.1: Define Block Types
 
 **Files:**
+
 - Create: `src/types/blocks.ts`
 - Create: `src/types/index.ts`
 
@@ -448,6 +455,7 @@ git commit -m "feat(types): add Block types with type guards"
 ### Task 1.2: Define Chunk Types
 
 **Files:**
+
 - Create: `src/types/chunks.ts`
 - Modify: `src/types/index.ts`
 
@@ -555,6 +563,7 @@ git commit -m "feat(types): add Chunk types for hierarchical grouping"
 ### Task 1.3: Define Parser Interface
 
 **Files:**
+
 - Create: `src/types/parser.ts`
 - Modify: `src/types/index.ts`
 
@@ -627,6 +636,7 @@ git commit -m "feat(types): add TraceParser interface"
 ### Task 1.4: Define Search Interface
 
 **Files:**
+
 - Create: `src/types/search.ts`
 - Modify: `src/types/index.ts`
 
@@ -710,6 +720,7 @@ git commit -m "feat(types): add SearchEngine interface"
 **Action:** Team Lead reviews all types in `src/types/` before parallel work begins.
 
 **Review checklist:**
+
 - [ ] Block types cover all Claude Code JSONL entry types
 - [ ] Chunk hierarchy supports theme → task → turn levels
 - [ ] Parser interface supports incremental parsing for live-reload
@@ -729,6 +740,7 @@ git commit -m "feat(types): add SearchEngine interface"
 ### Task 2.1: Create Base Parser Class
 
 **Files:**
+
 - Create: `src/parser/base.ts`
 - Create: `src/parser/index.ts`
 
@@ -809,15 +821,11 @@ export abstract class BaseParser implements TraceParser {
     filePath: string,
     blocks: AnyBlock[],
     chunks: Chunk[] = [],
-    metadata: Partial<SessionMetadata> = {}
+    metadata: Partial<SessionMetadata> = {},
   ): ParsedSession {
-    const startTime = blocks.length > 0
-      ? Math.min(...blocks.map(b => b.timestamp))
-      : Date.now();
+    const startTime = blocks.length > 0 ? Math.min(...blocks.map((b) => b.timestamp)) : Date.now();
 
-    const endTime = blocks.length > 0
-      ? Math.max(...blocks.map(b => b.timestamp))
-      : undefined;
+    const endTime = blocks.length > 0 ? Math.max(...blocks.map((b) => b.timestamp)) : undefined;
 
     return {
       id: this.generateSessionId(filePath),
@@ -868,6 +876,7 @@ git commit -m "feat(parser): add BaseParser abstract class"
 ### Task 2.2: Implement Claude Code JSONL Parser
 
 **Files:**
+
 - Create: `src/parser/claude-code.ts`
 - Modify: `src/parser/index.ts`
 
@@ -905,7 +914,7 @@ describe('ClaudeCodeParser', () => {
       type: 'assistant',
       message: {
         role: 'assistant',
-        content: [{ type: 'text', text: 'Hi there!' }]
+        content: [{ type: 'text', text: 'Hi there!' }],
       },
       timestamp: '2026-02-18T10:00:01Z',
     });
@@ -921,12 +930,14 @@ describe('ClaudeCodeParser', () => {
       type: 'assistant',
       message: {
         role: 'assistant',
-        content: [{
-          type: 'tool_use',
-          id: 'tool-1',
-          name: 'Read',
-          input: { file_path: '/test.txt' },
-        }],
+        content: [
+          {
+            type: 'tool_use',
+            id: 'tool-1',
+            name: 'Read',
+            input: { file_path: '/test.txt' },
+          },
+        ],
       },
       timestamp: '2026-02-18T10:00:02Z',
     });
@@ -941,11 +952,13 @@ describe('ClaudeCodeParser', () => {
       type: 'user',
       message: {
         role: 'user',
-        content: [{
-          type: 'tool_result',
-          tool_use_id: 'tool-1',
-          content: 'file contents here',
-        }],
+        content: [
+          {
+            type: 'tool_result',
+            tool_use_id: 'tool-1',
+            content: 'file contents here',
+          },
+        ],
       },
       timestamp: '2026-02-18T10:00:03Z',
     });
@@ -958,8 +971,16 @@ describe('ClaudeCodeParser', () => {
 
   it('parses complete session', () => {
     const content = [
-      JSON.stringify({ type: 'user', message: { role: 'user', content: 'Hello' }, timestamp: '2026-02-18T10:00:00Z' }),
-      JSON.stringify({ type: 'assistant', message: { role: 'assistant', content: [{ type: 'text', text: 'Hi!' }] }, timestamp: '2026-02-18T10:00:01Z' }),
+      JSON.stringify({
+        type: 'user',
+        message: { role: 'user', content: 'Hello' },
+        timestamp: '2026-02-18T10:00:00Z',
+      }),
+      JSON.stringify({
+        type: 'assistant',
+        message: { role: 'assistant', content: [{ type: 'text', text: 'Hi!' }] },
+        timestamp: '2026-02-18T10:00:01Z',
+      }),
     ].join('\n');
 
     const session = parser.parse(content);
@@ -982,13 +1003,7 @@ Expected: FAIL
 
 ```typescript
 import { BaseParser } from './base';
-import type {
-  AnyBlock,
-  ParsedSession,
-  UserBlock,
-  AgentBlock,
-  ToolBlock
-} from '@/types';
+import type { AnyBlock, ParsedSession, UserBlock, AgentBlock, ToolBlock } from '@/types';
 
 interface ClaudeCodeEntry {
   type: 'user' | 'assistant' | 'system';
@@ -1018,7 +1033,8 @@ interface ContentBlock {
  * Parser for Claude Code session JSONL files
  */
 export class ClaudeCodeParser extends BaseParser {
-  private pendingToolCalls: Map<string, { name: string; input: unknown; agentBlockId: string }> = new Map();
+  private pendingToolCalls: Map<string, { name: string; input: unknown; agentBlockId: string }> =
+    new Map();
   private currentAgentBlockId: string | null = null;
 
   canParse(content: string): boolean {
@@ -1032,7 +1048,10 @@ export class ClaudeCodeParser extends BaseParser {
   }
 
   parse(content: string): ParsedSession {
-    const lines = content.trim().split('\n').filter(line => line.trim());
+    const lines = content
+      .trim()
+      .split('\n')
+      .filter((line) => line.trim());
     const blocks: AnyBlock[] = [];
 
     for (const line of lines) {
@@ -1055,9 +1074,7 @@ export class ClaudeCodeParser extends BaseParser {
   }
 
   private parseEntry(entry: ClaudeCodeEntry): AnyBlock | null {
-    const timestamp = entry.timestamp
-      ? new Date(entry.timestamp).getTime()
-      : Date.now();
+    const timestamp = entry.timestamp ? new Date(entry.timestamp).getTime() : Date.now();
 
     if (entry.type === 'user') {
       return this.parseUserEntry(entry, timestamp);
@@ -1153,8 +1170,8 @@ export class ClaudeCodeParser extends BaseParser {
 
   private extractTextContent(content: ContentBlock[]): string {
     return content
-      .filter(block => block.type === 'text' && block.text)
-      .map(block => block.text!)
+      .filter((block) => block.type === 'text' && block.text)
+      .map((block) => block.text!)
       .join('\n');
   }
 }
@@ -1193,6 +1210,7 @@ git commit -m "feat(parser): implement Claude Code JSONL parser"
 ### Task 3.1: Implement MiniSearch Wrapper
 
 **Files:**
+
 - Create: `src/core/search.ts`
 - Create: `src/core/index.ts`
 
@@ -1242,17 +1260,17 @@ describe('BlockSearch', () => {
   it('finds blocks by content', () => {
     const results = search.search('authentication');
     expect(results.length).toBeGreaterThan(0);
-    expect(results.some(r => r.blockId === 'user-1')).toBe(true);
+    expect(results.some((r) => r.blockId === 'user-1')).toBe(true);
   });
 
   it('finds tool blocks by tool name', () => {
     const results = search.search('Read');
-    expect(results.some(r => r.blockId === 'tool-1')).toBe(true);
+    expect(results.some((r) => r.blockId === 'tool-1')).toBe(true);
   });
 
   it('filters by block type', () => {
     const results = search.search('authentication', { types: ['user'] });
-    expect(results.every(r => r.blockId.startsWith('user'))).toBe(true);
+    expect(results.every((r) => r.blockId.startsWith('user'))).toBe(true);
   });
 
   it('respects limit option', () => {
@@ -1269,7 +1287,7 @@ describe('BlockSearch', () => {
     };
     search.addBlock(newBlock);
     const results = search.search('tests');
-    expect(results.some(r => r.blockId === 'user-2')).toBe(true);
+    expect(results.some((r) => r.blockId === 'user-2')).toBe(true);
   });
 
   it('can clear the index', () => {
@@ -1331,9 +1349,9 @@ export class BlockSearch implements SearchEngine {
   }
 
   index(blocks: AnyBlock[]): void {
-    const documents = blocks.map(block => this.blockToDocument(block));
+    const documents = blocks.map((block) => this.blockToDocument(block));
     this.miniSearch.addAll(documents);
-    blocks.forEach(b => this.blockTypes.set(b.id, b.type));
+    blocks.forEach((b) => this.blockTypes.set(b.id, b.type));
   }
 
   addBlock(block: AnyBlock): void {
@@ -1349,19 +1367,21 @@ export class BlockSearch implements SearchEngine {
 
     // Filter by type if specified
     if (types && types.length > 0) {
-      results = results.filter(r => {
+      results = results.filter((r) => {
         const blockType = this.blockTypes.get(r.id);
         return blockType && types.includes(blockType as any);
       });
     }
 
-    return results.slice(0, limit).map(r => ({
+    return results.slice(0, limit).map((r) => ({
       blockId: r.id,
       score: r.score,
-      matches: r.match ? Object.entries(r.match).map(([field, terms]) => ({
-        field,
-        snippet: Array.from(terms as Set<string>).join(', '),
-      })) : undefined,
+      matches: r.match
+        ? Object.entries(r.match).map(([field, terms]) => ({
+            field,
+            snippet: Array.from(terms as Set<string>).join(', '),
+          }))
+        : undefined,
     }));
   }
 
@@ -1432,6 +1452,7 @@ git commit -m "feat(core): implement MiniSearch-based block search"
 ### Task 3.2: Implement Chunker
 
 **Files:**
+
 - Create: `src/core/chunker.ts`
 - Modify: `src/core/index.ts`
 
@@ -1449,31 +1470,61 @@ describe('Chunker', () => {
 
   const blocks: AnyBlock[] = [
     { id: 'u1', timestamp: 1000, type: 'user', content: 'Start task 1' } as UserBlock,
-    { id: 'a1', timestamp: 2000, type: 'agent', content: 'Working on task 1', toolCalls: ['t1'] } as AgentBlock,
-    { id: 't1', timestamp: 3000, type: 'tool', parentId: 'a1', toolName: 'Read', input: {}, output: '', status: 'success' } as ToolBlock,
+    {
+      id: 'a1',
+      timestamp: 2000,
+      type: 'agent',
+      content: 'Working on task 1',
+      toolCalls: ['t1'],
+    } as AgentBlock,
+    {
+      id: 't1',
+      timestamp: 3000,
+      type: 'tool',
+      parentId: 'a1',
+      toolName: 'Read',
+      input: {},
+      output: '',
+      status: 'success',
+    } as ToolBlock,
     { id: 'u2', timestamp: 4000, type: 'user', content: 'Now task 2' } as UserBlock,
-    { id: 'a2', timestamp: 5000, type: 'agent', content: 'Working on task 2', toolCalls: [] } as AgentBlock,
+    {
+      id: 'a2',
+      timestamp: 5000,
+      type: 'agent',
+      content: 'Working on task 2',
+      toolCalls: [],
+    } as AgentBlock,
   ];
 
   it('creates turn-level chunks for each user-agent exchange', () => {
     const chunks = chunker.createChunks(blocks);
-    const turns = chunks.filter(c => c.level === 'turn');
+    const turns = chunks.filter((c) => c.level === 'turn');
     expect(turns.length).toBe(2);
   });
 
   it('groups tool blocks with their parent agent', () => {
     const chunks = chunker.createChunks(blocks);
-    const turn1 = chunks.find(c => c.level === 'turn' && c.blockIds.includes('a1'));
+    const turn1 = chunks.find((c) => c.level === 'turn' && c.blockIds.includes('a1'));
     expect(turn1?.blockIds).toContain('t1');
   });
 
   it('calculates aggregate stats', () => {
     const blocksWithTokens: AnyBlock[] = [
       { id: 'u1', timestamp: 1000, type: 'user', content: 'Hello', tokensIn: 10 } as UserBlock,
-      { id: 'a1', timestamp: 2000, type: 'agent', content: 'Hi', toolCalls: [], tokensIn: 100, tokensOut: 50, wallTimeMs: 1000 } as AgentBlock,
+      {
+        id: 'a1',
+        timestamp: 2000,
+        type: 'agent',
+        content: 'Hi',
+        toolCalls: [],
+        tokensIn: 100,
+        tokensOut: 50,
+        wallTimeMs: 1000,
+      } as AgentBlock,
     ];
     const chunks = chunker.createChunks(blocksWithTokens);
-    const turn = chunks.find(c => c.level === 'turn');
+    const turn = chunks.find((c) => c.level === 'turn');
     expect(turn?.totalTokensIn).toBe(110);
     expect(turn?.totalTokensOut).toBe(50);
   });
@@ -1564,7 +1615,7 @@ export class Chunker {
   }
 
   private finalizeChunk(chunk: Chunk, allBlocks: AnyBlock[]): void {
-    const chunkBlocks = allBlocks.filter(b => chunk.blockIds.includes(b.id));
+    const chunkBlocks = allBlocks.filter((b) => chunk.blockIds.includes(b.id));
 
     chunk.totalTokensIn = chunkBlocks.reduce((sum, b) => sum + (b.tokensIn || 0), 0);
     chunk.totalTokensOut = chunkBlocks.reduce((sum, b) => sum + (b.tokensOut || 0), 0);
@@ -1606,6 +1657,7 @@ git commit -m "feat(core): implement Chunker for hierarchical grouping"
 ### Task 4.1: Create Express App
 
 **Files:**
+
 - Create: `src/server/app.ts`
 - Create: `src/server/index.ts`
 
@@ -1688,6 +1740,7 @@ git commit -m "feat(server): add Express app skeleton"
 ### Task 4.2: Implement CLI Argument Parsing
 
 **Files:**
+
 - Create: `src/server/cli.ts`
 
 **Step 1: Write test for CLI parsing**
@@ -1824,6 +1877,7 @@ git commit -m "feat(server): add CLI argument parsing"
 ### Task 4.3: Implement WebSocket Server
 
 **Files:**
+
 - Create: `src/server/websocket.ts`
 
 **Step 1: Create src/server/websocket.ts**
@@ -1892,6 +1946,7 @@ git commit -m "feat(server): add WebSocket server for live updates"
 ### Task 4.4: Implement File Watcher
 
 **Files:**
+
 - Create: `src/server/watcher.ts`
 
 **Step 1: Write test for watcher**
@@ -1919,7 +1974,11 @@ describe('SessionWatcher', () => {
   });
 
   it('reads initial file content', async () => {
-    const line = JSON.stringify({ type: 'user', message: { role: 'user', content: 'Hello' }, timestamp: new Date().toISOString() });
+    const line = JSON.stringify({
+      type: 'user',
+      message: { role: 'user', content: 'Hello' },
+      timestamp: new Date().toISOString(),
+    });
     fs.writeFileSync(testFile, line + '\n');
 
     const watcher = new SessionWatcher();
@@ -1943,11 +2002,15 @@ describe('SessionWatcher', () => {
     await watcher.watch(testFile, callback);
 
     // Append a new line
-    const line = JSON.stringify({ type: 'user', message: { role: 'user', content: 'Hello' }, timestamp: new Date().toISOString() });
+    const line = JSON.stringify({
+      type: 'user',
+      message: { role: 'user', content: 'Hello' },
+      timestamp: new Date().toISOString(),
+    });
     fs.appendFileSync(testFile, line + '\n');
 
     // Wait for file watcher to detect change
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     expect(callback).toHaveBeenCalledTimes(2); // Initial + update
 
@@ -1980,7 +2043,7 @@ export class SessionWatcher {
 
   async watch(
     filePath: string,
-    onBlocks: (blocks: AnyBlock[], isInitial: boolean) => void
+    onBlocks: (blocks: AnyBlock[], isInitial: boolean) => void,
   ): Promise<void> {
     this.filePath = filePath;
 
@@ -2026,7 +2089,10 @@ export class SessionWatcher {
   }
 
   private parseContent(content: string): AnyBlock[] {
-    const lines = content.trim().split('\n').filter(line => line.trim());
+    const lines = content
+      .trim()
+      .split('\n')
+      .filter((line) => line.trim());
     const blocks: AnyBlock[] = [];
 
     for (const line of lines) {
@@ -2074,6 +2140,7 @@ git commit -m "feat(server): add file watcher with incremental parsing"
 ### Task 5.1: Create React Entry Point and Theme
 
 **Files:**
+
 - Create: `src/ui/main.tsx`
 - Create: `src/ui/App.tsx`
 - Create: `src/ui/themes/index.ts`
@@ -2085,17 +2152,17 @@ git commit -m "feat(server): add file watcher with incremental parsing"
 export const claudeTheme = {
   name: 'claude',
   colors: {
-    background: '#ffedd5',      // peach
-    agentBg: '#374151',         // grey-700
-    agentText: '#f3f4f6',       // grey-100
-    userBg: '#f9fafb',          // grey-50
-    userText: '#111827',        // grey-900
-    toolBg: '#0f0f0f',          // near-black
-    toolText: '#e5e5e5',        // terminal white
-    accent: '#f97316',          // orange
+    background: '#ffedd5', // peach
+    agentBg: '#374151', // grey-700
+    agentText: '#f3f4f6', // grey-100
+    userBg: '#f9fafb', // grey-50
+    userText: '#111827', // grey-900
+    toolBg: '#0f0f0f', // near-black
+    toolText: '#e5e5e5', // terminal white
+    accent: '#f97316', // orange
     headerBg: 'rgba(0,0,0,0.8)',
     headerText: '#ffffff',
-    indexText: '#f3f4f6',       // light text on peach
+    indexText: '#f3f4f6', // light text on peach
   },
 };
 
@@ -2185,6 +2252,7 @@ git commit -m "feat(ui): add React entry point and Claude theme"
 ### Task 5.2: Create useSession Hook
 
 **Files:**
+
 - Create: `src/ui/hooks/useSession.ts`
 
 **Step 1: Create src/ui/hooks/useSession.ts**
@@ -2241,7 +2309,7 @@ export function useSession() {
 
           case 'blocks:new':
             if (message.blocks) {
-              setBlocks(prev => [...prev, ...message.blocks!]);
+              setBlocks((prev) => [...prev, ...message.blocks!]);
             }
             break;
         }
@@ -2283,6 +2351,7 @@ git commit -m "feat(ui): add useSession hook for WebSocket connection"
 ### Task 5.3: Create Block Components
 
 **Files:**
+
 - Create: `src/ui/components/UserBlock.tsx`
 - Create: `src/ui/components/AgentBlock.tsx`
 - Create: `src/ui/components/ToolBlock.tsx`
@@ -2511,6 +2580,7 @@ git commit -m "feat(ui): add UserBlock, AgentBlock, and ToolBlock components"
 ### Task 5.4: Create Layout Components
 
 **Files:**
+
 - Create: `src/ui/components/Header.tsx`
 - Create: `src/ui/components/Footer.tsx`
 - Create: `src/ui/components/IndexSidebar.tsx`
@@ -2720,6 +2790,7 @@ git commit -m "feat(ui): add Header, Footer, IndexSidebar, and TraceView compone
 ### Task 6.1: Wire Up Server with Parser and Core
 
 **Files:**
+
 - Modify: `src/server/index.ts`
 
 **Step 1: Update src/server/index.ts**
@@ -2828,6 +2899,7 @@ npm start -- /tmp/test-session.jsonl
 Navigate to http://localhost:3000
 
 **Expected:** See the chat-like interface with:
+
 - User messages on the right (light background)
 - Agent messages on the left (grey background)
 - Tool block (black background) indented under agent
@@ -2856,40 +2928,44 @@ git commit -m "test: verify end-to-end integration"
 ### Task 7.1: Add SVG Connection Lines
 
 **Files:**
+
 - Create: `src/ui/components/ConnectionLines.tsx`
 - Modify: `src/ui/components/TraceView.tsx`
 
-*(Implementation details for SVG arrows connecting blocks)*
+_(Implementation details for SVG arrows connecting blocks)_
 
 ---
 
 ### Task 7.2: Implement Search with Navigation
 
 **Files:**
+
 - Create: `src/ui/hooks/useSearch.ts`
 - Modify: `src/ui/components/Header.tsx`
 
-*(Implementation details for search with next/prev navigation)*
+_(Implementation details for search with next/prev navigation)_
 
 ---
 
 ### Task 7.3: Add Virtual Scrolling
 
 **Files:**
+
 - Modify: `src/ui/components/TraceView.tsx`
 
-*(Implementation using react-window for large sessions)*
+_(Implementation using react-window for large sessions)_
 
 ---
 
 ### Task 7.4: Implement Zoom Controls
 
 **Files:**
+
 - Create: `src/ui/hooks/useZoom.ts`
 - Modify: `src/ui/components/TraceView.tsx`
 - Modify: `src/ui/components/IndexSidebar.tsx`
 
-*(Implementation for zoom in/out affecting detail level)*
+_(Implementation for zoom in/out affecting detail level)_
 
 ---
 

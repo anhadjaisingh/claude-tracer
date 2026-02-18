@@ -24,13 +24,11 @@ export abstract class BaseParser implements TraceParser {
     filePath: string,
     blocks: AnyBlock[],
     chunks: Chunk[] = [],
-    metadata: Partial<SessionMetadata> = {}
+    metadata: Partial<SessionMetadata> = {},
   ): ParsedSession {
-    const startTime =
-      blocks.length > 0 ? Math.min(...blocks.map((b) => b.timestamp)) : Date.now();
+    const startTime = blocks.length > 0 ? Math.min(...blocks.map((b) => b.timestamp)) : Date.now();
 
-    const endTime =
-      blocks.length > 0 ? Math.max(...blocks.map((b) => b.timestamp)) : undefined;
+    const endTime = blocks.length > 0 ? Math.max(...blocks.map((b) => b.timestamp)) : undefined;
 
     return {
       id: this.generateSessionId(filePath),

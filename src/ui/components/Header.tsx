@@ -34,7 +34,9 @@ export function Header({
           type="text"
           placeholder="Search..."
           value={searchQuery}
-          onChange={(e) => { onSearchChange(e.target.value); }}
+          onChange={(e) => {
+            onSearchChange(e.target.value);
+          }}
           className="px-3 py-1.5 rounded bg-white/10 text-white placeholder-white/50 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-white/30"
         />
         <span className="text-xs opacity-60">
@@ -42,16 +44,10 @@ export function Header({
             ? `${String(currentResultIndex + 1)} of ${String(resultCount)}`
             : '0 of 0'}
         </span>
-        <button
-          className="px-2 py-1 text-sm opacity-60 hover:opacity-100"
-          onClick={onSearchPrev}
-        >
+        <button className="px-2 py-1 text-sm opacity-60 hover:opacity-100" onClick={onSearchPrev}>
           ◀
         </button>
-        <button
-          className="px-2 py-1 text-sm opacity-60 hover:opacity-100"
-          onClick={onSearchNext}
-        >
+        <button className="px-2 py-1 text-sm opacity-60 hover:opacity-100" onClick={onSearchNext}>
           ▶
         </button>
       </div>

@@ -71,19 +71,10 @@ export class Chunker {
   }
 
   private finalizeChunk(chunk: Chunk, allBlocks: AnyBlock[]): void {
-    const chunkBlocks = allBlocks.filter(b => chunk.blockIds.includes(b.id));
+    const chunkBlocks = allBlocks.filter((b) => chunk.blockIds.includes(b.id));
 
-    chunk.totalTokensIn = chunkBlocks.reduce(
-      (sum, b) => sum + (b.tokensIn ?? 0),
-      0,
-    );
-    chunk.totalTokensOut = chunkBlocks.reduce(
-      (sum, b) => sum + (b.tokensOut ?? 0),
-      0,
-    );
-    chunk.totalWallTimeMs = chunkBlocks.reduce(
-      (sum, b) => sum + (b.wallTimeMs ?? 0),
-      0,
-    );
+    chunk.totalTokensIn = chunkBlocks.reduce((sum, b) => sum + (b.tokensIn ?? 0), 0);
+    chunk.totalTokensOut = chunkBlocks.reduce((sum, b) => sum + (b.tokensOut ?? 0), 0);
+    chunk.totalWallTimeMs = chunkBlocks.reduce((sum, b) => sum + (b.wallTimeMs ?? 0), 0);
   }
 }

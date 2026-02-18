@@ -20,7 +20,9 @@ export function UserBlock({ block }: Props) {
             backgroundColor: theme.colors.userBg + '80',
             color: theme.colors.userText,
           }}
-          onClick={() => { setIsExpanded(!isExpanded); }}
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+          }}
         >
           {isExpanded ? (
             <div className="whitespace-pre-wrap font-mono text-xs max-w-xl">
@@ -36,9 +38,7 @@ export function UserBlock({ block }: Props) {
   }
 
   const preview =
-    block.content.length > 100 && !isExpanded
-      ? block.content.slice(0, 100) + '...'
-      : block.content;
+    block.content.length > 100 && !isExpanded ? block.content.slice(0, 100) + '...' : block.content;
 
   return (
     <div id={`block-${block.id}`} className="flex justify-end mb-4">

@@ -14,9 +14,15 @@ export function TraceView({ blocks }: Props) {
   const theme = useTheme();
   const [zoomLevel, setZoomLevel] = useState(1.0);
 
-  const zoomIn = () => { setZoomLevel(prev => Math.min(prev + 0.1, 2.0)); };
-  const zoomOut = () => { setZoomLevel(prev => Math.max(prev - 0.1, 0.5)); };
-  const zoomReset = () => { setZoomLevel(1.0); };
+  const zoomIn = () => {
+    setZoomLevel((prev) => Math.min(prev + 0.1, 2.0));
+  };
+  const zoomOut = () => {
+    setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
+  };
+  const zoomReset = () => {
+    setZoomLevel(1.0);
+  };
 
   return (
     <div className="relative">
@@ -64,10 +70,7 @@ export function TraceView({ blocks }: Props) {
         }}
       >
         {blocks.length === 0 ? (
-          <div
-            className="text-center py-20 opacity-60"
-            style={{ color: theme.colors.agentText }}
-          >
+          <div className="text-center py-20 opacity-60" style={{ color: theme.colors.agentText }}>
             No blocks to display. Open a session file to begin.
           </div>
         ) : (

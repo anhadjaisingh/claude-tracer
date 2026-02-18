@@ -5,6 +5,7 @@ This document describes the agent team structure for parallel development of cla
 ## Project Context
 
 **claude-tracer** is a standalone trace visualization and debugging tool that:
+
 - Runs locally via CLI (`claude-tracer ./session.jsonl` or `npx claude-tracer`)
 - Generates a web-based visualizer for stepping through Claude Code sessions
 - Shows user prompts, agent reasoning, tool calls, MCP calls, outputs, tokens, timestamps
@@ -85,16 +86,16 @@ claude-tracer/
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Language | TypeScript |
-| UI Framework | React + Vite |
-| Styling | Tailwind CSS |
-| Server | Node.js + Express |
-| Live Updates | WebSocket (ws) |
-| File Watching | chokidar |
-| Search | MiniSearch (Phase 1) |
-| Virtual Scrolling | react-window |
+| Layer             | Technology           |
+| ----------------- | -------------------- |
+| Language          | TypeScript           |
+| UI Framework      | React + Vite         |
+| Styling           | Tailwind CSS         |
+| Server            | Node.js + Express    |
+| Live Updates      | WebSocket (ws)       |
+| File Watching     | chokidar             |
+| Search            | MiniSearch (Phase 1) |
+| Virtual Scrolling | react-window         |
 
 ## Agent Team Structure
 
@@ -122,6 +123,7 @@ Team Lead (coordination, review, synthesis)
 ### Teammate Responsibilities
 
 #### Parser Teammate
+
 - Implement `TraceParser` interface in `src/types/parser.ts`
 - Build Claude Code JSONL parser (`src/parser/claude-code.ts`)
 - Create pluggable adapter pattern for future formats
@@ -129,6 +131,7 @@ Team Lead (coordination, review, synthesis)
 - Test with real Claude Code session files
 
 #### Core Teammate
+
 - Define Block and Chunk data models in `src/types/`
 - Implement chunking logic (theme → task → turn hierarchy)
 - Build MiniSearch integration for keyword search
@@ -136,6 +139,7 @@ Team Lead (coordination, review, synthesis)
 - Ensure efficient updates for live-reload scenario
 
 #### Server Teammate
+
 - Set up Express server serving static UI build
 - Implement WebSocket server for live updates
 - Build file watcher with incremental parsing
@@ -143,6 +147,7 @@ Team Lead (coordination, review, synthesis)
 - Handle CLI argument parsing (file path vs picker mode)
 
 #### UI Teammate
+
 - Build React component tree (Header, TraceView, Sidebar, Footer)
 - Implement collapsible blocks (UserBlock, AgentBlock, ToolBlock)
 - Create SVG arrow connections between blocks
@@ -151,6 +156,7 @@ Team Lead (coordination, review, synthesis)
 - Connect to WebSocket for live updates
 
 #### Devtools Teammate
+
 - Improve `npm run dev` to accept session file arguments
 - Maintain GitHub Actions CI/CD workflows
 - Set up and improve git hooks, pre-commit checks
@@ -197,6 +203,7 @@ interface SearchEngine {
 ### Coordination Protocol
 
 **Interface changes require coordination:**
+
 1. Teammate needing change messages the Team Lead
 2. Team Lead broadcasts proposed change to affected teammates
 3. Affected teammates confirm or suggest modifications
@@ -204,6 +211,7 @@ interface SearchEngine {
 5. Other teammates pull and adapt
 
 **File ownership prevents conflicts:**
+
 - Each teammate works only in their owned directories
 - `src/types/` changes are coordinated through Team Lead
 - No two teammates edit the same file
@@ -254,24 +262,28 @@ the design in docs/plans/ before approving.
 ### Phase 1: Foundation (all teammates in parallel)
 
 **Parser Teammate:**
+
 - [ ] Set up src/types/parser.ts interface
 - [ ] Implement base TraceParser class
 - [ ] Build ClaudeCodeParser for JSONL files
 - [ ] Add incremental parsing support
 
 **Core Teammate:**
+
 - [ ] Set up src/types/blocks.ts and chunks.ts
 - [ ] Implement Block type guards and utilities
 - [ ] Build Chunker class for hierarchy creation
 - [ ] Integrate MiniSearch for keyword search
 
 **Server Teammate:**
+
 - [ ] Set up Express app skeleton
 - [ ] Implement CLI argument parsing
 - [ ] Add session file picker
 - [ ] Set up WebSocket server
 
 **UI Teammate:**
+
 - [ ] Set up Vite + React + Tailwind
 - [ ] Build layout components (Header, Footer, Sidebar)
 - [ ] Create basic block components
@@ -280,6 +292,7 @@ the design in docs/plans/ before approving.
 ### Phase 2: Integration
 
 **All teammates:**
+
 - [ ] Connect components end-to-end
 - [ ] Test with real Claude Code session files
 - [ ] Fix interface mismatches

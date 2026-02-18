@@ -74,7 +74,9 @@ describe('SessionWatcher', () => {
     await Promise.race([
       secondCall,
       new Promise((_, reject) => {
-        setTimeout(() => { reject(new Error('Timed out waiting for file change')); }, 8000);
+        setTimeout(() => {
+          reject(new Error('Timed out waiting for file change'));
+        }, 8000);
       }),
     ]);
   });

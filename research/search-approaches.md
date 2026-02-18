@@ -3,6 +3,7 @@
 ## Project Context
 
 **claude-tracer** is a standalone trace visualization and debugging tool that:
+
 - Runs locally and generates a web-based visualizer
 - Allows stepping through Claude Code session history
 - Shows user prompts, agent reasoning, tool calls, MCP calls, outputs, tokens, timestamps
@@ -42,13 +43,13 @@ interface Block {
 
 // Initialize index
 const searchIndex = new MiniSearch<Block>({
-  fields: ['content', 'toolName'],           // Fields to index
-  storeFields: ['id', 'type', 'timestamp', 'chunkId'],  // Fields to return
+  fields: ['content', 'toolName'], // Fields to index
+  storeFields: ['id', 'type', 'timestamp', 'chunkId'], // Fields to return
   searchOptions: {
-    boost: { toolName: 2 },  // Tool names weighted higher
-    fuzzy: 0.2,              // Allow ~20% character differences
-    prefix: true             // Match prefixes ("auth" matches "authentication")
-  }
+    boost: { toolName: 2 }, // Tool names weighted higher
+    fuzzy: 0.2, // Allow ~20% character differences
+    prefix: true, // Match prefixes ("auth" matches "authentication")
+  },
 });
 
 // Index blocks
@@ -106,7 +107,7 @@ function indexBlock(block: Block): void {
     block.id,
     block.type,
     block.timestamp,
-    block.chunkId || ''
+    block.chunkId || '',
   );
 }
 
@@ -125,7 +126,7 @@ function search(query: string, limit = 20): SearchResult[] {
   // FTS5 query syntax: "auth*" for prefix, "auth OR login" for OR
   const ftsQuery = query
     .split(/\s+/)
-    .map(term => `"${term}"*`)
+    .map((term) => `"${term}"*`)
     .join(' OR ');
 
   return searchStmt.all(ftsQuery, limit);
@@ -142,7 +143,7 @@ import lunr from 'lunr';
 let searchIndex: lunr.Index;
 
 function buildIndex(blocks: Block[]): void {
-  searchIndex = lunr(function() {
+  searchIndex = lunr(function () {
     this.ref('id');
     this.field('content');
     this.field('toolName');
@@ -151,7 +152,7 @@ function buildIndex(blocks: Block[]): void {
     this.pipeline.add(lunr.stemmer);
     this.searchPipeline.add(lunr.stemmer);
 
-    blocks.forEach(block => {
+    blocks.forEach((block) => {
       this.add(block);
     });
   });
@@ -168,51 +169,52 @@ function search(query: string): SearchResult[] {
 
 ### Quality Analysis
 
-| Query Type | Example | Result Quality | Notes |
-|------------|---------|----------------|-------|
-| Exact match | `"npm test"` | Excellent | Direct string match |
-| Command/tool name | `Read file.ts` | Excellent | Indexed field |
-| Error message | `TypeError: undefined` | Excellent | Exact text |
-| File path | `src/auth/login.ts` | Excellent | Exact text |
-| Partial/prefix | `auth` | Good | Matches "authentication", "authorize" |
-| Typo | `authentcation` | Medium | Fuzzy matching helps but imperfect |
-| Semantic | `"when did it struggle"` | Poor | Won't find "failed repeatedly" |
-| Conceptual | `"working on login"` | Poor | Won't find "implementing auth" |
+| Query Type        | Example                  | Result Quality | Notes                                 |
+| ----------------- | ------------------------ | -------------- | ------------------------------------- |
+| Exact match       | `"npm test"`             | Excellent      | Direct string match                   |
+| Command/tool name | `Read file.ts`           | Excellent      | Indexed field                         |
+| Error message     | `TypeError: undefined`   | Excellent      | Exact text                            |
+| File path         | `src/auth/login.ts`      | Excellent      | Exact text                            |
+| Partial/prefix    | `auth`                   | Good           | Matches "authentication", "authorize" |
+| Typo              | `authentcation`          | Medium         | Fuzzy matching helps but imperfect    |
+| Semantic          | `"when did it struggle"` | Poor           | Won't find "failed repeatedly"        |
+| Conceptual        | `"working on login"`     | Poor           | Won't find "implementing auth"        |
 
 ### Performance & Scaling
 
 #### Indexing Cost
 
-| Session Size | Blocks | MiniSearch | SQLite FTS5 | Lunr |
-|--------------|--------|------------|-------------|------|
-| Small | 100 | <10ms | <50ms | <20ms |
-| Medium | 1,000 | ~50ms | ~200ms | ~100ms |
-| Large | 10,000 | ~500ms | ~1s | ~800ms |
-| Very Large | 100,000 | ~5s | ~10s | ~8s |
+| Session Size | Blocks  | MiniSearch | SQLite FTS5 | Lunr   |
+| ------------ | ------- | ---------- | ----------- | ------ |
+| Small        | 100     | <10ms      | <50ms       | <20ms  |
+| Medium       | 1,000   | ~50ms      | ~200ms      | ~100ms |
+| Large        | 10,000  | ~500ms     | ~1s         | ~800ms |
+| Very Large   | 100,000 | ~5s        | ~10s        | ~8s    |
 
 #### Search Cost
 
-| Session Size | Blocks | MiniSearch | SQLite FTS5 | Lunr |
-|--------------|--------|------------|-------------|------|
-| Small | 100 | <1ms | <1ms | <1ms |
-| Medium | 1,000 | <5ms | <5ms | <5ms |
-| Large | 10,000 | <10ms | <10ms | <10ms |
-| Very Large | 100,000 | <50ms | <20ms | <30ms |
+| Session Size | Blocks  | MiniSearch | SQLite FTS5 | Lunr  |
+| ------------ | ------- | ---------- | ----------- | ----- |
+| Small        | 100     | <1ms       | <1ms        | <1ms  |
+| Medium       | 1,000   | <5ms       | <5ms        | <5ms  |
+| Large        | 10,000  | <10ms      | <10ms       | <10ms |
+| Very Large   | 100,000 | <50ms      | <20ms       | <30ms |
 
 #### Memory Cost
 
-| Session Size | Blocks | Raw Text | MiniSearch Index | SQLite FTS5 | Lunr Index |
-|--------------|--------|----------|------------------|-------------|------------|
-| Small | 100 | ~100KB | ~30KB | ~50KB | ~40KB |
-| Medium | 1,000 | ~1MB | ~300KB | ~400KB | ~350KB |
-| Large | 10,000 | ~10MB | ~3MB | ~4MB | ~3.5MB |
-| Very Large | 100,000 | ~100MB | ~30MB | ~40MB | ~35MB |
+| Session Size | Blocks  | Raw Text | MiniSearch Index | SQLite FTS5 | Lunr Index |
+| ------------ | ------- | -------- | ---------------- | ----------- | ---------- |
+| Small        | 100     | ~100KB   | ~30KB            | ~50KB       | ~40KB      |
+| Medium       | 1,000   | ~1MB     | ~300KB           | ~400KB      | ~350KB     |
+| Large        | 10,000  | ~10MB    | ~3MB             | ~4MB        | ~3.5MB     |
+| Very Large   | 100,000 | ~100MB   | ~30MB            | ~40MB       | ~35MB      |
 
 Index size is typically 20-40% of raw text size.
 
 ### Recommendation
 
 **Use MiniSearch** for the web UI:
+
 - Small bundle size (~50KB)
 - Incremental updates supported
 - Good fuzzy matching
@@ -245,6 +247,7 @@ Output: [0.023, -0.156, 0.089, ..., 0.042]  (384 dimensions)
 ```
 
 Similar concepts produce similar vectors:
+
 - "implementing auth" ≈ "adding login functionality" (high cosine similarity)
 - "implementing auth" ≠ "npm test" (low cosine similarity)
 
@@ -256,7 +259,7 @@ Similar concepts produce similar vectors:
 import { pipeline, env } from '@xenova/transformers';
 
 // Configure for local-only operation
-env.allowRemoteModels = true;  // Download once, then cached
+env.allowRemoteModels = true; // Download once, then cached
 env.localModelPath = './models';
 
 let embedder: any = null;
@@ -265,8 +268,8 @@ let embedder: any = null;
 async function initEmbedder(): Promise<void> {
   embedder = await pipeline(
     'feature-extraction',
-    'Xenova/all-MiniLM-L6-v2',  // 80MB model, 384 dimensions
-    { quantized: true }         // Use quantized version (~22MB)
+    'Xenova/all-MiniLM-L6-v2', // 80MB model, 384 dimensions
+    { quantized: true }, // Use quantized version (~22MB)
   );
 }
 
@@ -274,7 +277,7 @@ async function initEmbedder(): Promise<void> {
 async function embed(text: string): Promise<number[]> {
   const output = await embedder(text, {
     pooling: 'mean',
-    normalize: true
+    normalize: true,
   });
   return Array.from(output.data);
 }
@@ -283,15 +286,13 @@ async function embed(text: string): Promise<number[]> {
 async function embedBatch(texts: string[]): Promise<number[][]> {
   const outputs = await embedder(texts, {
     pooling: 'mean',
-    normalize: true
+    normalize: true,
   });
 
   const embeddings: number[][] = [];
   const dims = 384;
   for (let i = 0; i < texts.length; i++) {
-    embeddings.push(
-      Array.from(outputs.data.slice(i * dims, (i + 1) * dims))
-    );
+    embeddings.push(Array.from(outputs.data.slice(i * dims, (i + 1) * dims)));
   }
   return embeddings;
 }
@@ -301,13 +302,13 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
 
 **Models available**:
 
-| Model | Dimensions | Size (Quantized) | Quality | Speed |
-|-------|------------|------------------|---------|-------|
-| `all-MiniLM-L6-v2` | 384 | ~22MB | Good | Fast |
-| `all-MiniLM-L12-v2` | 384 | ~40MB | Better | Medium |
-| `bge-small-en-v1.5` | 384 | ~40MB | Better | Medium |
-| `bge-base-en-v1.5` | 768 | ~130MB | Great | Slower |
-| `nomic-embed-text-v1` | 768 | ~130MB | Great | Slower |
+| Model                 | Dimensions | Size (Quantized) | Quality | Speed  |
+| --------------------- | ---------- | ---------------- | ------- | ------ |
+| `all-MiniLM-L6-v2`    | 384        | ~22MB            | Good    | Fast   |
+| `all-MiniLM-L12-v2`   | 384        | ~40MB            | Better  | Medium |
+| `bge-small-en-v1.5`   | 384        | ~40MB            | Better  | Medium |
+| `bge-base-en-v1.5`    | 768        | ~130MB           | Great   | Slower |
+| `nomic-embed-text-v1` | 768        | ~130MB           | Great   | Slower |
 
 #### Option B: ONNX Runtime (More Control)
 
@@ -327,15 +328,19 @@ async function embed(text: string): Promise<number[]> {
   const encoded = await tokenizer(text, {
     padding: true,
     truncation: true,
-    max_length: 512
+    max_length: 512,
   });
 
   const inputIds = new ort.Tensor('int64', encoded.input_ids.data, encoded.input_ids.dims);
-  const attentionMask = new ort.Tensor('int64', encoded.attention_mask.data, encoded.attention_mask.dims);
+  const attentionMask = new ort.Tensor(
+    'int64',
+    encoded.attention_mask.data,
+    encoded.attention_mask.dims,
+  );
 
   const outputs = await session.run({
     input_ids: inputIds,
-    attention_mask: attentionMask
+    attention_mask: attentionMask,
   });
 
   // Mean pooling
@@ -355,8 +360,8 @@ import ollama from 'ollama';
 
 async function embed(text: string): Promise<number[]> {
   const response = await ollama.embeddings({
-    model: 'nomic-embed-text',  // or 'mxbai-embed-large'
-    prompt: text
+    model: 'nomic-embed-text', // or 'mxbai-embed-large'
+    prompt: text,
   });
   return response.embedding;
 }
@@ -379,18 +384,18 @@ function cosineSimilarity(a: number[], b: number[]): number {
   for (let i = 0; i < a.length; i++) {
     dot += a[i] * b[i];
   }
-  return dot;  // Vectors are normalized, so dot product = cosine similarity
+  return dot; // Vectors are normalized, so dot product = cosine similarity
 }
 
 function vectorSearch(
   queryEmbedding: number[],
   index: BlockEmbedding[],
-  k: number
+  k: number,
 ): SearchResult[] {
   return index
-    .map(item => ({
+    .map((item) => ({
       id: item.id,
-      score: cosineSimilarity(queryEmbedding, item.embedding)
+      score: cosineSimilarity(queryEmbedding, item.embedding),
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, k);
@@ -407,7 +412,7 @@ const maxElements = 100000;
 
 // Initialize index
 const index = new HierarchicalNSW('cosine', dims);
-index.initIndex(maxElements, 16, 200, 100);  // M, efConstruction, randomSeed
+index.initIndex(maxElements, 16, 200, 100); // M, efConstruction, randomSeed
 
 // Add embeddings
 function addToIndex(id: number, embedding: number[]): void {
@@ -419,7 +424,7 @@ function search(queryEmbedding: number[], k: number): { id: number; distance: nu
   const result = index.searchKnn(queryEmbedding, k);
   return result.neighbors.map((id, i) => ({
     id,
-    distance: result.distances[i]
+    distance: result.distances[i],
   }));
 }
 
@@ -438,14 +443,14 @@ import { LocalIndex } from 'vectra';
 const index = new LocalIndex('./vector-index');
 
 // Create index if needed
-if (!await index.isIndexCreated()) {
+if (!(await index.isIndexCreated())) {
   await index.createIndex();
 }
 
 // Add item
 await index.insertItem({
   vector: embedding,
-  metadata: { blockId, type, timestamp }
+  metadata: { blockId, type, timestamp },
 });
 
 // Search
@@ -456,15 +461,15 @@ const results = await index.queryItems(queryEmbedding, 10);
 
 ### Quality Analysis
 
-| Query Type | Example | Result Quality | Notes |
-|------------|---------|----------------|-------|
-| Exact match | `"npm test"` | Medium | May miss, finds related |
-| Semantic | `"when did it struggle"` | Good | Finds "failed", "errors", "problems" |
-| Conceptual | `"working on authentication"` | Good | Finds "implementing login", "JWT", "auth" |
-| Behavioral | `"debugging issues"` | Good | Finds "troubleshooting", "fixing" |
-| Typo | `"authentcation"` | Good | Embedding captures meaning |
-| Negation | `"NOT authentication"` | Poor | Embeddings don't handle negation |
-| Specific code | `"line 42"` | Poor | Too specific, better with keyword |
+| Query Type    | Example                       | Result Quality | Notes                                     |
+| ------------- | ----------------------------- | -------------- | ----------------------------------------- |
+| Exact match   | `"npm test"`                  | Medium         | May miss, finds related                   |
+| Semantic      | `"when did it struggle"`      | Good           | Finds "failed", "errors", "problems"      |
+| Conceptual    | `"working on authentication"` | Good           | Finds "implementing login", "JWT", "auth" |
+| Behavioral    | `"debugging issues"`          | Good           | Finds "troubleshooting", "fixing"         |
+| Typo          | `"authentcation"`             | Good           | Embedding captures meaning                |
+| Negation      | `"NOT authentication"`        | Poor           | Embeddings don't handle negation          |
+| Specific code | `"line 42"`                   | Poor           | Too specific, better with keyword         |
 
 ### Performance & Scaling
 
@@ -472,46 +477,48 @@ const results = await index.queryItems(queryEmbedding, 10);
 
 Using Transformers.js with `all-MiniLM-L6-v2` on M1 Mac:
 
-| Session Size | Blocks | Time (Sequential) | Time (Batched) | Notes |
-|--------------|--------|-------------------|----------------|-------|
-| Small | 100 | ~5s | ~2s | Model load dominates |
-| Medium | 1,000 | ~30s | ~15s | ~15-30ms per block |
-| Large | 10,000 | ~5min | ~2.5min | Background indexing essential |
-| Very Large | 100,000 | ~50min | ~25min | Consider incremental |
+| Session Size | Blocks  | Time (Sequential) | Time (Batched) | Notes                         |
+| ------------ | ------- | ----------------- | -------------- | ----------------------------- |
+| Small        | 100     | ~5s               | ~2s            | Model load dominates          |
+| Medium       | 1,000   | ~30s              | ~15s           | ~15-30ms per block            |
+| Large        | 10,000  | ~5min             | ~2.5min        | Background indexing essential |
+| Very Large   | 100,000 | ~50min            | ~25min         | Consider incremental          |
 
 **First run**: Add 1-5 seconds for model loading (cached afterward).
 
 #### Search Cost
 
-| Session Size | Blocks | Linear Search | HNSW Search |
-|--------------|--------|---------------|-------------|
-| Small | 100 | <1ms | <1ms |
-| Medium | 1,000 | ~5ms | <1ms |
-| Large | 10,000 | ~50ms | <5ms |
-| Very Large | 100,000 | ~500ms | <10ms |
+| Session Size | Blocks  | Linear Search | HNSW Search |
+| ------------ | ------- | ------------- | ----------- |
+| Small        | 100     | <1ms          | <1ms        |
+| Medium       | 1,000   | ~5ms          | <1ms        |
+| Large        | 10,000  | ~50ms         | <5ms        |
+| Very Large   | 100,000 | ~500ms        | <10ms       |
 
 HNSW provides O(log n) search vs O(n) for linear.
 
 #### Memory Cost
 
-| Session Size | Blocks | Embeddings (384d) | HNSW Index | Total |
-|--------------|--------|-------------------|------------|-------|
-| Small | 100 | ~150KB | ~200KB | ~350KB |
-| Medium | 1,000 | ~1.5MB | ~2MB | ~3.5MB |
-| Large | 10,000 | ~15MB | ~20MB | ~35MB |
-| Very Large | 100,000 | ~150MB | ~200MB | ~350MB |
+| Session Size | Blocks  | Embeddings (384d) | HNSW Index | Total  |
+| ------------ | ------- | ----------------- | ---------- | ------ |
+| Small        | 100     | ~150KB            | ~200KB     | ~350KB |
+| Medium       | 1,000   | ~1.5MB            | ~2MB       | ~3.5MB |
+| Large        | 10,000  | ~15MB             | ~20MB      | ~35MB  |
+| Very Large   | 100,000 | ~150MB            | ~200MB     | ~350MB |
 
 Plus ~100-500MB for the embedding model in memory.
 
 ### Recommendation
 
 **Use Transformers.js with `all-MiniLM-L6-v2`**:
+
 - Fully local, no API calls
 - Good balance of quality and speed
 - 22MB quantized model
 - Works in browser (WebAssembly) and Node.js
 
 **For storage**:
+
 - Small-medium sessions (<10K blocks): Linear search is fine
 - Large sessions: Use HNSW via `hnswlib-node` or Vectra
 
@@ -533,7 +540,7 @@ import ollama from 'ollama';
 interface BlockSummary {
   id: string;
   index: number;
-  summary: string;  // Pre-computed or truncated content
+  summary: string; // Pre-computed or truncated content
   type: 'user' | 'agent' | 'tool';
   toolName?: string;
 }
@@ -541,7 +548,7 @@ interface BlockSummary {
 async function llmSearch(
   query: string,
   blocks: BlockSummary[],
-  model = 'llama3.2'  // or 'mistral', 'phi3'
+  model = 'llama3.2', // or 'mistral', 'phi3'
 ): Promise<string[]> {
   // Format blocks for context
   const blockContext = blocks
@@ -566,8 +573,8 @@ Response format: {"indices": [3, 7, 12]}`;
     format: 'json',
     options: {
       temperature: 0,
-      num_predict: 100
-    }
+      num_predict: 100,
+    },
   });
 
   const result = JSON.parse(response.message.content);
@@ -581,23 +588,21 @@ Response format: {"indices": [3, 7, 12]}`;
 async function hybridLlmSearch(
   query: string,
   allBlocks: Block[],
-  embeddings: BlockEmbedding[]
+  embeddings: BlockEmbedding[],
 ): Promise<string[]> {
   // Stage 1: Vector search for candidates (fast)
   const queryEmbedding = await embed(query);
   const candidates = vectorSearch(queryEmbedding, embeddings, 50);
 
   // Stage 2: LLM re-ranking (slow but precise)
-  const candidateBlocks = candidates.map(c =>
-    allBlocks.find(b => b.id === c.id)!
-  );
+  const candidateBlocks = candidates.map((c) => allBlocks.find((b) => b.id === c.id)!);
 
   const summaries: BlockSummary[] = candidateBlocks.map((b, i) => ({
     id: b.id,
     index: i,
-    summary: b.content.slice(0, 200),  // Truncate for context
+    summary: b.content.slice(0, 200), // Truncate for context
     type: b.type,
-    toolName: b.toolName
+    toolName: b.toolName,
   }));
 
   return await llmSearch(query, summaries);
@@ -616,7 +621,7 @@ ${block.content.slice(0, 500)}`;
   const response = await ollama.generate({
     model: 'llama3.2',
     prompt,
-    options: { num_predict: 50 }
+    options: { num_predict: 50 },
   });
 
   return response.response;
@@ -631,7 +636,7 @@ async function indexWithSummaries(blocks: Block[]): Promise<BlockSummary[]> {
       index: summaries.length,
       summary: await generateBlockSummary(block),
       type: block.type,
-      toolName: block.toolName
+      toolName: block.toolName,
     });
   }
   return summaries;
@@ -640,60 +645,61 @@ async function indexWithSummaries(blocks: Block[]): Promise<BlockSummary[]> {
 
 ### Quality Analysis
 
-| Query Type | Example | Result Quality | Notes |
-|------------|---------|----------------|-------|
-| Exact match | `"npm test"` | Good | LLM can identify |
-| Semantic | `"when did it struggle"` | Excellent | Full reasoning |
-| Complex | `"authentication work after the refactor"` | Excellent | Temporal reasoning |
-| Behavioral | `"where did it make mistakes"` | Excellent | Understands intent |
-| Comparative | `"compare the two approaches it tried"` | Excellent | Can reason about relationships |
-| Negation | `"everything except tests"` | Good | Can handle negation |
+| Query Type  | Example                                    | Result Quality | Notes                          |
+| ----------- | ------------------------------------------ | -------------- | ------------------------------ |
+| Exact match | `"npm test"`                               | Good           | LLM can identify               |
+| Semantic    | `"when did it struggle"`                   | Excellent      | Full reasoning                 |
+| Complex     | `"authentication work after the refactor"` | Excellent      | Temporal reasoning             |
+| Behavioral  | `"where did it make mistakes"`             | Excellent      | Understands intent             |
+| Comparative | `"compare the two approaches it tried"`    | Excellent      | Can reason about relationships |
+| Negation    | `"everything except tests"`                | Good           | Can handle negation            |
 
 ### Performance & Scaling
 
 #### Search Latency by Model
 
-| Model | Size | Local Latency | Quality |
-|-------|------|---------------|---------|
-| `phi3:mini` | 2.3GB | 1-3s | Good |
-| `llama3.2:3b` | 2GB | 2-5s | Good |
-| `mistral:7b` | 4GB | 3-8s | Better |
-| `llama3.1:8b` | 4.7GB | 5-15s | Better |
-| `llama3.1:70b` | 40GB | 30-60s | Excellent |
+| Model          | Size  | Local Latency | Quality   |
+| -------------- | ----- | ------------- | --------- |
+| `phi3:mini`    | 2.3GB | 1-3s          | Good      |
+| `llama3.2:3b`  | 2GB   | 2-5s          | Good      |
+| `mistral:7b`   | 4GB   | 3-8s          | Better    |
+| `llama3.1:8b`  | 4.7GB | 5-15s         | Better    |
+| `llama3.1:70b` | 40GB  | 30-60s        | Excellent |
 
 #### Context Limits
 
-| Model | Context Window | Max Blocks (with summaries) |
-|-------|----------------|---------------------------|
-| `phi3:mini` | 4K tokens | ~50-100 |
-| `llama3.2:3b` | 8K tokens | ~100-200 |
-| `mistral:7b` | 32K tokens | ~500-1000 |
-| `llama3.1:8b` | 128K tokens | ~2000-5000 |
+| Model         | Context Window | Max Blocks (with summaries) |
+| ------------- | -------------- | --------------------------- |
+| `phi3:mini`   | 4K tokens      | ~50-100                     |
+| `llama3.2:3b` | 8K tokens      | ~100-200                    |
+| `mistral:7b`  | 32K tokens     | ~500-1000                   |
+| `llama3.1:8b` | 128K tokens    | ~2000-5000                  |
 
 For sessions larger than context window, use vector pre-filtering or hierarchical chunking.
 
 #### Summary Generation Cost
 
 | Session Size | Blocks | Time (3B model) | Time (7B model) |
-|--------------|--------|-----------------|-----------------|
-| Small | 100 | ~2min | ~5min |
-| Medium | 1,000 | ~20min | ~50min |
-| Large | 10,000 | ~3hr | ~8hr |
+| ------------ | ------ | --------------- | --------------- |
+| Small        | 100    | ~2min           | ~5min           |
+| Medium       | 1,000  | ~20min          | ~50min          |
+| Large        | 10,000 | ~3hr            | ~8hr            |
 
 Summary generation is a one-time cost, do it in background.
 
 #### Memory Requirements
 
-| Model | VRAM/RAM Required |
-|-------|-------------------|
-| `phi3:mini` | 2-3GB |
-| `llama3.2:3b` | 2-4GB |
-| `mistral:7b` | 4-8GB |
-| `llama3.1:8b` | 6-10GB |
+| Model         | VRAM/RAM Required |
+| ------------- | ----------------- |
+| `phi3:mini`   | 2-3GB             |
+| `llama3.2:3b` | 2-4GB             |
+| `mistral:7b`  | 4-8GB             |
+| `llama3.1:8b` | 6-10GB            |
 
 ### Recommendation
 
 **Use as optional enhancement, not primary search**:
+
 - Latency (2-15s) is too slow for interactive search
 - Excellent for "deep search" or "ask about this session" features
 - Pre-compute summaries during initial indexing
@@ -752,11 +758,14 @@ Summary generation is a one-time cost, do it in background.
 ```typescript
 interface SearchOptions {
   mode: 'fast' | 'smart' | 'deep';
-  chunkFilter?: string;  // Filter to specific chunk/todo
+  chunkFilter?: string; // Filter to specific chunk/todo
   limit?: number;
 }
 
-async function search(query: string, options: SearchOptions = { mode: 'smart' }): Promise<SearchResult[]> {
+async function search(
+  query: string,
+  options: SearchOptions = { mode: 'smart' },
+): Promise<SearchResult[]> {
   const limit = options.limit ?? 20;
 
   if (options.mode === 'fast') {
@@ -767,18 +776,18 @@ async function search(query: string, options: SearchOptions = { mode: 'smart' })
   // Parallel keyword + vector search
   const [keywordResults, vectorResults] = await Promise.all([
     keywordSearch(query, limit * 2),
-    vectorSearch(await embed(query), limit * 2)
+    vectorSearch(await embed(query), limit * 2),
   ]);
 
   // Merge with weighted scoring
   let merged = mergeResults(keywordResults, vectorResults, {
     keywordWeight: 0.3,
-    vectorWeight: 0.7
+    vectorWeight: 0.7,
   });
 
   // Apply chunk filter if specified
   if (options.chunkFilter) {
-    merged = merged.filter(r => r.chunkId === options.chunkFilter);
+    merged = merged.filter((r) => r.chunkId === options.chunkFilter);
   }
 
   if (options.mode === 'deep' && merged.length > 0) {
@@ -793,20 +802,20 @@ async function search(query: string, options: SearchOptions = { mode: 'smart' })
 function mergeResults(
   keyword: SearchResult[],
   vector: SearchResult[],
-  weights: { keywordWeight: number; vectorWeight: number }
+  weights: { keywordWeight: number; vectorWeight: number },
 ): SearchResult[] {
   const merged = new Map<string, SearchResult>();
 
   // Normalize scores to 0-1 range
-  const maxKeyword = Math.max(...keyword.map(r => r.score), 1);
-  const maxVector = Math.max(...vector.map(r => r.score), 1);
+  const maxKeyword = Math.max(...keyword.map((r) => r.score), 1);
+  const maxVector = Math.max(...vector.map((r) => r.score), 1);
 
   for (const r of keyword) {
     merged.set(r.id, {
       ...r,
       keywordScore: r.score / maxKeyword,
       vectorScore: 0,
-      combinedScore: (r.score / maxKeyword) * weights.keywordWeight
+      combinedScore: (r.score / maxKeyword) * weights.keywordWeight,
     });
   }
 
@@ -820,13 +829,12 @@ function mergeResults(
         ...r,
         keywordScore: 0,
         vectorScore: r.score / maxVector,
-        combinedScore: (r.score / maxVector) * weights.vectorWeight
+        combinedScore: (r.score / maxVector) * weights.vectorWeight,
       });
     }
   }
 
-  return Array.from(merged.values())
-    .sort((a, b) => b.combinedScore - a.combinedScore);
+  return Array.from(merged.values()).sort((a, b) => b.combinedScore - a.combinedScore);
 }
 ```
 
@@ -836,30 +844,30 @@ function mergeResults(
 
 ### Indexing Cost by Session Size
 
-| Size | Blocks | Keyword | Vector | LLM Summaries | Total (K+V) |
-|------|--------|---------|--------|---------------|-------------|
-| Small | 100 | <10ms | ~5s | ~2min | ~5s |
-| Medium | 1,000 | ~50ms | ~30s | ~20min | ~30s |
-| Large | 10,000 | ~500ms | ~5min | ~3hr | ~5min |
-| V.Large | 100,000 | ~5s | ~50min | ~30hr | ~50min |
+| Size    | Blocks  | Keyword | Vector | LLM Summaries | Total (K+V) |
+| ------- | ------- | ------- | ------ | ------------- | ----------- |
+| Small   | 100     | <10ms   | ~5s    | ~2min         | ~5s         |
+| Medium  | 1,000   | ~50ms   | ~30s   | ~20min        | ~30s        |
+| Large   | 10,000  | ~500ms  | ~5min  | ~3hr          | ~5min       |
+| V.Large | 100,000 | ~5s     | ~50min | ~30hr         | ~50min      |
 
 ### Search Cost by Session Size
 
-| Size | Blocks | Keyword | Hybrid (K+V) | Deep (K+V+LLM) |
-|------|--------|---------|--------------|----------------|
-| Small | 100 | <1ms | ~20ms | ~3s |
-| Medium | 1,000 | <5ms | ~30ms | ~5s |
-| Large | 10,000 | <10ms | ~60ms | ~10s |
-| V.Large | 100,000 | <50ms | ~150ms | ~15s |
+| Size    | Blocks  | Keyword | Hybrid (K+V) | Deep (K+V+LLM) |
+| ------- | ------- | ------- | ------------ | -------------- |
+| Small   | 100     | <1ms    | ~20ms        | ~3s            |
+| Medium  | 1,000   | <5ms    | ~30ms        | ~5s            |
+| Large   | 10,000  | <10ms   | ~60ms        | ~10s           |
+| V.Large | 100,000 | <50ms   | ~150ms       | ~15s           |
 
 ### Memory Cost by Session Size
 
-| Size | Blocks | Text | Keyword Index | Embeddings | LLM Model | Total (K+V) |
-|------|--------|------|---------------|------------|-----------|-------------|
-| Small | 100 | ~100KB | ~30KB | ~350KB | 100-500MB | ~500MB |
-| Medium | 1,000 | ~1MB | ~300KB | ~3.5MB | 100-500MB | ~505MB |
-| Large | 10,000 | ~10MB | ~3MB | ~35MB | 100-500MB | ~550MB |
-| V.Large | 100,000 | ~100MB | ~30MB | ~350MB | 100-500MB | ~1GB |
+| Size    | Blocks  | Text   | Keyword Index | Embeddings | LLM Model | Total (K+V) |
+| ------- | ------- | ------ | ------------- | ---------- | --------- | ----------- |
+| Small   | 100     | ~100KB | ~30KB         | ~350KB     | 100-500MB | ~500MB      |
+| Medium  | 1,000   | ~1MB   | ~300KB        | ~3.5MB     | 100-500MB | ~505MB      |
+| Large   | 10,000  | ~10MB  | ~3MB          | ~35MB      | 100-500MB | ~550MB      |
+| V.Large | 100,000 | ~100MB | ~30MB         | ~350MB     | 100-500MB | ~1GB        |
 
 Note: Embedding model is shared across all sessions.
 
@@ -868,17 +876,20 @@ Note: Embedding model is shared across all sessions.
 ## Phased Implementation Recommendation
 
 ### Phase 1: Keyword Search (1-2 days)
+
 - MiniSearch for full-text indexing
 - Fuzzy matching and prefix search
 - Instant results (<50ms)
 
 ### Phase 2: Vector Search (3-5 days)
+
 - Transformers.js with MiniLM model
 - Background indexing with progress indicator
 - Hybrid search combining keyword + vector
 - Persist embeddings to avoid recomputation
 
 ### Phase 3: LLM Enhancement (5-7 days, optional)
+
 - Ollama integration for "Deep Search"
 - Pre-computed block summaries
 - "Ask about this session" feature

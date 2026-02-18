@@ -28,13 +28,13 @@ export function useSearch(blocks: AnyBlock[]) {
 
   const next = useCallback(() => {
     if (results.length > 0) {
-      setCurrentIndex(prev => (prev + 1) % results.length);
+      setCurrentIndex((prev) => (prev + 1) % results.length);
     }
   }, [results.length]);
 
   const prev = useCallback(() => {
     if (results.length > 0) {
-      setCurrentIndex(prev => (prev - 1 + results.length) % results.length);
+      setCurrentIndex((prev) => (prev - 1 + results.length) % results.length);
     }
   }, [results.length]);
 

@@ -11,17 +11,17 @@ export function ToolBlock({ block }: Props) {
   const theme = useTheme();
 
   const inputPreview =
-    typeof block.input === 'string'
-      ? block.input
-      : JSON.stringify(block.input, null, 2);
+    typeof block.input === 'string' ? block.input : JSON.stringify(block.input, null, 2);
 
   const outputPreview =
-    typeof block.output === 'string'
-      ? block.output
-      : JSON.stringify(block.output, null, 2);
+    typeof block.output === 'string' ? block.output : JSON.stringify(block.output, null, 2);
 
   return (
-    <div id={`block-${block.id}`} className="flex justify-start ml-8 mb-2 pl-3 border-l-2" style={{ borderColor: theme.colors.accent + '60' }}>
+    <div
+      id={`block-${block.id}`}
+      className="flex justify-start ml-8 mb-2 pl-3 border-l-2"
+      style={{ borderColor: theme.colors.accent + '60' }}
+    >
       <div
         className="max-w-xl p-3 rounded cursor-pointer transition-all hover:shadow-md font-mono text-xs"
         style={{
@@ -36,8 +36,7 @@ export function ToolBlock({ block }: Props) {
           <span
             className="px-2 py-0.5 rounded text-xs"
             style={{
-              backgroundColor:
-                block.status === 'success' ? '#166534' : '#991b1b',
+              backgroundColor: block.status === 'success' ? '#166534' : '#991b1b',
             }}
           >
             {block.toolName}

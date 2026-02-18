@@ -25,16 +25,16 @@ claude-tracer is a standalone trace visualization and debugging tool for Claude 
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|------------|
-| Language | TypeScript |
-| UI Framework | React + Vite |
-| Styling | Tailwind CSS |
-| Server | Node.js + Express |
-| Live Updates | WebSocket (ws) |
-| File Watching | chokidar |
-| Search | MiniSearch |
-| Virtual Scrolling | react-window |
+| Layer             | Technology        |
+| ----------------- | ----------------- |
+| Language          | TypeScript        |
+| UI Framework      | React + Vite      |
+| Styling           | Tailwind CSS      |
+| Server            | Node.js + Express |
+| Live Updates      | WebSocket (ws)    |
+| File Watching     | chokidar          |
+| Search            | MiniSearch        |
+| Virtual Scrolling | react-window      |
 
 ## Architecture
 
@@ -61,6 +61,7 @@ claude-tracer is a standalone trace visualization and debugging tool for Claude 
 ```
 
 **Single Node process** handles:
+
 - Serving static React UI
 - File watching (chokidar)
 - WebSocket for pushing live updates
@@ -127,6 +128,7 @@ interface Chunk {
 ```
 
 **Hierarchy:**
+
 - **Theme** (highest) — High-level goal/conversation topic
 - **Task** — TODO item Claude is working on
 - **Turn** (lowest) — Individual user↔agent exchange
@@ -191,14 +193,14 @@ interface ParsedSession {
 
 ### Key UI Elements
 
-| Element | Alignment | Behavior |
-|---------|-----------|----------|
-| User blocks | Right-aligned | Collapsible, shows summary when collapsed |
-| Agent blocks | Left-aligned | Collapsible, includes thinking section |
-| Tool blocks | Furthest left | Collapsible, shows tool name + input/output |
-| Arrows | SVG layer | Connect user→agent→tools→user flow |
-| Index sidebar | Right side | Click to scroll, reflects zoom level |
-| Zoom controls | Top-right of main | (+)/(-) adjust detail level |
+| Element       | Alignment         | Behavior                                    |
+| ------------- | ----------------- | ------------------------------------------- |
+| User blocks   | Right-aligned     | Collapsible, shows summary when collapsed   |
+| Agent blocks  | Left-aligned      | Collapsible, includes thinking section      |
+| Tool blocks   | Furthest left     | Collapsible, shows tool name + input/output |
+| Arrows        | SVG layer         | Connect user→agent→tools→user flow          |
+| Index sidebar | Right side        | Click to scroll, reflects zoom level        |
+| Zoom controls | Top-right of main | (+)/(-) adjust detail level                 |
 
 ### Search Behavior
 
@@ -209,35 +211,35 @@ interface ParsedSession {
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-| Feature | Behavior |
-|---------|----------|
-| Search input | Debounced 300ms, searches as you type |
-| Result count | Shows "N of M" (current / total matches) |
-| Next/Prev | `[◀]` `[▶]` buttons or `↑`/`↓` keys to navigate |
-| Filters | Toggle block types to include |
-| Highlighting | Current match prominent, other matches subtle |
-| Clear | Escape or X clears filter |
+| Feature      | Behavior                                        |
+| ------------ | ----------------------------------------------- |
+| Search input | Debounced 300ms, searches as you type           |
+| Result count | Shows "N of M" (current / total matches)        |
+| Next/Prev    | `[◀]` `[▶]` buttons or `↑`/`↓` keys to navigate |
+| Filters      | Toggle block types to include                   |
+| Highlighting | Current match prominent, other matches subtle   |
+| Clear        | Escape or X clears filter                       |
 
 ## Theme & Typography
 
 ### Color Palette (Claude Theme)
 
-| Element | Background | Text |
-|---------|------------|------|
-| Page background | Orange/peach (Claude brand) | — |
-| Agent blocks | Grey (`#374151` / `gray-700`) | Light grey/white (`#f3f4f6`) |
-| User blocks | Light grey/white (`#f9fafb`) | Black (`#111827`) |
-| Tool/code blocks | Black (`#0f0f0f`) | White terminal (`#e5e5e5`) |
-| Header/footer | Semi-transparent dark | White |
-| Index sidebar | Orange/peach (same as page) | Light grey/white (`#f3f4f6`) |
-| Arrows/connections | Grey (`#6b7280`) | — |
+| Element            | Background                    | Text                         |
+| ------------------ | ----------------------------- | ---------------------------- |
+| Page background    | Orange/peach (Claude brand)   | —                            |
+| Agent blocks       | Grey (`#374151` / `gray-700`) | Light grey/white (`#f3f4f6`) |
+| User blocks        | Light grey/white (`#f9fafb`)  | Black (`#111827`)            |
+| Tool/code blocks   | Black (`#0f0f0f`)             | White terminal (`#e5e5e5`)   |
+| Header/footer      | Semi-transparent dark         | White                        |
+| Index sidebar      | Orange/peach (same as page)   | Light grey/white (`#f3f4f6`) |
+| Arrows/connections | Grey (`#6b7280`)              | —                            |
 
 ### Claude Brand Colors Reference
 
 ```css
---claude-orange: #f97316;      /* Primary orange */
---claude-peach: #ffedd5;       /* Light peach background */
---claude-cream: #fff7ed;       /* Lighter variant */
+--claude-orange: #f97316; /* Primary orange */
+--claude-peach: #ffedd5; /* Light peach background */
+--claude-cream: #fff7ed; /* Lighter variant */
 ```
 
 ### Typography
@@ -248,12 +250,12 @@ interface ParsedSession {
 --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
 ```
 
-| Element | Size | Weight |
-|---------|------|--------|
-| Headers | 1.25rem | 600 |
-| Body/content | 0.875rem | 400 |
-| Code/tool output | 0.8125rem | 400 |
-| Labels/meta | 0.75rem | 500 |
+| Element          | Size      | Weight |
+| ---------------- | --------- | ------ |
+| Headers          | 1.25rem   | 600    |
+| Body/content     | 0.875rem  | 400    |
+| Code/tool output | 0.8125rem | 400    |
+| Labels/meta      | 0.75rem   | 500    |
 
 ### Theme System
 
@@ -278,14 +280,14 @@ export interface Theme {
 export const claudeTheme: Theme = {
   name: 'claude',
   colors: {
-    background: '#ffedd5',  // peach
-    agentBg: '#374151',     // grey-700
-    agentText: '#f3f4f6',   // grey-100
-    userBg: '#f9fafb',      // grey-50
-    userText: '#111827',    // grey-900
-    toolBg: '#0f0f0f',      // near-black
-    toolText: '#e5e5e5',    // terminal white
-    accent: '#f97316',      // orange
+    background: '#ffedd5', // peach
+    agentBg: '#374151', // grey-700
+    agentText: '#f3f4f6', // grey-100
+    userBg: '#f9fafb', // grey-50
+    userText: '#111827', // grey-900
+    toolBg: '#0f0f0f', // near-black
+    toolText: '#e5e5e5', // terminal white
+    accent: '#f97316', // orange
   },
 };
 ```
@@ -312,6 +314,7 @@ Examples:
 ```
 
 **Behavior:**
+
 - No file argument → scan `~/.claude/projects/` → show picker UI
 - With file argument → watch file, serve UI, open browser
 
@@ -393,28 +396,31 @@ claude-tracer/
 
 See `docs/team-setup.md` for full team configuration.
 
-| Teammate | Owns | Responsibility |
-|----------|------|----------------|
-| Parser | `src/parser/` | JSONL parsing, pluggable adapters |
-| Core | `src/core/` | Chunking, search, stats |
-| Server | `src/server/` | Express, WebSocket, file watching |
-| UI | `src/ui/` | React components, visualization |
+| Teammate | Owns          | Responsibility                    |
+| -------- | ------------- | --------------------------------- |
+| Parser   | `src/parser/` | JSONL parsing, pluggable adapters |
+| Core     | `src/core/`   | Chunking, search, stats           |
+| Server   | `src/server/` | Express, WebSocket, file watching |
+| UI       | `src/ui/`     | React components, visualization   |
 
 **Coordination:** `src/types/` is the shared contract. Interface changes coordinated through Team Lead.
 
 ## Future Phases
 
 ### Phase 2: Semantic Search
+
 - Vector embeddings via Transformers.js (MiniLM)
 - Hybrid keyword + vector search
 - See `research/search-approaches.md`
 
 ### Phase 3: LLM Enhancement
+
 - Ollama integration for "Deep Search"
 - "Ask about this session" feature
 - Pre-computed block summaries
 
 ### Future Features
+
 - Sub-agent/swarm visualization
 - Standalone binary distribution
 - Additional format adapters (Codex, Jules)

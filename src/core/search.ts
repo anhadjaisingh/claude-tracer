@@ -1,10 +1,5 @@
 import MiniSearch from 'minisearch';
-import type {
-  AnyBlock,
-  SearchEngine,
-  SearchOptions,
-  SearchResult,
-} from '@/types';
+import type { AnyBlock, SearchEngine, SearchOptions, SearchResult } from '@/types';
 import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock } from '@/types';
 
 interface IndexedBlock {
@@ -34,9 +29,9 @@ export class BlockSearch implements SearchEngine {
   }
 
   index(blocks: AnyBlock[]): void {
-    const documents = blocks.map(block => this.blockToDocument(block));
+    const documents = blocks.map((block) => this.blockToDocument(block));
     this.miniSearch.addAll(documents);
-    blocks.forEach(b => this.blockTypes.set(b.id, b.type));
+    blocks.forEach((b) => this.blockTypes.set(b.id, b.type));
   }
 
   addBlock(block: AnyBlock): void {
@@ -52,13 +47,13 @@ export class BlockSearch implements SearchEngine {
 
     // Filter by type if specified
     if (types && types.length > 0) {
-      results = results.filter(r => {
+      results = results.filter((r) => {
         const blockType = this.blockTypes.get(r.id as string);
         return blockType && (types as readonly string[]).includes(blockType);
       });
     }
 
-    return results.slice(0, limit).map(r => ({
+    return results.slice(0, limit).map((r) => ({
       blockId: r.id as string,
       score: r.score,
       matches: Object.entries(r.match).map(([field, terms]: [string, unknown]) => ({
@@ -101,9 +96,7 @@ export class BlockSearch implements SearchEngine {
     if (isToolBlock(block) || isMcpBlock(block)) {
       return [
         JSON.stringify(block.input),
-        typeof block.output === 'string'
-          ? block.output
-          : JSON.stringify(block.output),
+        typeof block.output === 'string' ? block.output : JSON.stringify(block.output),
       ].join(' ');
     }
     return '';

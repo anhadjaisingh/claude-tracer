@@ -10,7 +10,10 @@ class SimpleLineParser implements TraceParser {
   private blockIdCounter = 0;
 
   parse(content: string) {
-    const lines = content.trim().split('\n').filter((l) => l.trim());
+    const lines = content
+      .trim()
+      .split('\n')
+      .filter((l) => l.trim());
     const blocks: AnyBlock[] = [];
     for (const line of lines) {
       const block = this.parseLine(line);
@@ -29,9 +32,7 @@ class SimpleLineParser implements TraceParser {
     try {
       const data = JSON.parse(line) as Record<string, unknown>;
       const id = `block-${String(++this.blockIdCounter)}-${String(Date.now())}`;
-      const timestamp = data.timestamp
-        ? new Date(data.timestamp as string).getTime()
-        : Date.now();
+      const timestamp = data.timestamp ? new Date(data.timestamp as string).getTime() : Date.now();
 
       if (data.type === 'user') {
         const message = data.message as Record<string, unknown> | undefined;

@@ -189,7 +189,7 @@ describe('ClaudeCodeParser', () => {
       const session = parser.parse(content);
 
       // Should produce exactly 1 AgentBlock
-      const agentBlocks = session.blocks.filter(b => b.type === 'agent');
+      const agentBlocks = session.blocks.filter((b) => b.type === 'agent');
       expect(agentBlocks.length).toBe(1);
 
       const agent = agentBlocks[0];
@@ -223,7 +223,7 @@ describe('ClaudeCodeParser', () => {
       });
 
       const session = parser.parse([entry1, entry2].join('\n'));
-      const agentBlocks = session.blocks.filter(b => b.type === 'agent');
+      const agentBlocks = session.blocks.filter((b) => b.type === 'agent');
       expect(agentBlocks.length).toBe(1);
 
       const agent = agentBlocks[0];
@@ -251,7 +251,7 @@ describe('ClaudeCodeParser', () => {
       });
 
       const session = parser.parse([entry1, entry2].join('\n'));
-      const agentBlocks = session.blocks.filter(b => b.type === 'agent');
+      const agentBlocks = session.blocks.filter((b) => b.type === 'agent');
       expect(agentBlocks.length).toBe(2);
     });
 
@@ -273,7 +273,7 @@ describe('ClaudeCodeParser', () => {
       });
 
       const session = parser.parse([entry1, entry2].join('\n'));
-      const agentBlocks = session.blocks.filter(b => b.type === 'agent');
+      const agentBlocks = session.blocks.filter((b) => b.type === 'agent');
       expect(agentBlocks.length).toBe(2);
     });
   });
@@ -319,7 +319,7 @@ describe('ClaudeCodeParser', () => {
       });
 
       const session = parser.parse([entry1, entry2].join('\n'));
-      const agent = session.blocks.find(b => b.type === 'agent');
+      const agent = session.blocks.find((b) => b.type === 'agent');
       expect(agent).toBeDefined();
       expect(agent?.tokensIn).toBe(100);
       expect(agent?.tokensOut).toBe(50);
@@ -357,7 +357,8 @@ describe('ClaudeCodeParser', () => {
     });
 
     it('sets metaLabel from content text (truncated to 40 chars)', () => {
-      const longText = 'This is a very long meta content that should be truncated to forty characters';
+      const longText =
+        'This is a very long meta content that should be truncated to forty characters';
       const line = JSON.stringify({
         type: 'user',
         message: {

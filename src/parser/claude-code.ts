@@ -41,7 +41,10 @@ interface ContentBlock {
  * Parser for Claude Code session JSONL files
  */
 export class ClaudeCodeParser extends BaseParser {
-  private pendingToolCalls = new Map<string, { name: string; input: unknown; agentBlockId: string }>();
+  private pendingToolCalls = new Map<
+    string,
+    { name: string; input: unknown; agentBlockId: string }
+  >();
   private currentAgentBlockId: string | null = null;
   private activeAgentBlocks = new Map<string, AgentBlock>(); // requestId -> AgentBlock
 
@@ -82,7 +85,7 @@ export class ClaudeCodeParser extends BaseParser {
       const block = this.parseLine(line);
       if (block) {
         // If merged block, check if already in array by id
-        const existingIndex = blocks.findIndex(b => b.id === block.id);
+        const existingIndex = blocks.findIndex((b) => b.id === block.id);
         if (existingIndex >= 0) {
           blocks[existingIndex] = block;
         } else {
@@ -158,7 +161,8 @@ export class ClaudeCodeParser extends BaseParser {
     if (entry.isMeta) {
       userBlock.isMeta = true;
       if (textContent) {
-        userBlock.metaLabel = textContent.length > 40 ? textContent.slice(0, 37) + '...' : textContent;
+        userBlock.metaLabel =
+          textContent.length > 40 ? textContent.slice(0, 37) + '...' : textContent;
       } else {
         userBlock.metaLabel = 'System';
       }
@@ -200,7 +204,6 @@ export class ClaudeCodeParser extends BaseParser {
     // Check if we should merge with an existing block by requestId
     const existing = requestId ? this.activeAgentBlocks.get(requestId) : undefined;
     if (existing) {
-
       // Merge text content
       if (textContent) {
         existing.content = existing.content ? existing.content + textContent : textContent;

@@ -32,7 +32,7 @@ async function main() {
 
     await watcher.watch(args.file, (newBlocks) => {
       // Merge by id (updated blocks replace, new ones append)
-      const blockMap = new Map(allBlocks.map(b => [b.id, b]));
+      const blockMap = new Map(allBlocks.map((b) => [b.id, b]));
       for (const block of newBlocks) {
         blockMap.set(block.id, block);
       }

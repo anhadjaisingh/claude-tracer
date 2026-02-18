@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-claude-orange: #f97316;
@@ -12,7 +12,7 @@
   --color-tool-bg: #0f0f0f;
   --color-tool-text: #e5e5e5;
 
-  --font-mono: "JetBrains Mono", "Fira Code", "SF Mono", Consolas, monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
 }
 
 body {

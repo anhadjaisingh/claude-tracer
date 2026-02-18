@@ -70,6 +70,7 @@ npm run typecheck    # TypeScript type checking
 ### Team Lead (TL) Role
 
 The TL agent's primary job is to **stay available to the human** for planning, design, and decision-making. The TL should:
+
 - **Delegate implementation and fix work to sub-agents/teammates.** Don't do coding, lint fixing, CI debugging, or test repairs yourself -- fire off an agent for that.
 - **Coordinate and integrate.** After parallel agent work completes, verify integration, open PRs, and monitor CI. If CI fails, dispatch a sub-agent to fix it.
 - **Escalate, don't block.** If something needs human judgment, tag @anhad on the PR or surface it in conversation. Don't sit on blockers.

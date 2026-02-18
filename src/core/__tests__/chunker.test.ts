@@ -45,16 +45,14 @@ describe('Chunker', () => {
   it('creates turn-level chunks for each user-agent exchange', () => {
     const chunker = new Chunker();
     const chunks = chunker.createChunks(blocks);
-    const turns = chunks.filter(c => c.level === 'turn');
+    const turns = chunks.filter((c) => c.level === 'turn');
     expect(turns.length).toBe(2);
   });
 
   it('groups tool blocks with their parent agent', () => {
     const chunker = new Chunker();
     const chunks = chunker.createChunks(blocks);
-    const turn1 = chunks.find(
-      c => c.level === 'turn' && c.blockIds.includes('a1'),
-    );
+    const turn1 = chunks.find((c) => c.level === 'turn' && c.blockIds.includes('a1'));
     expect(turn1?.blockIds).toContain('t1');
   });
 
@@ -80,7 +78,7 @@ describe('Chunker', () => {
       } as AgentBlock,
     ];
     const chunks = chunker.createChunks(blocksWithTokens);
-    const turn = chunks.find(c => c.level === 'turn');
+    const turn = chunks.find((c) => c.level === 'turn');
     expect(turn?.totalTokensIn).toBe(110);
     expect(turn?.totalTokensOut).toBe(50);
   });
@@ -119,7 +117,7 @@ describe('Chunker', () => {
     ];
 
     const chunks = chunker.createChunks(blocksWithMeta);
-    const turns = chunks.filter(c => c.level === 'turn');
+    const turns = chunks.filter((c) => c.level === 'turn');
 
     // Should be 1 turn, not 2 (isMeta user block should not start a new turn)
     expect(turns.length).toBe(1);
