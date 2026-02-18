@@ -46,6 +46,9 @@ npm run typecheck    # TypeScript type checking
 - Unit test files: `*.test.ts` (vitest)
 - E2E test files: `*.spec.ts` (Playwright)
 - Test fixtures in `e2e/fixtures/sessions/`
+- **Always run unit tests locally** (`npm run test:run`) after making changes -- they're cheap
+- **Run E2E tests** (`npm run test:e2e`) when changes might break integration or when additional testing confidence is needed
+- For UI changes, include before/after screenshots of the affected flow in the PR description
 
 ## Permissions Note
 
