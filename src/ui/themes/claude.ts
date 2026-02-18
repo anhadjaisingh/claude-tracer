@@ -1,7 +1,7 @@
 export const claudeTheme = {
   name: 'claude',
   colors: {
-    background: '#ffedd5', // peach
+    background: '#d97757', // claude terracotta
     agentBg: '#374151', // grey-700
     agentText: '#f3f4f6', // grey-100
     userBg: '#f9fafb', // grey-50
