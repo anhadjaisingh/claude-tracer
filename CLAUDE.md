@@ -56,6 +56,14 @@ npm run typecheck    # TypeScript type checking
 - For feature work, create a branch and open a PR for review.
 - For smaller changes (docs, config, fixes), pushing directly to main is fine.
 
+## PR and Code Review Process
+
+- **Agent teammates must work on feature branches** and open PRs rather than pushing directly to main.
+- **Track PR status.** Monitor the automated Claude Code Action and Security Review comments on each PR. Address any issues flagged before requesting human review.
+- **When a PR is ready for human review**, notify the team lead with the PR URL. Mention if PRs have dependencies or need to be reviewed/merged in a specific order.
+- **Surface architectural decisions.** If any significant design choices are made during implementation (new patterns, interface changes, dependency additions, structural decisions), explicitly flag them to the team lead. This is critical -- don't bury architectural decisions in commit messages.
+- **Code review feedback must be addressed** before merging. Check PR comments and resolve conversations.
+
 ## Permissions Note
 
 If you find yourself repeatedly needing permission for a specific command pattern, ask me to add a permanent permission for it rather than asking each time. I prefer to grant broad permissions for safe development commands within this project.

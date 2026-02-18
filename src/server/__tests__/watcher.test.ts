@@ -4,7 +4,6 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-// Use polling for reliable change detection in test/tmp environments
 const testChokidarOptions = {
   persistent: true,
   usePolling: true,
@@ -14,6 +13,7 @@ const testChokidarOptions = {
 describe('SessionWatcher', () => {
   let tmpDir: string;
   let testFile: string;
+  let watcher: SessionWatcher;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'watcher-test-'));
@@ -21,6 +21,7 @@ describe('SessionWatcher', () => {
   });
 
   afterEach(() => {
+    watcher.stop();
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
@@ -32,7 +33,7 @@ describe('SessionWatcher', () => {
     });
     fs.writeFileSync(testFile, line + '\n');
 
-    const watcher = new SessionWatcher({ chokidar: testChokidarOptions });
+    watcher = new SessionWatcher({ chokidar: testChokidarOptions });
     const callback = vi.fn();
 
     await watcher.watch(testFile, callback);
@@ -40,31 +41,42 @@ describe('SessionWatcher', () => {
     expect(callback).toHaveBeenCalled();
     const blocks = callback.mock.calls[0][0];
     expect(blocks.length).toBe(1);
-
-    watcher.stop();
   });
 
   it('detects new lines appended to file', async () => {
-    fs.writeFileSync(testFile, '');
-
-    const watcher = new SessionWatcher({ chokidar: testChokidarOptions });
-    const callback = vi.fn();
-
-    await watcher.watch(testFile, callback);
-
-    // Append a new line
-    const line = JSON.stringify({
+    const line1 = JSON.stringify({
       type: 'user',
-      message: { role: 'user', content: 'Hello' },
+      message: { role: 'user', content: 'First' },
       timestamp: new Date().toISOString(),
     });
-    fs.appendFileSync(testFile, line + '\n');
+    fs.writeFileSync(testFile, line1 + '\n');
 
-    // Wait for polling to detect the change
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    watcher = new SessionWatcher({ chokidar: testChokidarOptions });
 
-    expect(callback).toHaveBeenCalledTimes(2); // Initial + update
+    // Use a promise to wait for the second callback
+    const secondCall = new Promise<void>((resolve) => {
+      let callCount = 0;
+      const callback = vi.fn(() => {
+        callCount++;
+        if (callCount === 2) resolve();
+      });
+      watcher.watch(testFile, callback).then(() => {
+        // After watcher is ready, append new content
+        const line2 = JSON.stringify({
+          type: 'user',
+          message: { role: 'user', content: 'Second' },
+          timestamp: new Date().toISOString(),
+        });
+        fs.appendFileSync(testFile, line2 + '\n');
+      });
+    });
 
-    watcher.stop();
+    // Wait up to 5s for the change to be detected
+    await Promise.race([
+      secondCall,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timed out waiting for file change')), 5000),
+      ),
+    ]);
   });
 });

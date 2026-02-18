@@ -48,7 +48,7 @@ export class BlockSearch implements SearchEngine {
   search(query: string, options: SearchOptions = {}): SearchResult[] {
     const { limit = 20, types } = options;
 
-    let results = this.miniSearch.search(query, { limit: limit * 2 });
+    let results = this.miniSearch.search(query).slice(0, limit * 2);
 
     // Filter by type if specified
     if (types && types.length > 0) {
@@ -64,7 +64,7 @@ export class BlockSearch implements SearchEngine {
       matches: r.match
         ? Object.entries(r.match).map(([field, terms]) => ({
             field,
-            snippet: Array.from(terms as Set<string>).join(', '),
+            snippet: Array.from(terms as unknown as Iterable<string>).join(', '),
           }))
         : undefined,
     }));
