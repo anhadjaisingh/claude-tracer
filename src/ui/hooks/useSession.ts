@@ -34,7 +34,7 @@ export function useSession() {
 
     ws.onmessage = (event) => {
       try {
-        const message: WsMessage = JSON.parse(event.data as string);
+        const message = JSON.parse(String(event.data)) as WsMessage;
 
         switch (message.type) {
           case 'session:init':
@@ -49,7 +49,7 @@ export function useSession() {
 
           case 'blocks:new':
             if (message.blocks) {
-              setBlocks((prev) => [...prev, ...message.blocks!]);
+              setBlocks((prev) => [...prev, ...(message.blocks ?? [])]);
             }
             break;
         }

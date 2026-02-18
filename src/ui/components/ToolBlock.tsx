@@ -28,7 +28,9 @@ export function ToolBlock({ block }: Props) {
           backgroundColor: theme.colors.toolBg,
           color: theme.colors.toolText,
         }}
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+        }}
       >
         <div className="flex items-center gap-2 mb-1">
           <span

@@ -24,7 +24,9 @@ export function AgentBlock({ block }: Props) {
           backgroundColor: theme.colors.agentBg,
           color: theme.colors.agentText,
         }}
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          setIsExpanded(!isExpanded);
+        }}
       >
         <div className="flex items-center gap-2 mb-2 text-xs opacity-60">
           <span>agent</span>

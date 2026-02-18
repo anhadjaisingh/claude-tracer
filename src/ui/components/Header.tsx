@@ -20,7 +20,9 @@ export function Header() {
           type="text"
           placeholder="Search..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+          }}
           className="px-3 py-1.5 rounded bg-white/10 text-white placeholder-white/50 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-white/30"
         />
         <span className="text-xs opacity-60">0 of 0</span>
