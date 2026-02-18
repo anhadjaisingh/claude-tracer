@@ -9,6 +9,7 @@
   },
   "scripts": {
     "dev": "bash scripts/dev.sh",
+    "local": "bash scripts/local.sh",
     "dev:server": "tsx watch src/server/index.ts",
     "dev:ui": "vite",
     "build": "npm run build:server && npm run build:ui",
