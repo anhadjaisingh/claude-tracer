@@ -64,13 +64,13 @@ Each agent and the human should use a distinct port range for Express and Vite.
 The codebase now supports this via the `VITE_BACKEND_PORT` environment variable
 in `vite.config.ts` and the `--port` flag on the Express server.
 
-| Actor          | Express port | Vite port | Notes                        |
-| -------------- | ------------ | --------- | ---------------------------- |
-| Human (local)  | 4000         | 4001      | `npm run local`              |
-| Default (dev)  | 3000         | 5173      | `npm run dev`                |
-| Agent 1        | 5000         | 5001      | Tests / E2E                  |
-| Agent 2        | 5002         | 5003      | Tests / E2E                  |
-| Agent 3        | 5004         | 5005      | Tests / E2E                  |
+| Actor         | Express port | Vite port | Notes           |
+| ------------- | ------------ | --------- | --------------- |
+| Human (local) | 4000         | 4001      | `npm run local` |
+| Default (dev) | 3000         | 5173      | `npm run dev`   |
+| Agent 1       | 5000         | 5001      | Tests / E2E     |
+| Agent 2       | 5002         | 5003      | Tests / E2E     |
+| Agent 3       | 5004         | 5005      | Tests / E2E     |
 
 Agents should pick ports in the 5000-5999 range. To start servers on custom ports:
 
@@ -108,12 +108,12 @@ via git, so installs will be deterministic.
 
 ## Summary
 
-| Strategy           | Prevents port conflicts | Prevents file conflicts | Prevents git conflicts | Complexity |
-| ------------------ | ----------------------- | ----------------------- | ---------------------- | ---------- |
-| Worktrees + ports  | Yes                     | Yes                     | Yes                    | Low        |
-| Branches only      | No                      | No                      | Partial                | Low        |
-| File ownership     | No                      | Partial                 | No                     | Medium     |
-| Docker per agent   | Yes                     | Yes                     | Yes                    | High       |
+| Strategy          | Prevents port conflicts | Prevents file conflicts | Prevents git conflicts | Complexity |
+| ----------------- | ----------------------- | ----------------------- | ---------------------- | ---------- |
+| Worktrees + ports | Yes                     | Yes                     | Yes                    | Low        |
+| Branches only     | No                      | No                      | Partial                | Low        |
+| File ownership    | No                      | Partial                 | No                     | Medium     |
+| Docker per agent  | Yes                     | Yes                     | Yes                    | High       |
 
 **Recommendation: Use git worktrees + port isolation.** It fully solves all three
 categories of conflict with minimal overhead. Reserve Docker-based isolation for
