@@ -72,14 +72,22 @@ npm run typecheck    # TypeScript type checking
 The TL agent's primary job is to **stay available to the human** for planning, design, and decision-making. The TL should:
 
 - **Delegate implementation and fix work to sub-agents/teammates.** Don't do coding, lint fixing, CI debugging, or test repairs yourself -- fire off an agent for that.
+- **Never block the main loop.** No `sleep` commands, no `sleep && gh pr checks`, no long-running poll loops on the main conversation. Dispatch a background agent to monitor CI/PRs and notify you when done.
 - **Coordinate and integrate.** After parallel agent work completes, verify integration, open PRs, and monitor CI. If CI fails, dispatch a sub-agent to fix it.
 - **Escalate, don't block.** If something needs human judgment, tag @anhad on the PR or surface it in conversation. Don't sit on blockers.
+- **Persist instructions in CLAUDE.md**, not just memory files. All operational rules, workflow expectations, and team guidelines must be written to CLAUDE.md (and team docs if applicable) so they survive across sessions and agents.
 
 ### Teammate / Sub-agent Responsibilities
 
 - **Drive work to PR submission.** Each agent is responsible for committing, pushing, and opening PRs for their workstream.
 - **Monitor CI after pushing.** If CI fails on your PR, investigate and fix. Don't leave broken CI for someone else.
 - **Surface blockers immediately** to the TL agent. If the issue is non-trivial or needs a decision, the TL escalates to the human reviewer via GitHub PR comment or direct conversation.
+
+## Port Allocation
+
+- **Default dev ports:** Express on `3000`, Vite on `5173` — used by `npm run dev`
+- **Local dev ports:** Express on `4000`, Vite on `4001` — used by `npm run local` (for human-facing local instance, avoids conflicts with agent test servers)
+- **Agents should use default ports** for testing. The local dev command uses separate ports so agents and the human's local instance don't interfere with each other.
 
 ## Permissions Note
 
