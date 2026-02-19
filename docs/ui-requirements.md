@@ -14,13 +14,44 @@ the conflict to the TL or human for resolution — do not silently break a requi
   near the top-left of the screen on load.
 - The sidebar should be visible by default at its stored width (or 256px default).
 
-### Graph Layout
+### Graph Layout — Columnar Nesting-Depth Model
 
-- The conversation flows **top to bottom** as a DAG.
-- Sequential blocks (user → agent → tool → agent) flow vertically.
-- Parallel operations (multiple tool calls, teammate messages) fan out horizontally.
-- Edges connect every parent block to its children — the user should be able to
-  follow the full conversation flow by following arrows.
+The graph uses a **columnar layout** where horizontal position encodes nesting
+depth and vertical position encodes time.
+
+#### Columns
+
+- **Rightmost column (depth 0):** User messages. Always the rightmost nodes.
+- **Next column left (depth 1):** Main agent responses.
+- **Further left (depth 2+):** Tool calls, MCP calls, teammate/sub-agent messages.
+  Each additional level of nesting moves one column to the left.
+
+The horizontal span between the rightmost and leftmost active nodes is a visual
+indicator of how nested/parallel the current operation is. A narrow graph means
+simple back-and-forth; a wide graph means deep tool use or multi-agent work.
+
+#### Vertical Flow
+
+- Time flows **top to bottom**.
+- Sequential blocks within the same column stack vertically.
+- Parallel operations (multiple tool calls, concurrent teammate work) fan out
+  horizontally within their depth column, stacking side-by-side.
+
+#### Edges and Arrows
+
+- **Right → left** arrows represent spawning work (user → agent, agent → tool,
+  agent → teammate).
+- **Left → right** arrows represent returning results (tool → agent, teammate →
+  agent).
+- Every parent block must have an edge to each of its children — the user should
+  be able to follow the full conversation lifecycle by following arrows.
+- Edge style encodes relationship type (see Edge Styles below).
+
+#### Edge Styles
+
+- All edges are **black** (or white in dark theme) — a single neutral color.
+- Node colors already encode block type; edge color should not compete.
+- Animated edges may be used sparingly for in-progress operations (future).
 
 ### Navigation
 
@@ -32,14 +63,14 @@ the conflict to the TL or human for resolution — do not silently break a requi
 
 ### Block Types and Visual Hierarchy
 
-| Block Type       | Position             | Style                                   |
-| ---------------- | -------------------- | --------------------------------------- |
-| User message     | Right-aligned column | Light/white bubble, right-justified     |
-| Agent response   | Left-aligned column  | Dark bubble, left-justified             |
-| Tool call        | Indented under agent | Compact, monospace, dark terminal style |
-| MCP call         | Indented under agent | Same as tool call                       |
-| Meta/system      | Centered or right    | Compact pill/tag, collapsed by default  |
-| Teammate message | Left-aligned         | Distinct accent color (purple/indigo)   |
+| Block Type       | Column (depth) | Style                                   |
+| ---------------- | -------------- | --------------------------------------- |
+| User message     | 0 (rightmost)  | Light/white bubble, right-justified     |
+| Meta/system      | 0 (rightmost)  | Compact pill/tag, collapsed by default  |
+| Agent response   | 1              | Dark bubble, left-justified             |
+| Tool call        | 2+             | Compact, monospace, dark terminal style |
+| MCP call         | 2+             | Same as tool call                       |
+| Teammate message | 2+             | Distinct accent color (purple/indigo)   |
 
 ### Block Interactions
 
@@ -66,6 +97,18 @@ the conflict to the TL or human for resolution — do not silently break a requi
 - Search bar in the header with result count and prev/next navigation.
 - Mode toggle: Keyword (instant, local) vs Smart (hybrid keyword+vector, server-side).
 - Navigating search results pans the graph to the matched block.
+
+## Granularity Control (Future)
+
+- A granularity slider or level selector controls how much detail the graph shows.
+- At the highest level, nodes are **semantic sub-graphs** — named groups of blocks
+  that represent a logical unit of work (e.g., a TODO item, a PR, a Claude task).
+- Drilling into a sub-graph expands it to show the individual blocks within.
+- This enables navigating very long sessions: first find the high-level work item,
+  then drill down to the specific messages and tool calls.
+- The sidebar chunk/turn list should reflect the current granularity level.
+- **Not yet implemented.** The current UI shows all blocks at full detail. This
+  section captures the intended direction for future development.
 
 ## Responsive Behavior
 
