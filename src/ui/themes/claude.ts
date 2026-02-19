@@ -12,6 +12,9 @@ export const claudeTheme = {
     headerBg: 'rgba(0,0,0,0.8)',
     headerText: '#ffffff',
     indexText: '#f3f4f6', // light text on peach
+    teamMessageBg: '#2d1f4e', // deep purple
+    teamMessageText: '#e0d4f5', // light lavender
+    teamMessageAccent: '#7c3aed', // violet-600
   },
 };
 

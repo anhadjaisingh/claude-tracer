@@ -3,7 +3,8 @@ import { useTheme } from '../themes';
 import { UserBlock } from './UserBlock';
 import { AgentBlock } from './AgentBlock';
 import { ToolBlock } from './ToolBlock';
-import { isUserBlock, isAgentBlock, isToolBlock } from '@/types';
+import { TeamMessageBlock } from './TeamMessageBlock';
+import { isUserBlock, isAgentBlock, isToolBlock, isTeamMessageBlock } from '@/types';
 import type { AnyBlock } from '@/types';
 
 interface Props {
@@ -84,6 +85,9 @@ export function TraceView({ blocks }: Props) {
               }
               if (isToolBlock(block)) {
                 return <ToolBlock key={block.id} block={block} />;
+              }
+              if (isTeamMessageBlock(block)) {
+                return <TeamMessageBlock key={block.id} block={block} />;
               }
               return null;
             })();

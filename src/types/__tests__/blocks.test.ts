@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock } from '../blocks';
-import type { UserBlock, AgentBlock, ToolBlock, McpBlock } from '../blocks';
+import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock, isTeamMessageBlock } from '../blocks';
+import type { UserBlock, AgentBlock, ToolBlock, McpBlock, TeamMessageBlock } from '../blocks';
 
 describe('Block type guards', () => {
   it('identifies UserBlock correctly', () => {
@@ -55,5 +55,32 @@ describe('Block type guards', () => {
     };
     expect(isMcpBlock(block)).toBe(true);
     expect(isToolBlock(block)).toBe(false);
+  });
+
+  it('identifies TeamMessageBlock correctly', () => {
+    const block: TeamMessageBlock = {
+      id: '5',
+      timestamp: Date.now(),
+      type: 'team-message',
+      sender: 'parser-agent',
+      recipient: 'team-lead',
+      content: 'Task complete',
+      messageType: 'message',
+    };
+    expect(isTeamMessageBlock(block)).toBe(true);
+    expect(isUserBlock(block)).toBe(false);
+    expect(isAgentBlock(block)).toBe(false);
+    expect(isToolBlock(block)).toBe(false);
+    expect(isMcpBlock(block)).toBe(false);
+  });
+
+  it('returns false for isTeamMessageBlock on non-team-message blocks', () => {
+    const block: UserBlock = {
+      id: '1',
+      timestamp: Date.now(),
+      type: 'user',
+      content: 'Hello',
+    };
+    expect(isTeamMessageBlock(block)).toBe(false);
   });
 });

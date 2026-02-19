@@ -1,7 +1,7 @@
 export interface Block {
   id: string;
   timestamp: number;
-  type: 'user' | 'agent' | 'tool' | 'mcp';
+  type: 'user' | 'agent' | 'tool' | 'mcp' | 'team-message';
   parentId?: string;
   tokensIn?: number;
   tokensOut?: number;
@@ -41,7 +41,15 @@ export interface McpBlock extends Block {
   status: 'pending' | 'success' | 'error';
 }
 
-export type AnyBlock = UserBlock | AgentBlock | ToolBlock | McpBlock;
+export interface TeamMessageBlock extends Block {
+  type: 'team-message';
+  sender: string;
+  recipient?: string;
+  content: string;
+  messageType: 'message' | 'broadcast' | 'shutdown_request' | 'shutdown_response';
+}
+
+export type AnyBlock = UserBlock | AgentBlock | ToolBlock | McpBlock | TeamMessageBlock;
 
 export function isUserBlock(block: Block): block is UserBlock {
   return block.type === 'user';
@@ -57,4 +65,8 @@ export function isToolBlock(block: Block): block is ToolBlock {
 
 export function isMcpBlock(block: Block): block is McpBlock {
   return block.type === 'mcp';
+}
+
+export function isTeamMessageBlock(block: Block): block is TeamMessageBlock {
+  return block.type === 'team-message';
 }
