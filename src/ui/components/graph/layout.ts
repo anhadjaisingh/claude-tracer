@@ -5,19 +5,19 @@ const COLUMN_GAP = 80;
 const COLUMN_SPACING = NODE_WIDTH + COLUMN_GAP; // 400px between column starts
 const ROW_GAP = 40;
 
-/** Canonical left-to-right ordering of column types. */
-const TYPE_ORDER = ['tool', 'team-message', 'agent', 'meta', 'user'] as const;
+/** Canonical left-to-right ordering of column types. Meta shares the user column. */
+const TYPE_ORDER = ['tool', 'team-message', 'agent', 'user'] as const;
 
-/** Column index for a node type (0=tool/leftmost, 4=user/rightmost). */
+/** Column index for a node type (0=tool/leftmost, 3=user/rightmost). Meta shares user column. */
 export function getColumnIndex(nodeType: string | undefined): number {
   const map: Record<string, number> = {
     tool: 0,
     'team-message': 1,
     agent: 2,
-    meta: 3,
-    user: 4,
+    meta: 3, // same as user
+    user: 3,
   };
-  return map[nodeType ?? 'user'] ?? 4;
+  return map[nodeType ?? 'user'] ?? 3;
 }
 
 /**
@@ -25,7 +25,13 @@ export function getColumnIndex(nodeType: string | undefined): number {
  * present in the graph. This avoids wasting horizontal space on empty columns.
  */
 export function buildColumnX(nodes: Node[]): Record<string, number> {
-  const presentTypes = new Set(nodes.map((n) => n.type ?? 'user'));
+  const presentTypes = new Set(
+    nodes.map((n) => {
+      // Meta nodes share the user column
+      const type = n.type ?? 'user';
+      return type === 'meta' ? 'user' : type;
+    }),
+  );
   const columnX: Record<string, number> = {};
   let colIndex = 0;
   for (const type of TYPE_ORDER) {
@@ -34,6 +40,8 @@ export function buildColumnX(nodes: Node[]): Record<string, number> {
       colIndex++;
     }
   }
+  // Meta nodes use the same X position as user nodes
+  columnX.meta = columnX.user;
   return columnX;
 }
 

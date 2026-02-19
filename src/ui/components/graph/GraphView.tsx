@@ -94,6 +94,7 @@ interface Props {
   onExpandBlock: (block: AnyBlock) => void;
   onNavigateReady?: (navigateToBlock: NavigateToBlockFn) => void;
   nodesDraggable?: boolean;
+  highlightedBlockId?: string | null;
 }
 
 /** Half the default node width, used to compute node center for setCenter(). */
@@ -101,7 +102,7 @@ const NODE_CENTER_OFFSET_X = 160;
 /** Half the default node height, used to compute node center for setCenter(). */
 const NODE_CENTER_OFFSET_Y = 40;
 
-function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable = false }: Props) {
+function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable = false, highlightedBlockId }: Props) {
   const theme = useTheme();
   const { setCenter } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
@@ -161,6 +162,16 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable
       );
     }
   }, [blocks, onExpandBlock, setNodes, setEdges, setCenter]);
+
+  // Update node className when search result changes for visual highlight
+  useEffect(() => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => ({
+        ...node,
+        className: node.id === highlightedBlockId ? 'search-highlight' : undefined,
+      })),
+    );
+  }, [highlightedBlockId, setNodes]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
