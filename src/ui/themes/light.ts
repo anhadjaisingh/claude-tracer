@@ -14,5 +14,8 @@ export const lightTheme: Theme = {
     headerBg: 'rgba(31,41,55,0.95)', // grey-800
     headerText: '#ffffff',
     indexText: '#374151', // grey-700
+    teamMessageBg: '#eef2ff', // indigo-50
+    teamMessageText: '#312e81', // indigo-900
+    teamMessageAccent: '#4f46e5', // indigo-600
   },
 };

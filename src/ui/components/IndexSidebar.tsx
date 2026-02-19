@@ -21,11 +21,15 @@ export function IndexSidebar({ chunks, blocks = [], onChunkClick }: Props) {
       {chunks.length === 0 ? (
         <p className="text-xs opacity-60">No chunks yet</p>
       ) : (
-        <ul className="space-y-2">
-          {chunks.map((chunk) => (
+        <ul>
+          {chunks.map((chunk, index) => (
             <li
               key={chunk.id}
-              className="cursor-pointer hover:opacity-80 transition-opacity"
+              className="cursor-pointer hover:opacity-80 transition-opacity py-3"
+              style={{
+                borderBottom:
+                  index < chunks.length - 1 ? `1px solid ${theme.colors.accent}26` : undefined,
+              }}
               onClick={() => onChunkClick?.(chunk.id)}
             >
               <div className="flex items-center gap-2 text-sm">
