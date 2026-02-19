@@ -50,6 +50,15 @@ npm run typecheck    # TypeScript type checking
 - **Run E2E tests** (`npm run test:e2e`) when changes might break integration or when additional testing confidence is needed
 - For UI changes, include before/after screenshots of the affected flow in the PR description
 
+## Human Review Workflow
+
+When saying something is "done", "ready for review", or needs "manual verification":
+
+- **Always merge the branch into local main first** (`git merge <branch> --ff-only` after rebasing) so the human's running `npm run local` instance picks up changes via hot-reload.
+- **Run `npm install`** if dependencies changed (added/removed packages).
+- **Never ask the human to switch branches, check out worktrees, or restart servers.** The human's `npm run local` is always running — make it show the latest work automatically.
+- **Confirm it's ready** by saying something like "Your local instance should have the changes now" rather than just linking a PR.
+
 ## Visual Verification
 
 - **Use Playwright to verify UI changes.** Before calling any UI work "done", open the app in a Playwright browser, take a screenshot, and visually confirm the feature looks and works as expected based on the design/discussion. Don't rely solely on test output — look at it yourself.
