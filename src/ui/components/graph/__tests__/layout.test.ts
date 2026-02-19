@@ -50,7 +50,7 @@ describe('layoutGraph', () => {
     }
   });
 
-  it('places user nodes to the right of agent nodes', async () => {
+  it('places user nodes below agent nodes', async () => {
     const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent')];
     const edges = [makeEdge('u1', 'a1')];
 
@@ -61,10 +61,10 @@ describe('layoutGraph', () => {
     if (!userNode || !agentNode) {
       throw new Error('Expected user and agent nodes to exist');
     }
-    expect(userNode.position.x).toBeGreaterThan(agentNode.position.x);
+    expect(userNode.position.y).toBeGreaterThan(agentNode.position.y);
   });
 
-  it('places agent nodes to the right of tool nodes', async () => {
+  it('places agent nodes below tool nodes', async () => {
     const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent'), makeNode('t1', 'tool')];
     const edges = [makeEdge('u1', 'a1'), makeEdge('a1', 't1')];
 
@@ -75,7 +75,7 @@ describe('layoutGraph', () => {
     if (!agentNode || !toolNode) {
       throw new Error('Expected agent and tool nodes to exist');
     }
-    expect(agentNode.position.x).toBeGreaterThan(toolNode.position.x);
+    expect(agentNode.position.y).toBeGreaterThan(toolNode.position.y);
   });
 
   it('preserves edges unchanged', async () => {
