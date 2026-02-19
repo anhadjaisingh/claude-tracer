@@ -1,13 +1,12 @@
-import { useState } from 'react';
 import { useTheme } from '../themes';
 import type { UserBlock as UserBlockType } from '@/types';
 
 interface Props {
   block: UserBlockType;
+  onExpand: (block: UserBlockType) => void;
 }
 
-export function UserBlock({ block }: Props) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function UserBlock({ block, onExpand }: Props) {
   const theme = useTheme();
 
   // Compact rendering for system-injected (isMeta) messages
@@ -21,24 +20,16 @@ export function UserBlock({ block }: Props) {
             color: theme.colors.userText,
           }}
           onClick={() => {
-            setIsExpanded(!isExpanded);
+            onExpand(block);
           }}
         >
-          {isExpanded ? (
-            <div className="whitespace-pre-wrap font-mono text-xs max-w-xl">
-              {block.content.slice(0, 500)}
-              {block.content.length > 500 && '...'}
-            </div>
-          ) : (
-            <span>{block.metaLabel ?? 'system'}</span>
-          )}
+          <span>{block.metaLabel ?? 'system'}</span>
         </div>
       </div>
     );
   }
 
-  const preview =
-    block.content.length > 100 && !isExpanded ? block.content.slice(0, 100) + '...' : block.content;
+  const preview = block.content.length > 100 ? block.content.slice(0, 100) + '...' : block.content;
 
   return (
     <div id={`block-${block.id}`} className="flex justify-end mb-4">
@@ -49,7 +40,7 @@ export function UserBlock({ block }: Props) {
           color: theme.colors.userText,
         }}
         onClick={() => {
-          setIsExpanded(!isExpanded);
+          onExpand(block);
         }}
       >
         <div className="flex items-center gap-2 mb-2 text-xs opacity-60">
@@ -58,15 +49,7 @@ export function UserBlock({ block }: Props) {
         </div>
         <div className="whitespace-pre-wrap font-mono text-sm">{preview}</div>
         {block.content.length > 100 && (
-          <button
-            className="text-xs mt-2 opacity-60 hover:opacity-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsExpanded(!isExpanded);
-            }}
-          >
-            {isExpanded ? '▲ Collapse' : '▼ Expand'}
-          </button>
+          <div className="text-xs mt-2 opacity-60">Click to expand</div>
         )}
       </div>
     </div>

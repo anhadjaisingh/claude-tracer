@@ -1,14 +1,13 @@
-import { useState } from 'react';
 import { useTheme } from '../themes';
 import { getToolRenderer } from '../renderers';
 import type { ToolBlock as ToolBlockType } from '@/types';
 
 interface Props {
   block: ToolBlockType;
+  onExpand: (block: ToolBlockType) => void;
 }
 
-export function ToolBlock({ block }: Props) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function ToolBlock({ block, onExpand }: Props) {
   const theme = useTheme();
   const renderer = getToolRenderer(block.toolName);
 
@@ -33,7 +32,7 @@ export function ToolBlock({ block }: Props) {
           color: theme.colors.toolText,
         }}
         onClick={() => {
-          setIsExpanded(!isExpanded);
+          onExpand(block);
         }}
       >
         {/* Header bar with slightly darker background */}
@@ -56,12 +55,8 @@ export function ToolBlock({ block }: Props) {
           <span className="opacity-40 ml-auto shrink-0">{block.status}</span>
         </div>
 
-        {/* Body: preview or full content */}
-        <div className="px-3 py-2">
-          {isExpanded
-            ? renderer.fullContent(block.input, block.output)
-            : renderer.preview(block.input, block.output)}
-        </div>
+        {/* Preview content — click opens overlay for full content */}
+        <div className="px-3 py-2">{renderer.preview(block.input, block.output)}</div>
       </div>
     </div>
   );

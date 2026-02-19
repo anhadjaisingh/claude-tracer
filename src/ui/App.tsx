@@ -4,9 +4,11 @@ import { Header } from './components/Header';
 import { TraceView } from './components/TraceView';
 import { IndexSidebar } from './components/IndexSidebar';
 import { Footer } from './components/Footer';
+import { BlockOverlay } from './components/BlockOverlay';
 import { useSession } from './hooks/useSession';
 import { useSearch } from './hooks/useSearch';
 import { useSettings } from './hooks/useSettings';
+import { useOverlay } from './hooks/useOverlay';
 import { useResizable } from './hooks/useResizable';
 
 export default function App() {
@@ -14,6 +16,7 @@ export default function App() {
   const search = useSearch(blocks);
   const { themeName, setThemeName } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const overlay = useOverlay();
   const sidebar = useResizable({
     minWidth: 200,
     maxWidth: 600,
@@ -58,7 +61,7 @@ export default function App() {
 
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 overflow-auto p-4">
-            <TraceView blocks={blocks} />
+            <TraceView blocks={blocks} onExpandBlock={overlay.open} />
           </main>
 
           {/* Resize handle on left edge of sidebar */}
@@ -87,6 +90,10 @@ export default function App() {
           onThemeChange={setThemeName}
         />
       </div>
+
+      {overlay.overlayBlock && (
+        <BlockOverlay block={overlay.overlayBlock} onClose={overlay.close} />
+      )}
     </ThemeContext.Provider>
   );
 }

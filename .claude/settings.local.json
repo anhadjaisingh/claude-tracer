@@ -39,7 +39,8 @@
       "Bash(python3:*)",
       "Bash(kill:*)",
       "Bash(lsof*)",
-      "Bash(npx vite*)"
+      "Bash(npx vite*)",
+      "Bash(gh pr checks:*)"
     ]
   }
 }
