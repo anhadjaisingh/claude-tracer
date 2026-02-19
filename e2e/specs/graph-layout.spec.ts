@@ -31,7 +31,7 @@ test.describe('Graph layout', () => {
     }
   });
 
-  test('user nodes are below agent nodes', async ({ page }) => {
+  test('user nodes are in the rightmost column (larger X than agent nodes)', async ({ page }) => {
     await page.goto('/');
 
     // Wait for multiple nodes to render
@@ -39,33 +39,77 @@ test.describe('Graph layout', () => {
       timeout: 15_000,
     });
 
-    // Get positions of user and agent nodes via the DOM transform attribute
+    // Get positions of nodes via the DOM transform attribute
     const positions = await page.evaluate(() => {
       const nodes = document.querySelectorAll('.react-flow__node');
-      const result: { type: string; y: number }[] = [];
+      const result: { type: string; x: number; y: number }[] = [];
       for (const node of nodes) {
         const type = Array.from(node.classList)
           .find((c) => c.startsWith('react-flow__node-'))
           ?.replace('react-flow__node-', '');
         const transform = (node as HTMLElement).style.transform;
-        const match = transform.match(/translate\([^,]+px,\s*([^)]+)px/);
+        const match = transform.match(/translate\(\s*([^,]+)px,\s*([^)]+)px/);
         if (type && match) {
-          result.push({ type, y: parseFloat(match[1]) });
+          result.push({ type, x: parseFloat(match[1]), y: parseFloat(match[2]) });
         }
       }
       return result;
     });
 
-    const userYs = positions.filter((p) => p.type === 'user').map((p) => p.y);
-    const agentYs = positions.filter((p) => p.type === 'agent').map((p) => p.y);
+    const userXs = positions.filter((p) => p.type === 'user').map((p) => p.x);
+    const agentXs = positions.filter((p) => p.type === 'agent').map((p) => p.x);
 
     // At least one of each must exist
-    expect(userYs.length).toBeGreaterThan(0);
-    expect(agentYs.length).toBeGreaterThan(0);
+    expect(userXs.length).toBeGreaterThan(0);
+    expect(agentXs.length).toBeGreaterThan(0);
 
-    const minUserY = Math.min(...userYs);
-    const maxAgentY = Math.max(...agentYs);
-    expect(minUserY).toBeGreaterThan(maxAgentY);
+    // In the columnar layout, user nodes have a larger X than agent nodes
+    const minUserX = Math.min(...userXs);
+    const maxAgentX = Math.max(...agentXs);
+    expect(minUserX).toBeGreaterThan(maxAgentX);
+  });
+
+  test('columnar layout: tool < agent < user on X axis', async ({ page }) => {
+    await page.goto('/');
+
+    // Wait for multiple nodes to render
+    await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length >= 3, {
+      timeout: 15_000,
+    });
+
+    // Get X positions of nodes via the DOM transform attribute
+    const positions = await page.evaluate(() => {
+      const nodes = document.querySelectorAll('.react-flow__node');
+      const result: { type: string; x: number }[] = [];
+      for (const node of nodes) {
+        const type = Array.from(node.classList)
+          .find((c) => c.startsWith('react-flow__node-'))
+          ?.replace('react-flow__node-', '');
+        const transform = (node as HTMLElement).style.transform;
+        const match = transform.match(/translate\(\s*([^,]+)px/);
+        if (type && match) {
+          result.push({ type, x: parseFloat(match[1]) });
+        }
+      }
+      return result;
+    });
+
+    const toolXs = positions.filter((p) => p.type === 'tool').map((p) => p.x);
+    const agentXs = positions.filter((p) => p.type === 'agent').map((p) => p.x);
+    const userXs = positions.filter((p) => p.type === 'user').map((p) => p.x);
+
+    // Verify columnar ordering when all three node types are present
+    if (toolXs.length > 0 && agentXs.length > 0) {
+      const maxToolX = Math.max(...toolXs);
+      const minAgentX = Math.min(...agentXs);
+      expect(maxToolX).toBeLessThan(minAgentX);
+    }
+
+    if (agentXs.length > 0 && userXs.length > 0) {
+      const maxAgentX = Math.max(...agentXs);
+      const minUserX = Math.min(...userXs);
+      expect(maxAgentX).toBeLessThan(minUserX);
+    }
   });
 
   test('all edges use the same stroke color', async ({ page }) => {
