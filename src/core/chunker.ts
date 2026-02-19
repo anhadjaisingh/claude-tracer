@@ -1,5 +1,5 @@
 import type { AnyBlock, Chunk, ChunkLevel } from '@/types';
-import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock } from '@/types';
+import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock, isTeamMessageBlock } from '@/types';
 
 /**
  * Creates hierarchical chunks from blocks
@@ -37,6 +37,11 @@ export class Chunker {
         currentTurn.blockIds.push(block.id);
       } else if ((isToolBlock(block) || isMcpBlock(block)) && currentTurn) {
         currentTurn.blockIds.push(block.id);
+      } else if (isTeamMessageBlock(block)) {
+        // Team messages don't start new turns
+        if (currentTurn) {
+          currentTurn.blockIds.push(block.id);
+        }
       }
     }
 

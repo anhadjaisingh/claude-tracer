@@ -45,7 +45,7 @@ export default function App() {
           </main>
 
           <aside className="w-64 overflow-auto p-4 border-l border-white/20">
-            <IndexSidebar chunks={chunks} />
+            <IndexSidebar chunks={chunks} blocks={blocks} />
           </aside>
         </div>
 

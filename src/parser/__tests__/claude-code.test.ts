@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ClaudeCodeParser } from '../claude-code';
-import type { UserBlock, AgentBlock, ToolBlock } from '@/types';
+import type { UserBlock, AgentBlock, ToolBlock, TeamMessageBlock } from '@/types';
 
 describe('ClaudeCodeParser', () => {
   let parser: ClaudeCodeParser;
@@ -397,6 +397,147 @@ describe('ClaudeCodeParser', () => {
         message: { role: 'system', content: 'System init' },
       });
       expect(parser.parseLine(line)).toBeNull();
+    });
+  });
+
+  describe('SendMessage / team message parsing', () => {
+    it('parses a SendMessage tool_use as TeamMessageBlock', () => {
+      const line = JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_send_1',
+              name: 'SendMessage',
+              input: {
+                type: 'message',
+                recipient: 'team-lead',
+                content: 'Task is complete',
+                summary: 'Task complete notification',
+              },
+            },
+          ],
+        },
+        timestamp: '2026-02-18T10:00:05Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('team-message');
+      const teamBlock = block as TeamMessageBlock;
+      expect(teamBlock.sender).toBe('agent');
+      expect(teamBlock.recipient).toBe('team-lead');
+      expect(teamBlock.content).toBe('Task is complete');
+      expect(teamBlock.messageType).toBe('message');
+    });
+
+    it('parses a broadcast SendMessage', () => {
+      const line = JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_send_2',
+              name: 'SendMessage',
+              input: {
+                type: 'broadcast',
+                content: 'Critical issue found',
+                summary: 'Critical blocking issue',
+              },
+            },
+          ],
+        },
+        timestamp: '2026-02-18T10:00:06Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('team-message');
+      const teamBlock = block as TeamMessageBlock;
+      expect(teamBlock.recipient).toBeUndefined();
+      expect(teamBlock.messageType).toBe('broadcast');
+    });
+
+    it('parses a shutdown_request SendMessage', () => {
+      const line = JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_send_3',
+              name: 'SendMessage',
+              input: {
+                type: 'shutdown_request',
+                recipient: 'researcher',
+                content: 'Task complete, wrapping up',
+              },
+            },
+          ],
+        },
+        timestamp: '2026-02-18T10:00:07Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('team-message');
+      const teamBlock = block as TeamMessageBlock;
+      expect(teamBlock.messageType).toBe('shutdown_request');
+      expect(teamBlock.recipient).toBe('researcher');
+    });
+
+    it('falls back to summary when content is absent', () => {
+      const line = JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_send_4',
+              name: 'SendMessage',
+              input: {
+                type: 'message',
+                recipient: 'tester',
+                summary: 'Quick status update',
+              },
+            },
+          ],
+        },
+        timestamp: '2026-02-18T10:00:08Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      const teamBlock = block as TeamMessageBlock;
+      expect(teamBlock.content).toBe('Quick status update');
+    });
+
+    it('does not treat non-SendMessage tool calls as team messages', () => {
+      const line = JSON.stringify({
+        type: 'assistant',
+        message: {
+          role: 'assistant',
+          content: [
+            {
+              type: 'tool_use',
+              id: 'toolu_read_1',
+              name: 'Read',
+              input: { file_path: '/test.txt' },
+            },
+          ],
+        },
+        timestamp: '2026-02-18T10:00:09Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('agent');
     });
   });
 });

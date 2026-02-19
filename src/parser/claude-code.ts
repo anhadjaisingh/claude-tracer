@@ -1,5 +1,12 @@
 import { BaseParser } from './base';
-import type { AnyBlock, ParsedSession, UserBlock, AgentBlock, ToolBlock } from '@/types';
+import type {
+  AnyBlock,
+  ParsedSession,
+  UserBlock,
+  AgentBlock,
+  ToolBlock,
+  TeamMessageBlock,
+} from '@/types';
 
 interface ClaudeCodeEntry {
   type: 'user' | 'assistant' | 'system' | 'progress' | 'file-history-snapshot' | 'queue-operation';
@@ -35,6 +42,15 @@ interface ContentBlock {
   tool_use_id?: string;
   content?: string;
   thinking?: string;
+}
+
+interface SendMessageInput {
+  type?: 'message' | 'broadcast' | 'shutdown_request' | 'shutdown_response';
+  recipient?: string;
+  content?: string;
+  summary?: string;
+  approve?: boolean;
+  request_id?: string;
 }
 
 /**
@@ -181,6 +197,8 @@ export class ClaudeCodeParser extends BaseParser {
     let thinking: string | undefined;
     const newToolCallIds: string[] = [];
 
+    let sendMessageBlock: TeamMessageBlock | null = null;
+
     if (Array.isArray(content)) {
       for (const block of content) {
         if (block.type === 'text' && block.text) {
@@ -190,7 +208,11 @@ export class ClaudeCodeParser extends BaseParser {
           thinking = block.thinking;
         }
         if (block.type === 'tool_use' && block.id && block.name) {
-          newToolCallIds.push(block.id);
+          if (block.name === 'SendMessage') {
+            sendMessageBlock = this.parseSendMessageBlock(block, timestamp);
+          } else {
+            newToolCallIds.push(block.id);
+          }
         }
       }
     } else if (typeof content === 'string') {
@@ -203,6 +225,11 @@ export class ClaudeCodeParser extends BaseParser {
 
     // Check if we should merge with an existing block by requestId
     const existing = requestId ? this.activeAgentBlocks.get(requestId) : undefined;
+
+    // If this entry is purely a SendMessage tool call, return the team message block
+    if (sendMessageBlock && !textContent && newToolCallIds.length === 0 && !existing) {
+      return sendMessageBlock;
+    }
     if (existing) {
       // Merge text content
       if (textContent) {
@@ -214,10 +241,10 @@ export class ClaudeCodeParser extends BaseParser {
         existing.thinking = thinking;
       }
 
-      // Register new tool calls and add their ids
+      // Register new tool calls and add their ids (skip SendMessage)
       if (Array.isArray(content)) {
         for (const block of content) {
-          if (block.type === 'tool_use' && block.id && block.name) {
+          if (block.type === 'tool_use' && block.id && block.name && block.name !== 'SendMessage') {
             this.pendingToolCalls.set(block.id, {
               name: block.name,
               input: block.input,
@@ -244,10 +271,10 @@ export class ClaudeCodeParser extends BaseParser {
     const blockId = this.generateBlockId();
     this.currentAgentBlockId = blockId;
 
-    // Register tool calls for this new block
+    // Register tool calls for this new block (skip SendMessage)
     if (Array.isArray(content)) {
       for (const block of content) {
-        if (block.type === 'tool_use' && block.id && block.name) {
+        if (block.type === 'tool_use' && block.id && block.name && block.name !== 'SendMessage') {
           this.pendingToolCalls.set(block.id, {
             name: block.name,
             input: block.input,
@@ -275,6 +302,26 @@ export class ClaudeCodeParser extends BaseParser {
     }
 
     return agentBlock;
+  }
+
+  private parseSendMessageBlock(block: ContentBlock, timestamp: number): TeamMessageBlock | null {
+    const input = block.input as SendMessageInput | undefined;
+    if (!input) return null;
+
+    const msgType = input.type ?? 'message';
+    const validTypes = ['message', 'broadcast', 'shutdown_request', 'shutdown_response'];
+    if (!validTypes.includes(msgType)) return null;
+
+    return {
+      id: this.generateBlockId(),
+      timestamp,
+      type: 'team-message',
+      parentId: this.currentAgentBlockId ?? undefined,
+      sender: 'agent',
+      recipient: input.recipient,
+      content: input.content ?? input.summary ?? '',
+      messageType: msgType,
+    };
   }
 
   private extractTextContent(content: ContentBlock[]): string {

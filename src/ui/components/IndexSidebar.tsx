@@ -1,13 +1,18 @@
 import { useTheme } from '../themes';
-import type { Chunk } from '@/types';
+import type { AnyBlock, Chunk } from '@/types';
+import { isTeamMessageBlock } from '@/types';
 
 interface Props {
   chunks: Chunk[];
+  blocks?: AnyBlock[];
   onChunkClick?: (chunkId: string) => void;
 }
 
-export function IndexSidebar({ chunks, onChunkClick }: Props) {
+export function IndexSidebar({ chunks, blocks = [], onChunkClick }: Props) {
   const theme = useTheme();
+
+  const hasTeamMessage = (chunk: Chunk): boolean =>
+    chunk.blockIds.some((id) => blocks.find((b) => b.id === id && isTeamMessageBlock(b)));
 
   return (
     <div className="h-full" style={{ color: theme.colors.indexText }}>
@@ -24,7 +29,7 @@ export function IndexSidebar({ chunks, onChunkClick }: Props) {
               onClick={() => onChunkClick?.(chunk.id)}
             >
               <div className="flex items-center gap-2 text-sm">
-                <span className="opacity-60">○</span>
+                <span className="opacity-60">{hasTeamMessage(chunk) ? 'team' : '\u25CB'}</span>
                 <span className="truncate">{chunk.label}</span>
               </div>
               <div className="text-xs opacity-50 ml-5">
