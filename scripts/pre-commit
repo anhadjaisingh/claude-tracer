@@ -10,4 +10,7 @@ npx eslint .
 echo "=== Pre-commit: tests ==="
 npx vitest run
 
+echo "=== Pre-commit: build ==="
+npm run build
+
 echo "=== All checks passed ==="
