@@ -87,12 +87,12 @@ export function ToolNode({ data }: NodeProps) {
         onExpandBlock(block);
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ background: theme.colors.accent }} />
+      <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
       <Handle
         type="target"
         position={Position.Right}
         id="agent-in"
-        style={{ background: theme.colors.accent }}
+        style={{ opacity: 0, width: 0, height: 0 }}
       />
 
       <div className="flex items-center gap-2 mb-1">
@@ -114,7 +114,7 @@ export function ToolNode({ data }: NodeProps) {
       <Handle
         type="source"
         position={Position.Bottom}
-        style={{ background: theme.colors.accent }}
+        style={{ opacity: 0, width: 0, height: 0 }}
       />
     </div>
   );

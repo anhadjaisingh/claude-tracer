@@ -38,7 +38,7 @@ export function TeamMessageNode({ data }: NodeProps) {
         onExpandBlock(block as unknown as AnyBlock);
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ background: '#8b5cf6' }} />
+      <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
 
       <div className="flex items-center gap-2 mb-1 text-xs opacity-70">
         <span className="font-semibold uppercase">Team Message</span>
@@ -47,7 +47,7 @@ export function TeamMessageNode({ data }: NodeProps) {
 
       <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>
 
-      <Handle type="source" position={Position.Bottom} style={{ background: '#8b5cf6' }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 0, height: 0 }} />
     </div>
   );
 }

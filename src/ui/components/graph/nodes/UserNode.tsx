@@ -31,7 +31,7 @@ export function UserNode({ data }: NodeProps) {
         onExpandBlock(block);
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ background: '#3b82f6' }} />
+      <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
 
       <div className="flex items-center gap-2 mb-1 text-xs opacity-60">
         <span className="font-semibold uppercase">User</span>
@@ -40,7 +40,7 @@ export function UserNode({ data }: NodeProps) {
 
       <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>
 
-      <Handle type="source" position={Position.Bottom} style={{ background: '#3b82f6' }} />
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 0, height: 0 }} />
     </div>
   );
 }

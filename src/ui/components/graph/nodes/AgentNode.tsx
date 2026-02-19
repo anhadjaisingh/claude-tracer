@@ -31,7 +31,7 @@ export function AgentNode({ data }: NodeProps) {
         onExpandBlock(block);
       }}
     >
-      <Handle type="target" position={Position.Top} style={{ background: theme.colors.accent }} />
+      <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
 
       <div className="flex items-center gap-2 mb-1 text-xs opacity-60">
         <span className="font-semibold uppercase">Agent</span>
@@ -61,13 +61,13 @@ export function AgentNode({ data }: NodeProps) {
       <Handle
         type="source"
         position={Position.Bottom}
-        style={{ background: theme.colors.accent }}
+        style={{ opacity: 0, width: 0, height: 0 }}
       />
       <Handle
         type="source"
         position={Position.Left}
         id="tool-out"
-        style={{ background: theme.colors.accent }}
+        style={{ opacity: 0, width: 0, height: 0 }}
       />
     </div>
   );

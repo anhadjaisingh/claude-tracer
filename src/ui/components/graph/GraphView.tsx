@@ -214,7 +214,7 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable
         maxZoom={2}
         defaultEdgeOptions={{
           type: 'bezier',
-          markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15 },
+          markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15, color: theme.colors.edgeColor },
           style: { stroke: theme.colors.edgeColor, strokeWidth: 1.5 },
         }}
         proOptions={{ hideAttribution: true }}
