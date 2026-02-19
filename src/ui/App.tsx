@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ThemeContext, getTheme } from './themes';
 import { Header } from './components/Header';
-import { TraceView } from './components/TraceView';
+import { GraphView } from './components/graph/GraphView';
 import { IndexSidebar } from './components/IndexSidebar';
 import { Footer } from './components/Footer';
 import { BlockOverlay } from './components/BlockOverlay';
@@ -60,8 +60,8 @@ export default function App() {
         />
 
         <div className="flex-1 flex overflow-hidden">
-          <main className="flex-1 overflow-auto p-4">
-            <TraceView blocks={blocks} onExpandBlock={overlay.open} />
+          <main className="flex-1 relative" style={{ minHeight: 0 }}>
+            <GraphView blocks={blocks} onExpandBlock={overlay.open} />
           </main>
 
           {/* Resize handle on left edge of sidebar */}
