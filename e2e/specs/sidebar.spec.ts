@@ -11,10 +11,9 @@ test.describe('Sidebar', () => {
     await expect(rfNodes.first()).toBeVisible({ timeout: 15_000 });
 
     // Wait for multiple nodes so layout is complete
-    await page.waitForFunction(
-      () => document.querySelectorAll('.react-flow__node').length >= 4,
-      { timeout: 15_000 },
-    );
+    await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length >= 4, {
+      timeout: 15_000,
+    });
 
     // Wait for chunks to appear in the sidebar INDEX
     const indexHeading = page.locator('text=INDEX');
@@ -79,10 +78,9 @@ test.describe('Sidebar', () => {
     await page.goto('/');
 
     // Wait for graph to fully render
-    await page.waitForFunction(
-      () => document.querySelectorAll('.react-flow__node').length >= 4,
-      { timeout: 15_000 },
-    );
+    await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length >= 4, {
+      timeout: 15_000,
+    });
 
     const indexHeading = page.locator('text=INDEX');
     await expect(indexHeading).toBeVisible({ timeout: 10_000 });
