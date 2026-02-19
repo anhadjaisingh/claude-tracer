@@ -47,7 +47,11 @@ export function TeamMessageNode({ data }: NodeProps) {
 
       <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>
 
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 0, height: 0 }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ opacity: 0, width: 0, height: 0 }}
+      />
     </div>
   );
 }

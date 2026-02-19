@@ -40,7 +40,7 @@
  *     If it fails, you have broken navigation.
  */
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -59,8 +59,8 @@ import '@xyflow/react/dist/style.css';
 import { useTheme } from '../../themes';
 import { buildGraph } from './buildGraph';
 import { layoutGraph } from './layout';
-import { UserNode, AgentNode, ToolNode, MetaNode, TeamMessageNode } from './nodes';
-import type { AnyBlock } from '@/types';
+import { UserNode, AgentNode, ToolNode, MetaNode, TeamMessageNode, ChunkGroupNode } from './nodes';
+import type { AnyBlock, Chunk } from '@/types';
 
 export type NavigateToBlockFn = (blockId: string) => void;
 
@@ -70,6 +70,7 @@ const nodeTypes = {
   tool: ToolNode,
   meta: MetaNode,
   'team-message': TeamMessageNode,
+  chunkGroup: ChunkGroupNode,
 };
 
 function minimapNodeColor(node: { type?: string }): string {
@@ -84,6 +85,8 @@ function minimapNodeColor(node: { type?: string }): string {
       return '#9ca3af';
     case 'team-message':
       return '#8b5cf6';
+    case 'chunkGroup':
+      return 'rgba(249,115,22,0.3)';
     default:
       return '#6b7280';
   }
@@ -91,6 +94,7 @@ function minimapNodeColor(node: { type?: string }): string {
 
 interface Props {
   blocks: AnyBlock[];
+  chunks?: Chunk[];
   onExpandBlock: (block: AnyBlock) => void;
   onNavigateReady?: (navigateToBlock: NavigateToBlockFn) => void;
   nodesDraggable?: boolean;
@@ -101,11 +105,20 @@ const NODE_CENTER_OFFSET_X = 160;
 /** Half the default node height, used to compute node center for setCenter(). */
 const NODE_CENTER_OFFSET_Y = 40;
 
-function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable = false }: Props) {
+function GraphViewInner({
+  blocks,
+  chunks,
+  onExpandBlock,
+  onNavigateReady,
+  nodesDraggable = false,
+}: Props) {
   const theme = useTheme();
   const { setCenter } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
+
+  // Track which groups are collapsed (start all expanded)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
   const initialViewportSet = useRef(false);
   const nodesRef = useRef<Node[]>([]);
@@ -120,19 +133,66 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable
     if (!onNavigateReady) return;
 
     const navigateToBlock: NavigateToBlockFn = (blockId: string) => {
-      const targetNode = nodesRef.current.find((n) => n.id === blockId);
+      // First try to find the block node directly
+      let targetNode = nodesRef.current.find((n) => n.id === blockId);
+
+      if (!targetNode || targetNode.hidden) {
+        // If the block is hidden (collapsed), find its parent group and expand it
+        const parentGroup = nodesRef.current.find(
+          (n) =>
+            n.type === 'chunkGroup' &&
+            nodesRef.current.some((child) => child.id === blockId && child.parentId === n.id),
+        );
+
+        if (parentGroup) {
+          // Expand the group, then navigate will happen on next render
+          setCollapsedGroups((prev) => {
+            const next = new Set(prev);
+            next.delete(parentGroup.id);
+            return next;
+          });
+          // Navigate to the group node for now; re-render will fix positions
+          targetNode = parentGroup;
+        }
+      }
+
       if (!targetNode) return;
 
-      // setCenter takes world coordinates of the point to center in the viewport
-      void setCenter(
-        targetNode.position.x + NODE_CENTER_OFFSET_X,
-        targetNode.position.y + NODE_CENTER_OFFSET_Y,
-        { zoom: 1, duration: 500 },
-      );
+      // For child nodes, compute world position (parent position + child relative position)
+      let worldX = targetNode.position.x;
+      let worldY = targetNode.position.y;
+
+      if (targetNode.parentId) {
+        const parentNode = nodesRef.current.find((n) => n.id === targetNode.parentId);
+        if (parentNode) {
+          worldX += parentNode.position.x;
+          worldY += parentNode.position.y;
+        }
+      }
+
+      void setCenter(worldX + NODE_CENTER_OFFSET_X, worldY + NODE_CENTER_OFFSET_Y, {
+        zoom: 1,
+        duration: 500,
+      });
     };
 
     onNavigateReady(navigateToBlock);
-  }, [onNavigateReady, setCenter]);
+  }, [onNavigateReady, setCenter, setCollapsedGroups]);
+
+  const handleToggleCollapse = useCallback((groupId: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) {
+        next.delete(groupId);
+      } else {
+        next.add(groupId);
+      }
+      return next;
+    });
+  }, []);
+
+  // Stable collapsed groups ref for buildGraph options
+  const collapsedGroupsRef = useMemo(() => collapsedGroups, [collapsedGroups]);
 
   useEffect(() => {
     if (blocks.length === 0) {
@@ -141,7 +201,13 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable
       return;
     }
 
-    const { nodes: rawNodes, edges: rawEdges } = buildGraph(blocks, onExpandBlock);
+    const hasChunks = chunks !== undefined && chunks.length > 0;
+
+    const { nodes: rawNodes, edges: rawEdges } = buildGraph(blocks, onExpandBlock, {
+      chunks: hasChunks ? chunks : undefined,
+      collapsedGroups: collapsedGroupsRef,
+      onToggleCollapse: hasChunks ? handleToggleCollapse : undefined,
+    });
 
     const result = layoutGraph(rawNodes, rawEdges);
     setNodes(result.nodes);
@@ -151,19 +217,28 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable
     if (!initialViewportSet.current && result.nodes.length > 0) {
       initialViewportSet.current = true;
 
-      // Find the first node in the blocks array (chronologically first)
       const firstNode = result.nodes[0];
-      // Center the viewport on this node with reasonable zoom
       void setCenter(
-        firstNode.position.x + NODE_CENTER_OFFSET_X, // half node width
-        firstNode.position.y + NODE_CENTER_OFFSET_Y,  // half node height
+        firstNode.position.x + NODE_CENTER_OFFSET_X,
+        firstNode.position.y + NODE_CENTER_OFFSET_Y,
         { zoom: 0.85, duration: 0 },
       );
     }
-  }, [blocks, onExpandBlock, setNodes, setEdges, setCenter]);
+  }, [
+    blocks,
+    chunks,
+    onExpandBlock,
+    setNodes,
+    setEdges,
+    setCenter,
+    collapsedGroupsRef,
+    handleToggleCollapse,
+  ]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
+      // Don't open overlay for group nodes
+      if (node.type === 'chunkGroup') return;
       const block = (node.data as { block: AnyBlock }).block;
       onExpandBlock(block);
     },
@@ -214,7 +289,12 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable
         maxZoom={2}
         defaultEdgeOptions={{
           type: 'bezier',
-          markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15, color: theme.colors.edgeColor },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 15,
+            height: 15,
+            color: theme.colors.edgeColor,
+          },
           style: { stroke: theme.colors.edgeColor, strokeWidth: 1.5 },
         }}
         proOptions={{ hideAttribution: true }}

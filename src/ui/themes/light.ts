@@ -18,5 +18,9 @@ export const lightTheme: Theme = {
     teamMessageText: '#312e81', // indigo-900
     teamMessageAccent: '#4f46e5', // indigo-600
     edgeColor: '#000000', // black
+    groupBg: 'rgba(37,99,235,0.04)', // blue tint
+    groupBorder: 'rgba(37,99,235,0.2)',
+    groupText: '#374151',
+    groupBadgeBg: 'rgba(37,99,235,0.1)',
   },
 };

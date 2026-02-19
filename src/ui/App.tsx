@@ -97,6 +97,7 @@ export default function App() {
             )}
             <GraphView
               blocks={blocks}
+              chunks={chunks}
               onExpandBlock={overlay.open}
               onNavigateReady={handleNavigateReady}
               nodesDraggable={nodesDraggable}
