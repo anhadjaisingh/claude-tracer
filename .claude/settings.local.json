@@ -5,6 +5,9 @@
   "permissions": {
     "allow": [
       "Skill(superpowers:*)",
+      "Edit",
+      "Write",
+      "NotebookEdit",
       "Bash(npm init*)",
       "Bash(npm install*)",
       "Bash(npm uninstall*)",
@@ -46,10 +49,25 @@
       "Bash(git fetch*)",
       "Bash(git rebase*)",
       "Bash(sleep*)",
+      "Bash(node *)",
+      "Bash(curl *)",
+      "Bash(open *)",
+      "Bash(tail *)",
+      "Bash(cat *)",
+      "Bash(cp *)",
+      "Bash(mv *)",
+      "Bash(rm *)",
+      "Bash(touch *)",
+      "Bash(which *)",
+      "Bash(concurrently*)",
       "WebFetch(domain:github.com)",
       "Bash(npm view:*)",
       "WebFetch(domain:eclipse.dev)",
-      "WebFetch(domain:reactflow.dev)"
+      "WebFetch(domain:reactflow.dev)",
+      "Bash(npm ls:*)",
+      "Bash(grep:*)",
+      "WebFetch(domain:gojs.net)",
+      "WebFetch(domain:www.npmjs.com)"
     ]
   }
 }
