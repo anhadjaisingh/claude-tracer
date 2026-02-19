@@ -9,9 +9,10 @@ import type { AnyBlock } from '@/types';
 
 interface Props {
   blocks: AnyBlock[];
+  onExpandBlock: (block: AnyBlock) => void;
 }
 
-export function TraceView({ blocks }: Props) {
+export function TraceView({ blocks, onExpandBlock }: Props) {
   const theme = useTheme();
   const [zoomLevel, setZoomLevel] = useState(1.0);
 
@@ -78,13 +79,13 @@ export function TraceView({ blocks }: Props) {
           blocks.map((block, index) => {
             const rendered = (() => {
               if (isUserBlock(block)) {
-                return <UserBlock key={block.id} block={block} />;
+                return <UserBlock key={block.id} block={block} onExpand={onExpandBlock} />;
               }
               if (isAgentBlock(block)) {
-                return <AgentBlock key={block.id} block={block} />;
+                return <AgentBlock key={block.id} block={block} onExpand={onExpandBlock} />;
               }
               if (isToolBlock(block)) {
-                return <ToolBlock key={block.id} block={block} />;
+                return <ToolBlock key={block.id} block={block} onExpand={onExpandBlock} />;
               }
               if (isTeamMessageBlock(block)) {
                 return <TeamMessageBlock key={block.id} block={block} />;

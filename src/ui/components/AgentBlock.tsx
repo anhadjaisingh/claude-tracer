@@ -1,18 +1,15 @@
-import { useState } from 'react';
 import { useTheme } from '../themes';
 import type { AgentBlock as AgentBlockType } from '@/types';
 
 interface Props {
   block: AgentBlockType;
+  onExpand: (block: AgentBlockType) => void;
 }
 
-export function AgentBlock({ block }: Props) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showThinking, setShowThinking] = useState(false);
+export function AgentBlock({ block, onExpand }: Props) {
   const theme = useTheme();
 
-  const preview =
-    block.content.length > 200 && !isExpanded ? block.content.slice(0, 200) + '...' : block.content;
+  const preview = block.content.length > 200 ? block.content.slice(0, 200) + '...' : block.content;
 
   return (
     <div id={`block-${block.id}`} className="flex justify-start mb-4">
@@ -23,7 +20,7 @@ export function AgentBlock({ block }: Props) {
           color: theme.colors.agentText,
         }}
         onClick={() => {
-          setIsExpanded(!isExpanded);
+          onExpand(block);
         }}
       >
         <div className="flex items-center gap-2 mb-2 text-xs opacity-60">
@@ -33,40 +30,12 @@ export function AgentBlock({ block }: Props) {
           {block.wallTimeMs && <span>{(block.wallTimeMs / 1000).toFixed(1)}s</span>}
         </div>
 
-        {block.thinking && (
-          <div className="mb-2">
-            <button
-              className="text-xs opacity-60 hover:opacity-100"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowThinking(!showThinking);
-              }}
-            >
-              {showThinking ? '▲ Hide thinking' : '▼ Show thinking'}
-            </button>
-            {showThinking && (
-              <div
-                className="mt-2 p-2 rounded text-xs opacity-80 whitespace-pre-wrap"
-                style={{ backgroundColor: 'rgba(0,0,0,0.2)' }}
-              >
-                {block.thinking}
-              </div>
-            )}
-          </div>
-        )}
+        {block.thinking && <div className="mb-2 text-xs opacity-60">Has thinking section</div>}
 
         <div className="whitespace-pre-wrap font-mono text-sm">{preview}</div>
 
         {block.content.length > 200 && (
-          <button
-            className="text-xs mt-2 opacity-60 hover:opacity-100"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsExpanded(!isExpanded);
-            }}
-          >
-            {isExpanded ? '▲ Collapse' : '▼ Expand'}
-          </button>
+          <div className="text-xs mt-2 opacity-60">Click to expand</div>
         )}
 
         {block.toolCalls.length > 0 && (
