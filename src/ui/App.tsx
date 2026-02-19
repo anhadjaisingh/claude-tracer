@@ -7,12 +7,19 @@ import { Footer } from './components/Footer';
 import { useSession } from './hooks/useSession';
 import { useSearch } from './hooks/useSearch';
 import { useSettings } from './hooks/useSettings';
+import { useResizable } from './hooks/useResizable';
 
 export default function App() {
   const { blocks, chunks, isConnected, scrollToBlock } = useSession();
   const search = useSearch(blocks);
   const { themeName, setThemeName } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const sidebar = useResizable({
+    minWidth: 200,
+    maxWidth: 600,
+    defaultWidth: 256,
+    storageKey: 'sidebar-width',
+  });
 
   const theme = getTheme(themeName);
 
@@ -26,6 +33,16 @@ export default function App() {
       scrollToBlock(search.currentBlockId);
     }
   }, [search.currentBlockId, scrollToBlock]);
+
+  const handleChunkClick = useCallback(
+    (chunkId: string) => {
+      const chunk = chunks.find((c) => c.id === chunkId);
+      if (chunk && chunk.blockIds.length > 0) {
+        scrollToBlock(chunk.blockIds[0]);
+      }
+    },
+    [chunks, scrollToBlock],
+  );
 
   return (
     <ThemeContext.Provider value={theme}>
@@ -44,8 +61,20 @@ export default function App() {
             <TraceView blocks={blocks} />
           </main>
 
-          <aside className="w-64 overflow-auto p-4 border-l border-white/20">
-            <IndexSidebar chunks={chunks} blocks={blocks} />
+          {/* Resize handle on left edge of sidebar */}
+          <div
+            className="w-1 cursor-col-resize hover:bg-white/30 transition-colors flex-shrink-0"
+            style={{
+              backgroundColor: sidebar.isResizing ? 'rgba(255,255,255,0.3)' : 'transparent',
+            }}
+            {...sidebar.handleProps}
+          />
+
+          <aside
+            className="overflow-auto p-4 border-l border-white/20 flex-shrink-0"
+            style={{ width: sidebar.width }}
+          >
+            <IndexSidebar chunks={chunks} onChunkClick={handleChunkClick} />
           </aside>
         </div>
 

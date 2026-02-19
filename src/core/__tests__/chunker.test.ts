@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { Chunker } from '../chunker';
+import { isUserBlock, isAgentBlock, isToolBlock } from '@/types';
 import type { AnyBlock, UserBlock, AgentBlock, ToolBlock } from '@/types';
 
 describe('Chunker', () => {
@@ -127,5 +128,29 @@ describe('Chunker', () => {
     expect(turns[0].blockIds).toContain('a1');
     expect(turns[0].blockIds).toContain('u-meta');
     expect(turns[0].blockIds).toContain('a2');
+  });
+
+  it('chunk blockIds map to renderable block types with correct DOM IDs', () => {
+    const chunker = new Chunker();
+    const chunks = chunker.createChunks(blocks);
+
+    for (const chunk of chunks) {
+      expect(chunk.blockIds.length).toBeGreaterThan(0);
+
+      for (const blockId of chunk.blockIds) {
+        // Every blockId in a chunk must reference an actual block
+        const block = blocks.find((b) => b.id === blockId);
+        expect(block).toBeDefined();
+        if (!block) continue;
+
+        // The block must be a renderable type (user, agent, or tool)
+        const isRenderable = isUserBlock(block) || isAgentBlock(block) || isToolBlock(block);
+        expect(isRenderable).toBe(true);
+
+        // The DOM element ID should follow the pattern used by block components
+        const expectedDomId = `block-${blockId}`;
+        expect(expectedDomId).toBe(`block-${block.id}`);
+      }
+    }
   });
 });

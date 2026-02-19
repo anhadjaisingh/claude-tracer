@@ -14,5 +14,8 @@ export const darkTheme: Theme = {
     headerBg: 'rgba(0,0,0,0.9)',
     headerText: '#f3f4f6',
     indexText: '#d1d5db', // grey-300
+    teamMessageBg: '#1e1b4b', // indigo-950
+    teamMessageText: '#c7d2fe', // indigo-200
+    teamMessageAccent: '#818cf8', // indigo-400
   },
 };
