@@ -17,5 +17,6 @@ export const lightTheme: Theme = {
     teamMessageBg: '#eef2ff', // indigo-50
     teamMessageText: '#312e81', // indigo-900
     teamMessageAccent: '#4f46e5', // indigo-600
+    edgeColor: '#000000', // black
   },
 };

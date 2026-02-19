@@ -15,6 +15,7 @@ export const claudeTheme = {
     teamMessageBg: '#2d1f4e', // deep purple
     teamMessageText: '#e0d4f5', // light lavender
     teamMessageAccent: '#7c3aed', // violet-600
+    edgeColor: '#000000', // black
   },
 };
 
