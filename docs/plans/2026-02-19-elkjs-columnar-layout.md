@@ -9,6 +9,7 @@
 **Tech Stack:** elkjs (bundled, ~1.6MB uncompressed — fine for local tool), React Flow v12, vitest, Playwright.
 
 **Essential docs to read before starting:**
+
 - `docs/ui-requirements.md` — authoritative UI/UX constraints
 - `docs/plans/2026-02-19-elkjs-columnar-layout-design.md` — approved design
 
@@ -17,6 +18,7 @@
 ### Task 1: Add `edgeColor` to Theme Type and All Themes
 
 **Files:**
+
 - Modify: `src/ui/themes/claude.ts:1-21`
 - Modify: `src/ui/themes/dark.ts:1-21`
 - Modify: `src/ui/themes/light.ts:1-21`
@@ -96,6 +98,7 @@ git commit -m "feat: add edgeColor to all themes"
 ### Task 2: Swap dagre for elkjs in package.json
 
 **Files:**
+
 - Modify: `package.json`
 
 **Step 1: Install elkjs and remove dagre**
@@ -127,6 +130,7 @@ git commit -m "chore: swap dagre for elkjs dependency"
 ### Task 3: Rewrite `layout.ts` with elkjs
 
 **Files:**
+
 - Rewrite: `src/ui/components/graph/layout.ts`
 - Create: `src/ui/components/graph/__tests__/layout.test.ts`
 
@@ -176,11 +180,7 @@ describe('getPartition', () => {
 
 describe('layoutGraph', () => {
   it('returns positioned nodes with valid coordinates', async () => {
-    const nodes = [
-      makeNode('u1', 'user'),
-      makeNode('a1', 'agent'),
-      makeNode('t1', 'tool'),
-    ];
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent'), makeNode('t1', 'tool')];
     const edges = [makeEdge('u1', 'a1'), makeEdge('a1', 't1')];
 
     const result = await layoutGraph(nodes, edges);
@@ -192,10 +192,7 @@ describe('layoutGraph', () => {
   });
 
   it('places user nodes to the right of agent nodes', async () => {
-    const nodes = [
-      makeNode('u1', 'user'),
-      makeNode('a1', 'agent'),
-    ];
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent')];
     const edges = [makeEdge('u1', 'a1')];
 
     const result = await layoutGraph(nodes, edges);
@@ -206,11 +203,7 @@ describe('layoutGraph', () => {
   });
 
   it('places agent nodes to the right of tool nodes', async () => {
-    const nodes = [
-      makeNode('u1', 'user'),
-      makeNode('a1', 'agent'),
-      makeNode('t1', 'tool'),
-    ];
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent'), makeNode('t1', 'tool')];
     const edges = [makeEdge('u1', 'a1'), makeEdge('a1', 't1')];
 
     const result = await layoutGraph(nodes, edges);
@@ -372,6 +365,7 @@ git commit -m "feat: replace dagre with elkjs partitioned layout"
 ### Task 4: Update `buildGraph.ts` — Uniform Edge Color, Remove `getEdgeStyle`
 
 **Files:**
+
 - Modify: `src/ui/components/graph/buildGraph.ts`
 - Create: `src/ui/components/graph/__tests__/buildGraph.test.ts`
 
@@ -465,22 +459,23 @@ In `src/ui/components/graph/buildGraph.ts`:
 2. Replace the `addEdge` function to remove all style/animated properties:
 
 ```typescript
-  function addEdge(source: string, target: string): void {
-    const edgeId = `${source}->${target}`;
-    if (edgeIds.has(edgeId)) return;
-    edgeIds.add(edgeId);
+function addEdge(source: string, target: string): void {
+  const edgeId = `${source}->${target}`;
+  if (edgeIds.has(edgeId)) return;
+  edgeIds.add(edgeId);
 
-    edges.push({
-      id: edgeId,
-      source,
-      target,
-    });
-  }
+  edges.push({
+    id: edgeId,
+    source,
+    target,
+  });
+}
 ```
 
 3. Update all `addEdge` call sites to remove the `sourceType`/`targetType` arguments. Every call becomes `addEdge(source, target)`.
 
 Specifically, update these sections:
+
 - Line 87: `addEdge(block.id, toolCallId, 'agent', 'tool')` → `addEdge(block.id, toolCallId)`
 - Line 103: `addEdge(block.parentId, block.id, getNodeType(parent), 'tool')` → `addEdge(block.parentId, block.id)`
 - Lines 122-131: All `addEdge(current.id, next.id, ...)` → `addEdge(current.id, next.id)`
@@ -507,6 +502,7 @@ git commit -m "feat: uniform edges, remove per-type edge styling"
 ### Task 5: Update `GraphView.tsx` — Async Layout + Initial Viewport
 
 **Files:**
+
 - Modify: `src/ui/components/graph/GraphView.tsx`
 
 This task has no unit test — it is React component wiring. E2E tests (Task 6) cover the behavior.
@@ -514,6 +510,7 @@ This task has no unit test — it is React component wiring. E2E tests (Task 6) 
 **Step 1: Rewrite GraphView.tsx**
 
 Key changes:
+
 1. `layoutGraph` is now async — use `useEffect` + `useState` instead of `useMemo`.
 2. Remove `fitView` prop.
 3. Use `useReactFlow().setViewport()` to position camera at the first node after layout.
@@ -689,6 +686,7 @@ export function GraphView(props: Props) {
 ```
 
 **Important notes for the implementer:**
+
 - `useReactFlow()` must be called inside a `<ReactFlowProvider>`. The current code does not use a provider because `fitView` is a prop. After this change, GraphView wraps its inner component with `<ReactFlowProvider>`.
 - Check if the parent component (`App.tsx`) already has a `<ReactFlowProvider>`. If so, don't double-wrap — just use `useReactFlow()` directly. If not, add the provider in `GraphView` as shown above.
 - The `initialViewportSet` ref prevents re-centering on every WebSocket update — only the first layout positions the viewport.
@@ -710,6 +708,7 @@ git commit -m "feat: async elkjs layout with initial viewport positioning"
 ### Task 6: E2E Tests — Viewport, Column Ordering, Edge Colors
 
 **Files:**
+
 - Create: `e2e/specs/graph-layout.spec.ts`
 - Modify: `e2e/fixtures/sessions/tool-calls.jsonl` (if needed — it already has user + agent + tool blocks)
 
@@ -748,10 +747,9 @@ test.describe('Graph layout', () => {
       timeout: 15_000,
     });
     // Actually wait for multiple nodes
-    await page.waitForFunction(
-      () => document.querySelectorAll('.react-flow__node').length >= 3,
-      { timeout: 15_000 },
-    );
+    await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length >= 3, {
+      timeout: 15_000,
+    });
 
     // Get positions of user and agent nodes via the DOM transform attribute
     const positions = await page.evaluate(() => {
@@ -848,6 +846,7 @@ Expected: All tests pass (existing smoke + sidebar + new graph-layout tests).
 Start the dev server: `npm run dev -- -f ./e2e/fixtures/sessions/tool-calls.jsonl`
 
 Verify:
+
 - Graph loads with the first user message visible near the top
 - User messages are in the rightmost column
 - Agent messages are one column to the left

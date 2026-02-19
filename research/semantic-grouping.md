@@ -59,6 +59,7 @@ for each consecutive pair of blocks (A, B):
 ```
 
 **Threshold selection:**
+
 - Under 30 seconds: likely still the same thought (reading output, thinking)
 - 30 seconds to 2 minutes: borderline -- user may be reviewing
 - 2 to 5 minutes: probable topic switch
@@ -68,14 +69,16 @@ for each consecutive pair of blocks (A, B):
 A reasonable default is 3-5 minutes, with a user-configurable slider.
 
 **Pros:**
+
 - Trivially simple to implement
 - Works for all session types regardless of content
 - Zero false positives for very long gaps (>30 min)
 
 **Cons:**
+
 - Short tasks that happen rapidly will be merged together
 - A user who pauses to read docs mid-task will trigger a false boundary
-- Does not capture *what* the group is about -- only *when* it started
+- Does not capture _what_ the group is about -- only _when_ it started
 
 **Recommendation:** Use as a supplementary signal combined with other heuristics,
 not as the sole grouping mechanism. Weight: medium.
@@ -86,15 +89,15 @@ not as the sole grouping mechanism. Weight: medium.
 
 **Patterns to detect:**
 
-| Pattern                              | Signal Strength | Example                              |
-|--------------------------------------|-----------------|--------------------------------------|
-| Imperative opener                    | Strong          | "Now let's...", "Next:", "Move on to" |
-| Question after long agent output     | Medium          | "Can you also...", "What about..."   |
-| Slash commands / skill invocations   | Strong          | `/commit`, `/review-pr`, `/init`     |
-| Pasted error / stack trace           | Medium          | Lines starting with `Error:`, `at `  |
-| File path mention (new context)      | Weak            | "Look at src/auth/..."               |
-| Explicit task statement              | Strong          | "Task: ...", "TODO: ..."             |
-| "Let's" / "Let me" starters         | Medium          | "Let's fix the tests"               |
+| Pattern                            | Signal Strength | Example                               |
+| ---------------------------------- | --------------- | ------------------------------------- |
+| Imperative opener                  | Strong          | "Now let's...", "Next:", "Move on to" |
+| Question after long agent output   | Medium          | "Can you also...", "What about..."    |
+| Slash commands / skill invocations | Strong          | `/commit`, `/review-pr`, `/init`      |
+| Pasted error / stack trace         | Medium          | Lines starting with `Error:`, `at `   |
+| File path mention (new context)    | Weak            | "Look at src/auth/..."                |
+| Explicit task statement            | Strong          | "Task: ...", "TODO: ..."              |
+| "Let's" / "Let me" starters        | Medium          | "Let's fix the tests"                 |
 
 **Implementation sketch:**
 
@@ -106,20 +109,22 @@ const NEW_TASK_PATTERNS = [
   /^task[:\s]/i,
   /^todo[:\s]/i,
   /^can\s+you\s+(also|now)\s/i,
-  /^<command-name>/,  // slash commands in JSONL
+  /^<command-name>/, // slash commands in JSONL
 ];
 
 function isNewTaskSignal(content: string): boolean {
-  return NEW_TASK_PATTERNS.some(p => p.test(content.trim()));
+  return NEW_TASK_PATTERNS.some((p) => p.test(content.trim()));
 }
 ```
 
 **Pros:**
+
 - Captures the user's intent directly
 - No latency or external dependencies
 - Slash commands are particularly reliable boundaries
 
 **Cons:**
+
 - Fragile -- depends on user writing style
 - Many users just type instructions without preamble
 - Regex patterns need ongoing tuning
@@ -133,16 +138,16 @@ explicit task statements are the most reliable subset. Weight: medium-high.
 
 **End-of-work-unit signals:**
 
-| Tool / Action                        | Boundary Type   | Rationale                            |
-|--------------------------------------|-----------------|--------------------------------------|
-| `Bash` with `git commit`             | End of unit     | Code committed = milestone           |
-| `Bash` with `git push`               | End of unit     | Work published                       |
-| `Bash` with `gh pr create`           | End of unit     | PR created = deliverable complete    |
-| `Bash` with `git checkout -b`        | Start of unit   | New branch = new feature             |
-| `Bash` with `npm test` / `pytest`    | End of sub-unit | Validation checkpoint                |
-| `TodoWrite`                          | Boundary        | Explicit task management             |
-| `Skill` (any)                        | Start of unit   | Skill invocation = structured action |
-| `Task` (sub-agent spawn)             | Sub-graph       | Parallel work unit                   |
+| Tool / Action                     | Boundary Type   | Rationale                            |
+| --------------------------------- | --------------- | ------------------------------------ |
+| `Bash` with `git commit`          | End of unit     | Code committed = milestone           |
+| `Bash` with `git push`            | End of unit     | Work published                       |
+| `Bash` with `gh pr create`        | End of unit     | PR created = deliverable complete    |
+| `Bash` with `git checkout -b`     | Start of unit   | New branch = new feature             |
+| `Bash` with `npm test` / `pytest` | End of sub-unit | Validation checkpoint                |
+| `TodoWrite`                       | Boundary        | Explicit task management             |
+| `Skill` (any)                     | Start of unit   | Skill invocation = structured action |
+| `Task` (sub-agent spawn)          | Sub-graph       | Parallel work unit                   |
 
 **Implementation sketch:**
 
@@ -163,11 +168,13 @@ function detectToolBoundary(block: ToolBlock): 'start' | 'end' | 'subgraph' | nu
 ```
 
 **Pros:**
+
 - Very high signal-to-noise ratio -- git commits really are milestones
 - Deterministic and content-agnostic
 - Sub-agent spawning maps perfectly to sub-graph boundaries
 
 **Cons:**
+
 - Only works when the agent uses these tools (not all sessions involve git)
 - Misses non-tool-mediated task switches
 - Over-segments if there are many small commits
@@ -193,6 +200,7 @@ explicit task transitions.
 ```
 
 **How it works:**
+
 - Compare `todos` snapshots between consecutive user entries
 - When a todo transitions from `in_progress` to `completed`, that is a boundary
 - When a new todo appears as `in_progress`, that starts a new group
@@ -203,17 +211,17 @@ explicit task transitions.
 ```typescript
 function detectTodoBoundary(
   prevTodos: Todo[] | undefined,
-  currTodos: Todo[] | undefined
+  currTodos: Todo[] | undefined,
 ): { boundary: boolean; label?: string } {
   if (!prevTodos || !currTodos) return { boundary: false };
 
-  const prevActive = prevTodos.find(t => t.status === 'in_progress');
-  const currActive = currTodos.find(t => t.status === 'in_progress');
+  const prevActive = prevTodos.find((t) => t.status === 'in_progress');
+  const currActive = currTodos.find((t) => t.status === 'in_progress');
 
   if (prevActive?.content !== currActive?.content) {
     return {
       boundary: true,
-      label: currActive?.content ?? currActive?.activeForm
+      label: currActive?.content ?? currActive?.activeForm,
     };
   }
   return { boundary: false };
@@ -221,11 +229,13 @@ function detectTodoBoundary(
 ```
 
 **Pros:**
+
 - Highest-confidence signal available -- the agent explicitly manages tasks
 - Provides natural group labels from the todo content
 - Captures the agent's own understanding of work boundaries
 
 **Cons:**
+
 - Not all sessions use todos (many simple sessions skip TodoWrite entirely)
 - Parser currently discards the `todos` field -- need to extract it
 - Todo snapshots are only on user entries, not on every block
@@ -248,11 +258,13 @@ function detectBranchSwitch(prevBranch: string, currBranch: string): boolean {
 ```
 
 **Pros:**
+
 - Branch names are excellent group labels ("feature/auth", "fix/ci-pipeline")
 - Branch switches are unambiguous boundaries
 - Data is already in every JSONL entry
 
 **Cons:**
+
 - Some workflows stay on a single branch
 - Quick branch checkout for investigation may create noise
 
@@ -265,11 +277,11 @@ Rather than relying on any single signal, combine them with weighted scores:
 
 ```typescript
 interface BoundaryScore {
-  timeGap: number;       // 0-1 normalized
-  userPattern: number;   // 0 or 1
-  toolBoundary: number;  // 0 or 1
-  todoChange: number;    // 0 or 1
-  branchSwitch: number;  // 0 or 1
+  timeGap: number; // 0-1 normalized
+  userPattern: number; // 0 or 1
+  toolBoundary: number; // 0 or 1
+  todoChange: number; // 0 or 1
+  branchSwitch: number; // 0 or 1
 }
 
 function computeBoundaryScore(score: BoundaryScore): number {
@@ -277,7 +289,7 @@ function computeBoundaryScore(score: BoundaryScore): number {
     score.timeGap * 0.15 +
     score.userPattern * 0.15 +
     score.toolBoundary * 0.25 +
-    score.todoChange * 0.30 +
+    score.todoChange * 0.3 +
     score.branchSwitch * 0.15
   );
 }
@@ -290,6 +302,7 @@ Individual high-confidence signals (todo change, git commit) can independently
 trigger a split even if other signals are absent.
 
 **Label generation priority:**
+
 1. Active todo content (if available)
 2. Git branch name (if changed)
 3. First user message content (truncated)
@@ -307,16 +320,17 @@ hierarchy efficiently.
 
 **Key patterns:**
 
-| Pattern                    | Description                                        | Applicable?  |
-|----------------------------|----------------------------------------------------|--------------|
-| Waterfall/timeline view    | Spans as horizontal bars, time on x-axis           | Partially    |
-| Collapsible span trees     | Click to expand/collapse child spans               | Yes, directly|
-| Service grouping           | Spans grouped by service name                      | Analogous    |
-| Depth-based collapsing     | Collapse all spans at depth > N                    | Yes          |
-| Critical path highlighting | Bold the slowest path through the trace            | Future       |
-| Mini-map navigation        | Gantt chart overview for navigating large traces    | Already have |
+| Pattern                    | Description                                      | Applicable?   |
+| -------------------------- | ------------------------------------------------ | ------------- |
+| Waterfall/timeline view    | Spans as horizontal bars, time on x-axis         | Partially     |
+| Collapsible span trees     | Click to expand/collapse child spans             | Yes, directly |
+| Service grouping           | Spans grouped by service name                    | Analogous     |
+| Depth-based collapsing     | Collapse all spans at depth > N                  | Yes           |
+| Critical path highlighting | Bold the slowest path through the trace          | Future        |
+| Mini-map navigation        | Gantt chart overview for navigating large traces | Already have  |
 
 **Honeycomb's approach is particularly relevant:**
+
 - Collapse a span and all children with left-arrow key
 - Expand with right-arrow key
 - "Collapse all at this level" for bulk operations
@@ -324,6 +338,7 @@ hierarchy efficiently.
 - Dependent count badges show how many children are hidden
 
 **What to adopt:**
+
 - Collapse/expand interaction model (click or keyboard)
 - Badge showing count of hidden children
 - "Zoom into" to focus on a sub-graph
@@ -339,12 +354,14 @@ related messages together:
 - **Message groups:** Consecutive messages from the same sender grouped visually
 
 **Applicable patterns:**
+
 - Visual grouping of consecutive blocks from the same "phase" (user typing, agent
   working, tool execution) -- already partly done with turn-level chunks
 - Collapsible thread-like views for tool call sequences
 - "N more messages" summary when collapsed, similar to Slack's "N replies"
 
 **What to adopt:**
+
 - "N blocks" badge on collapsed groups
 - Summary line when collapsed (first user message + outcome)
 
@@ -356,12 +373,14 @@ PRs. Each PR in the stack represents one coherent unit of work.
 **Applicable insight:** The same principle applies to session visualization. A long
 session is like a large diff -- it should be decomposed into "stacked" logical units
 where each unit is:
+
 - Self-contained (has a clear start and end)
 - Labeled with its purpose
 - Reviewable independently
 - Connected to the units before/after it
 
 **What to adopt:**
+
 - The mental model of "stacked work units" maps perfectly to our task-level chunks
 - Stack visualization (vertical list of groups with dependency arrows)
 - Each group shows: label, block count, duration, status (in-progress/completed)
@@ -369,12 +388,14 @@ where each unit is:
 ### 2.4 Graph Visualization with Collapsible Sub-Graphs
 
 **Cytoscape.js** has first-class support for compound (parent-child) nodes:
+
 - `cytoscape-expand-collapse` extension provides expand/collapse for compound nodes
 - Nodes specify `parent` in their data to become children
 - Collapsed nodes show a summary badge
 - Supports animated transitions between states
 
 **D3 Force Layouts:**
+
 - No built-in compound node support
 - Can be simulated with custom force functions that cluster related nodes
 - Hull/convex-hull rendering to visually group nodes without nesting
@@ -398,7 +419,7 @@ const nodes: Node[] = [
   // Parent group node
   {
     id: 'group-1',
-    type: 'group',     // Built-in type: no handles, acts as container
+    type: 'group', // Built-in type: no handles, acts as container
     data: { label: 'Implementing auth feature' },
     position: { x: 0, y: 0 },
     style: {
@@ -414,9 +435,9 @@ const nodes: Node[] = [
     id: 'block-1',
     type: 'user',
     data: { block: userBlock },
-    position: { x: 40, y: 50 },  // Relative to parent's top-left
-    parentId: 'group-1',          // <-- This makes it a child
-    extent: 'parent',             // Constrain drag to within parent
+    position: { x: 40, y: 50 }, // Relative to parent's top-left
+    parentId: 'group-1', // <-- This makes it a child
+    extent: 'parent', // Constrain drag to within parent
   },
   {
     id: 'block-2',
@@ -430,6 +451,7 @@ const nodes: Node[] = [
 ```
 
 **Key behaviors:**
+
 - Child nodes are positioned relative to their parent (0,0 = parent's top-left)
 - Moving the parent moves all children
 - `extent: 'parent'` prevents children from being dragged outside
@@ -465,6 +487,7 @@ const nodeTypes = {
 ```
 
 For our use case, we will likely want a **custom group node** that shows:
+
 - Group label (from todo content, branch name, or first user message)
 - Block count badge
 - Token count summary
@@ -480,25 +503,21 @@ to implement it. The official example uses the `hidden` property on nodes and ed
 
 ```typescript
 interface GroupState {
-  [groupId: string]: boolean;  // true = expanded
+  [groupId: string]: boolean; // true = expanded
 }
 
 function toggleGroup(
   groupId: string,
   groupState: GroupState,
   allNodes: Node[],
-  allEdges: Edge[]
+  allEdges: Edge[],
 ): { nodes: Node[]; edges: Edge[] } {
   const isExpanding = !groupState[groupId];
 
   // Find all child node IDs for this group
-  const childIds = new Set(
-    allNodes
-      .filter(n => n.parentId === groupId)
-      .map(n => n.id)
-  );
+  const childIds = new Set(allNodes.filter((n) => n.parentId === groupId).map((n) => n.id));
 
-  const updatedNodes = allNodes.map(node => {
+  const updatedNodes = allNodes.map((node) => {
     if (childIds.has(node.id)) {
       return { ...node, hidden: !isExpanding };
     }
@@ -521,7 +540,7 @@ function toggleGroup(
   });
 
   // Hide edges connected to hidden nodes
-  const updatedEdges = allEdges.map(edge => {
+  const updatedEdges = allEdges.map((edge) => {
     const sourceHidden = childIds.has(edge.source) && !isExpanding;
     const targetHidden = childIds.has(edge.target) && !isExpanding;
     return {
@@ -537,6 +556,7 @@ function toggleGroup(
 **Collapsed group node rendering:**
 
 When collapsed, the group node should render as a single compact node showing:
+
 - Label
 - "12 blocks" count
 - Summary of first/last action
@@ -561,9 +581,8 @@ const elk = new ELK();
 async function layoutWithGroups(
   groups: GroupData[],
   blocks: AnyBlock[],
-  edges: Edge[]
+  edges: Edge[],
 ): Promise<{ nodes: Node[]; edges: Edge[] }> {
-
   const elkGraph = {
     id: 'root',
     layoutOptions: {
@@ -572,31 +591,28 @@ async function layoutWithGroups(
       'elk.spacing.nodeNode': '50',
       'elk.layered.spacing.nodeNodeBetweenLayers': '80',
     },
-    children: groups.map(group => ({
+    children: groups.map((group) => ({
       id: group.id,
       // ELK compound node -- contains children
       layoutOptions: {
         'elk.padding': '[top=40,left=12,bottom=12,right=12]',
       },
-      children: group.blockIds.map(blockId => ({
+      children: group.blockIds.map((blockId) => ({
         id: blockId,
         width: 320,
         height: estimateBlockHeight(blockId),
       })),
       edges: edges
-        .filter(e =>
-          group.blockIds.includes(e.source) &&
-          group.blockIds.includes(e.target)
-        )
-        .map(e => ({
+        .filter((e) => group.blockIds.includes(e.source) && group.blockIds.includes(e.target))
+        .map((e) => ({
           id: e.id,
           sources: [e.source],
           targets: [e.target],
         })),
     })),
     edges: edges
-      .filter(e => !sameGroup(e.source, e.target, groups))
-      .map(e => ({
+      .filter((e) => !sameGroup(e.source, e.target, groups))
+      .map((e) => ({
         id: e.id,
         sources: [e.source],
         targets: [e.target],
@@ -615,7 +631,7 @@ async function layoutWithGroups(
       type: 'taskGroup',
       position: { x: elkGroup.x ?? 0, y: elkGroup.y ?? 0 },
       style: { width: elkGroup.width, height: elkGroup.height },
-      data: { label: groups.find(g => g.id === elkGroup.id)?.label },
+      data: { label: groups.find((g) => g.id === elkGroup.id)?.label },
     });
 
     // Child nodes (positioned relative to parent)
@@ -637,15 +653,15 @@ async function layoutWithGroups(
 
 **ELK.js vs dagre comparison:**
 
-| Feature                    | dagre         | ELK.js                    |
-|----------------------------|---------------|---------------------------|
-| Compound/nested nodes      | No            | Yes (native)              |
-| Layout algorithms          | 1 (layered)   | 10+ (layered, force, etc) |
-| Configuration options      | Minimal       | Extensive                 |
-| Bundle size                | ~30KB         | ~140KB (bundled)          |
-| Async layout               | No            | Yes (Web Worker support)  |
-| Layout speed (1K nodes)    | ~50ms         | ~100ms                    |
-| Layout speed (10K nodes)   | ~500ms        | ~1-2s                     |
+| Feature                  | dagre       | ELK.js                    |
+| ------------------------ | ----------- | ------------------------- |
+| Compound/nested nodes    | No          | Yes (native)              |
+| Layout algorithms        | 1 (layered) | 10+ (layered, force, etc) |
+| Configuration options    | Minimal     | Extensive                 |
+| Bundle size              | ~30KB       | ~140KB (bundled)          |
+| Async layout             | No          | Yes (Web Worker support)  |
+| Layout speed (1K nodes)  | ~50ms       | ~100ms                    |
+| Layout speed (10K nodes) | ~500ms      | ~1-2s                     |
 
 **Migration path:** We can keep dagre as the default for flat views and use ELK.js
 only when grouping is enabled, lazy-loading the ELK.js bundle.
@@ -661,28 +677,29 @@ DOM). This provides good performance even with thousands of nodes. Key settings:
 <ReactFlow
   nodes={nodes}
   edges={edges}
-  onlyRenderVisibleElements  // Enable virtualization
+  onlyRenderVisibleElements // Enable virtualization
   // ...
 />
 ```
 
 **Performance with grouping:**
 
-| Scenario                        | Nodes in DOM | Layout Time | Interactive? |
-|---------------------------------|--------------|-------------|--------------|
-| 100 blocks, no grouping         | ~100         | <50ms       | Smooth       |
-| 1K blocks, no grouping          | ~200*        | ~200ms      | Smooth       |
-| 1K blocks, grouped (20 groups)  | ~40*         | ~150ms      | Smooth       |
-| 10K blocks, no grouping         | ~300*        | ~2s         | Acceptable   |
-| 10K blocks, grouped (100 groups)| ~100*        | ~500ms      | Smooth       |
+| Scenario                         | Nodes in DOM | Layout Time | Interactive? |
+| -------------------------------- | ------------ | ----------- | ------------ |
+| 100 blocks, no grouping          | ~100         | <50ms       | Smooth       |
+| 1K blocks, no grouping           | ~200\*       | ~200ms      | Smooth       |
+| 1K blocks, grouped (20 groups)   | ~40\*        | ~150ms      | Smooth       |
+| 10K blocks, no grouping          | ~300\*       | ~2s         | Acceptable   |
+| 10K blocks, grouped (100 groups) | ~100\*       | ~500ms      | Smooth       |
 
-*With virtualization, only visible nodes are rendered.
+\*With virtualization, only visible nodes are rendered.
 
-**Key insight:** Grouping actually *improves* performance because collapsed groups
+**Key insight:** Grouping actually _improves_ performance because collapsed groups
 reduce the total node count. A session with 10K blocks collapsed into 100 groups
 renders only ~100 nodes initially.
 
 **Optimization strategies:**
+
 1. Start collapsed -- render all groups collapsed, expand on click
 2. Use `React.memo` on custom group and block node components
 3. Memoize `style` objects and `data` props to prevent unnecessary re-renders
@@ -695,11 +712,13 @@ To support the granularity control described in `docs/ui-requirements.md`, imple
 two rendering modes that share the same data model:
 
 **Overview Mode (default for large sessions):**
+
 - Render one node per group (task-level chunk)
 - Edges between groups based on sequential order
 - Click a group to enter Detail Mode for that group
 
 **Detail Mode (default for small sessions, or after drill-down):**
+
 - Render all blocks within a single group (or all blocks if ungrouped)
 - Full DAG visualization with tool call edges
 - "Back to overview" button to return
@@ -738,12 +757,12 @@ Label:
 
 **Implementation options:**
 
-| Option               | Latency        | Quality    | Dependency             |
-|----------------------|----------------|------------|------------------------|
-| Claude API           | 200-500ms/group| Excellent  | API key, network       |
-| Ollama (local)       | 500ms-2s/group | Good       | Ollama running locally |
-| Transformers.js      | 2-5s/group     | Medium     | Large model download   |
-| Pattern matching     | <1ms/group     | Fair       | None                   |
+| Option           | Latency         | Quality   | Dependency             |
+| ---------------- | --------------- | --------- | ---------------------- |
+| Claude API       | 200-500ms/group | Excellent | API key, network       |
+| Ollama (local)   | 500ms-2s/group  | Good      | Ollama running locally |
+| Transformers.js  | 2-5s/group      | Medium    | Large model download   |
+| Pattern matching | <1ms/group      | Fair      | None                   |
 
 **Recommended approach:** Generate labels asynchronously after initial render.
 Show heuristic labels immediately (from todo content or first user message), then
@@ -795,6 +814,7 @@ Return JSON: { "tasks": [{ "startIndex": 0, "label": "..." }, ...] }
 This is feasible with Claude (200K context) but expensive and slow (5-15 seconds).
 
 **Mitigation strategies:**
+
 1. Summarize blocks before sending (tool name + first line only)
 2. Use vector search to identify candidate boundaries, then have the LLM confirm
 3. Process in chunks of 100 blocks with sliding window overlap
@@ -814,12 +834,14 @@ On-demand (user action):  "Re-analyze grouping" button triggers
 ```
 
 **UI indicators:**
+
 - Shimmer/skeleton on group labels while LLM is generating
 - "AI-generated" badge on LLM labels (distinguishable from heuristic labels)
 - "Improve labels" button in settings or toolbar
 - Loading spinner on individual groups being re-analyzed
 
 **Latency management:**
+
 - All LLM calls are non-blocking -- UI is usable immediately with heuristic groups
 - Labels stream in as they are generated (one group at a time)
 - Results cached in localStorage keyed by session file hash
@@ -847,30 +869,33 @@ from one group to another:
 
 ```typescript
 // On node drag stop, check if it's over a different group
-const onNodeDragStop: NodeMouseHandler = useCallback((_event, node) => {
-  if (!node.parentId) return;
+const onNodeDragStop: NodeMouseHandler = useCallback(
+  (_event, node) => {
+    if (!node.parentId) return;
 
-  // Find which group node the dragged node is now over
-  const groupNodes = nodes.filter(n => n.type === 'taskGroup');
-  const targetGroup = groupNodes.find(g =>
-    isOverlapping(node.position, g.position, g.style)
-  );
+    // Find which group node the dragged node is now over
+    const groupNodes = nodes.filter((n) => n.type === 'taskGroup');
+    const targetGroup = groupNodes.find((g) => isOverlapping(node.position, g.position, g.style));
 
-  if (targetGroup && targetGroup.id !== node.parentId) {
-    // Move node to new group
-    setNodes(prev => prev.map(n =>
-      n.id === node.id ? { ...n, parentId: targetGroup.id } : n
-    ));
-  }
-}, [nodes, setNodes]);
+    if (targetGroup && targetGroup.id !== node.parentId) {
+      // Move node to new group
+      setNodes((prev) =>
+        prev.map((n) => (n.id === node.id ? { ...n, parentId: targetGroup.id } : n)),
+      );
+    }
+  },
+  [nodes, setNodes],
+);
 ```
 
 **Pros:**
+
 - Gives users full control over grouping
 - Handles edge cases that heuristics miss
 - Familiar interaction pattern (drag-and-drop)
 
 **Cons:**
+
 - Significant implementation effort
 - Need to persist manual overrides
 - Re-layout required on every group change
@@ -879,6 +904,7 @@ const onNodeDragStop: NodeMouseHandler = useCallback((_event, node) => {
 ### 5.3 Split and Merge Groups
 
 Additional manual operations:
+
 - **Split:** Click a block within a group > "Split group here" -- divides the group
   at that block into two groups
 - **Merge:** Select two adjacent groups > "Merge groups"
@@ -917,6 +943,7 @@ individual block reassignments.
 ### Phase 1: Heuristic Grouping + Simple Collapse (3-5 days)
 
 **What to build:**
+
 - Extend `Chunker` to produce task-level chunks using the composite heuristic
   scoring system (Section 1.6)
 - Extract `todos` field from JSONL parser for todo-based boundaries
@@ -928,6 +955,7 @@ individual block reassignments.
 - Sidebar shows task-chunk list instead of turn-level list
 
 **What NOT to build yet:**
+
 - ELK.js layout (keep dagre for now, render overview as flat graph)
 - Nested sub-graphs (use view-switching instead)
 - Manual grouping
@@ -941,7 +969,7 @@ individual block reassignments.
 // Extend Chunk type
 export interface Chunk {
   id: string;
-  level: ChunkLevel;  // 'theme' | 'task' | 'turn'
+  level: ChunkLevel; // 'theme' | 'task' | 'turn'
   label: string;
   blockIds: string[];
   childChunkIds: string[];
@@ -950,8 +978,8 @@ export interface Chunk {
   totalTokensOut: number;
   totalWallTimeMs: number;
   // NEW fields:
-  boundarySignals: BoundarySignal[];  // What triggered this boundary
-  collapsed: boolean;                  // UI state
+  boundarySignals: BoundarySignal[]; // What triggered this boundary
+  collapsed: boolean; // UI state
   startTimestamp: number;
   endTimestamp: number;
 }
@@ -970,6 +998,7 @@ type BoundarySignal =
 ### Phase 2: React Flow Sub-Graphs + ELK.js (5-7 days)
 
 **What to build:**
+
 - Migrate layout engine from dagre to ELK.js (with dagre as fallback)
 - Implement proper nested sub-graph rendering with `parentId`
 - Custom `TaskGroupNode` component with label, block count, duration
@@ -982,6 +1011,7 @@ type BoundarySignal =
 ### Phase 3: LLM-Assisted Labels (2-3 days)
 
 **What to build:**
+
 - Server-side endpoint for label generation
 - Support Ollama (local) and Claude API as backends
 - Progressive label loading (heuristic first, LLM labels replace async)
@@ -993,6 +1023,7 @@ type BoundarySignal =
 ### Phase 4: Manual Grouping (3-5 days)
 
 **What to build:**
+
 - Selection-based grouping (shift+click, then "Group")
 - Drag blocks between groups
 - Split/merge group operations
@@ -1004,6 +1035,7 @@ type BoundarySignal =
 ### Phase 5: LLM Boundary Detection (2-3 days, experimental)
 
 **What to build:**
+
 - "Re-analyze session" button that sends summarized blocks to LLM
 - LLM suggests boundary revisions
 - User reviews and accepts/rejects suggestions
@@ -1015,15 +1047,15 @@ type BoundarySignal =
 
 ## Appendix A: Summary of Signals and Weights
 
-| Signal              | Weight | Confidence | Available In       | Implementation Effort |
-|---------------------|--------|------------|--------------------|-----------------------|
-| Todo changes        | 0.30   | Very High  | `todos` field      | Low (parser change)   |
-| Git commit/push     | 0.25   | High       | Tool call content  | Low (regex)           |
-| Branch switch       | 0.15   | High       | `gitBranch` field  | Low (field compare)   |
-| User message pattern| 0.15   | Medium     | User block content | Low (regex)           |
-| Time gap            | 0.15   | Medium     | Timestamps         | Trivial               |
-| Task tool spawn     | N/A    | Definitive | Tool call name     | Low                   |
-| PR creation         | N/A    | Definitive | Tool call content  | Low (regex)           |
+| Signal               | Weight | Confidence | Available In       | Implementation Effort |
+| -------------------- | ------ | ---------- | ------------------ | --------------------- |
+| Todo changes         | 0.30   | Very High  | `todos` field      | Low (parser change)   |
+| Git commit/push      | 0.25   | High       | Tool call content  | Low (regex)           |
+| Branch switch        | 0.15   | High       | `gitBranch` field  | Low (field compare)   |
+| User message pattern | 0.15   | Medium     | User block content | Low (regex)           |
+| Time gap             | 0.15   | Medium     | Timestamps         | Trivial               |
+| Task tool spawn      | N/A    | Definitive | Tool call name     | Low                   |
+| PR creation          | N/A    | Definitive | Tool call content  | Low (regex)           |
 
 ## Appendix B: React Flow API Quick Reference
 
@@ -1067,7 +1099,7 @@ const elkOptions = {
   'elk.spacing.nodeNode': '50',
   'elk.layered.spacing.nodeNodeBetweenLayers': '80',
   'elk.layered.crossingMinimization.strategy': 'LAYER_SWEEP',
-  'elk.hierarchyHandling': 'INCLUDE_CHILDREN',  // Key: layout children too
+  'elk.hierarchyHandling': 'INCLUDE_CHILDREN', // Key: layout children too
   'elk.padding': '[top=40,left=12,bottom=12,right=12]',
 };
 ```

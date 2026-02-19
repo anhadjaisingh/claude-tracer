@@ -93,10 +93,10 @@ Add `edgeColor` to the theme type:
 | `src/ui/components/graph/layout.ts`     | Rewrite: dagre → elkjs with partitioning                    |
 | `src/ui/components/graph/buildGraph.ts` | Remove `getEdgeStyle()`, uniform edge color, add partitions |
 | `src/ui/components/graph/GraphView.tsx` | Async layout, replace `fitView` with `setViewport`          |
-| `src/ui/themes/types.ts`               | Add `edgeColor`                                             |
-| `src/ui/themes/claude.ts`              | Add `edgeColor: '#000000'`                                  |
-| `src/ui/themes/dark.ts`                | Add `edgeColor: '#9ca3af'`                                  |
-| `src/ui/themes/light.ts`               | Add `edgeColor: '#000000'`                                  |
+| `src/ui/themes/types.ts`                | Add `edgeColor`                                             |
+| `src/ui/themes/claude.ts`               | Add `edgeColor: '#000000'`                                  |
+| `src/ui/themes/dark.ts`                 | Add `edgeColor: '#9ca3af'`                                  |
+| `src/ui/themes/light.ts`                | Add `edgeColor: '#000000'`                                  |
 
 No new files. No changes to parser, server, types, or core.
 

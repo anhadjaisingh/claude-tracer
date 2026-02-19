@@ -39,11 +39,7 @@ describe('getPartition', () => {
 
 describe('layoutGraph', () => {
   it('returns positioned nodes with valid coordinates', async () => {
-    const nodes = [
-      makeNode('u1', 'user'),
-      makeNode('a1', 'agent'),
-      makeNode('t1', 'tool'),
-    ];
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent'), makeNode('t1', 'tool')];
     const edges = [makeEdge('u1', 'a1'), makeEdge('a1', 't1')];
 
     const result = await layoutGraph(nodes, edges);
@@ -55,10 +51,7 @@ describe('layoutGraph', () => {
   });
 
   it('places user nodes to the right of agent nodes', async () => {
-    const nodes = [
-      makeNode('u1', 'user'),
-      makeNode('a1', 'agent'),
-    ];
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent')];
     const edges = [makeEdge('u1', 'a1')];
 
     const result = await layoutGraph(nodes, edges);
@@ -72,11 +65,7 @@ describe('layoutGraph', () => {
   });
 
   it('places agent nodes to the right of tool nodes', async () => {
-    const nodes = [
-      makeNode('u1', 'user'),
-      makeNode('a1', 'agent'),
-      makeNode('t1', 'tool'),
-    ];
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent'), makeNode('t1', 'tool')];
     const edges = [makeEdge('u1', 'a1'), makeEdge('a1', 't1')];
 
     const result = await layoutGraph(nodes, edges);
