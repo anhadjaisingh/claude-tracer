@@ -27,10 +27,9 @@ test.describe('Graph layout', () => {
     await page.goto('/');
 
     // Wait for multiple nodes to render
-    await page.waitForFunction(
-      () => document.querySelectorAll('.react-flow__node').length >= 3,
-      { timeout: 15_000 },
-    );
+    await page.waitForFunction(() => document.querySelectorAll('.react-flow__node').length >= 3, {
+      timeout: 15_000,
+    });
 
     // Get positions of user and agent nodes via the DOM transform attribute
     const positions = await page.evaluate(() => {
