@@ -103,6 +103,7 @@ When starting a new session or spawning a new agent, **always read these docs** 
 
 - **`docs/team-setup.md`** — Team structure, agent roles (including PR Shepherd), file ownership, coordination protocol, spawning instructions.
 - **`docs/agent-isolation.md`** — Git worktrees, port isolation, how agents avoid stepping on each other.
+- **`docs/ui-requirements.md`** — UI/UX requirements and constraints. **Any agent making UI changes must read this first** and ensure their work conforms. Conflicts must be surfaced to TL/human, never silently broken.
 - **`docs/plans/`** — Design docs and implementation plans for current/upcoming work.
 
 ## Port Allocation
