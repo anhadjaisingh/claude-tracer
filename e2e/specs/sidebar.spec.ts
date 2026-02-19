@@ -1,12 +1,20 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Sidebar', () => {
-  test('clicking a chunk in the sidebar scrolls the target block into view', async ({ page }) => {
+  test('clicking a chunk in the sidebar pans the React Flow viewport to show that chunk', async ({
+    page,
+  }) => {
     await page.goto('/');
 
-    // Wait for blocks to be rendered from the session fixture
-    const userBlock = page.locator('text=user').first();
-    await expect(userBlock).toBeVisible({ timeout: 10_000 });
+    // Wait for React Flow nodes to render (the graph has loaded and laid out)
+    const rfNodes = page.locator('.react-flow__node');
+    await expect(rfNodes.first()).toBeVisible({ timeout: 15_000 });
+
+    // Wait for multiple nodes so layout is complete
+    await page.waitForFunction(
+      () => document.querySelectorAll('.react-flow__node').length >= 4,
+      { timeout: 15_000 },
+    );
 
     // Wait for chunks to appear in the sidebar INDEX
     const indexHeading = page.locator('text=INDEX');
@@ -15,39 +23,94 @@ test.describe('Sidebar', () => {
     // Find the sidebar chunk list items
     const chunkItems = page.locator('aside li');
     const chunkCount = await chunkItems.count();
-    expect(chunkCount).toBeGreaterThan(0);
+    expect(chunkCount).toBeGreaterThanOrEqual(3);
 
-    // Click the last chunk to ensure we need to scroll
+    // Record the current viewport transform before clicking
+    const viewportBefore = await page.evaluate(() => {
+      const viewport = document.querySelector('.react-flow__viewport');
+      return viewport ? (viewport as HTMLElement).style.transform : '';
+    });
+
+    // Click the LAST chunk (which should be at the bottom of the graph,
+    // requiring a viewport pan to reach it)
     const lastChunk = chunkItems.last();
     await lastChunk.click();
 
-    // After clicking, the first block of that chunk should be visible in the viewport.
-    // Give the smooth scroll animation time to complete.
-    await page.waitForTimeout(1000);
+    // Wait for the smooth pan animation to complete (duration is 500ms)
+    await page.waitForTimeout(800);
 
-    // Verify that at least one block element is within the main scrollable area's visible viewport.
+    // Record the viewport transform after clicking
+    const viewportAfter = await page.evaluate(() => {
+      const viewport = document.querySelector('.react-flow__viewport');
+      return viewport ? (viewport as HTMLElement).style.transform : '';
+    });
+
+    // The viewport transform MUST have changed -- if it didn't, navigation is broken.
+    // This is the key assertion that catches the recurring bug.
+    expect(viewportAfter).not.toBe(viewportBefore);
+
+    // Additionally verify that at least one React Flow node is visible in the
+    // main area after navigation (sanity check that we didn't pan to empty space)
     const mainArea = page.locator('main');
     const mainBox = await mainArea.boundingBox();
     expect(mainBox).toBeTruthy();
 
-    // Get all block elements (they have IDs starting with "block-")
-    const blockElements = page.locator('[id^="block-"]');
-    const blockCount = await blockElements.count();
-    expect(blockCount).toBeGreaterThan(0);
-
-    // At least one block should be visible in the main area after the scroll
-    let anyBlockVisible = false;
-    for (let i = 0; i < blockCount; i++) {
-      const box = await blockElements.nth(i).boundingBox();
+    const allNodes = page.locator('.react-flow__node');
+    const nodeCount = await allNodes.count();
+    let anyNodeVisible = false;
+    for (let i = 0; i < nodeCount; i++) {
+      const box = await allNodes.nth(i).boundingBox();
       if (box && mainBox) {
-        const isInView = box.y + box.height > mainBox.y && box.y < mainBox.y + mainBox.height;
+        const isInView =
+          box.y + box.height > mainBox.y &&
+          box.y < mainBox.y + mainBox.height &&
+          box.x + box.width > mainBox.x &&
+          box.x < mainBox.x + mainBox.width;
         if (isInView) {
-          anyBlockVisible = true;
+          anyNodeVisible = true;
           break;
         }
       }
     }
-    expect(anyBlockVisible).toBe(true);
+    expect(anyNodeVisible).toBe(true);
+  });
+
+  test('clicking different chunks pans to different viewport positions', async ({ page }) => {
+    await page.goto('/');
+
+    // Wait for graph to fully render
+    await page.waitForFunction(
+      () => document.querySelectorAll('.react-flow__node').length >= 4,
+      { timeout: 15_000 },
+    );
+
+    const indexHeading = page.locator('text=INDEX');
+    await expect(indexHeading).toBeVisible({ timeout: 10_000 });
+
+    const chunkItems = page.locator('aside li');
+    const chunkCount = await chunkItems.count();
+    expect(chunkCount).toBeGreaterThanOrEqual(2);
+
+    // Click the first chunk
+    await chunkItems.first().click();
+    await page.waitForTimeout(800);
+
+    const viewportAfterFirst = await page.evaluate(() => {
+      const viewport = document.querySelector('.react-flow__viewport');
+      return viewport ? (viewport as HTMLElement).style.transform : '';
+    });
+
+    // Click the last chunk
+    await chunkItems.last().click();
+    await page.waitForTimeout(800);
+
+    const viewportAfterLast = await page.evaluate(() => {
+      const viewport = document.querySelector('.react-flow__viewport');
+      return viewport ? (viewport as HTMLElement).style.transform : '';
+    });
+
+    // Clicking different chunks must result in different viewport positions
+    expect(viewportAfterFirst).not.toBe(viewportAfterLast);
   });
 
   test('sidebar has a resize handle', async ({ page }) => {

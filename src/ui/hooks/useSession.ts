@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import type { AnyBlock, Chunk } from '@/types';
 
 interface WsMessage {
@@ -63,17 +63,9 @@ export function useSession() {
     };
   }, []);
 
-  const scrollToBlock = useCallback((blockId: string) => {
-    const element = document.getElementById(`block-${blockId}`);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, []);
-
   return {
     blocks,
     chunks,
     isConnected,
-    scrollToBlock,
   };
 }

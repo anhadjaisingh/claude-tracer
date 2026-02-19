@@ -1,7 +1,8 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { ThemeContext, getTheme } from './themes';
 import { Header } from './components/Header';
 import { GraphView } from './components/graph/GraphView';
+import type { NavigateToBlockFn } from './components/graph/GraphView';
 import { IndexSidebar } from './components/IndexSidebar';
 import { Footer } from './components/Footer';
 import { BlockOverlay } from './components/BlockOverlay';
@@ -12,7 +13,7 @@ import { useOverlay } from './hooks/useOverlay';
 import { useResizable } from './hooks/useResizable';
 
 export default function App() {
-  const { blocks, chunks, isConnected, scrollToBlock } = useSession();
+  const { blocks, chunks, isConnected } = useSession();
   const search = useHybridSearch(blocks);
   const { themeName, setThemeName } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -26,25 +27,34 @@ export default function App() {
 
   const theme = getTheme(themeName);
 
+  // Store the navigateToBlock callback from GraphView.
+  // This ref is set by GraphView's onNavigateReady prop, giving us access to
+  // React Flow's setCenter() without needing to be inside ReactFlowProvider.
+  const navigateToBlockRef = useRef<NavigateToBlockFn | null>(null);
+
+  const handleNavigateReady = useCallback((fn: NavigateToBlockFn) => {
+    navigateToBlockRef.current = fn;
+  }, []);
+
   const toggleSettings = useCallback(() => {
     setSettingsOpen((prev) => !prev);
   }, []);
 
-  // Scroll to current search result
+  // Scroll to current search result using the React Flow viewport API
   useEffect(() => {
-    if (search.currentBlockId) {
-      scrollToBlock(search.currentBlockId);
+    if (search.currentBlockId && navigateToBlockRef.current) {
+      navigateToBlockRef.current(search.currentBlockId);
     }
-  }, [search.currentBlockId, scrollToBlock]);
+  }, [search.currentBlockId]);
 
   const handleChunkClick = useCallback(
     (chunkId: string) => {
       const chunk = chunks.find((c) => c.id === chunkId);
-      if (chunk && chunk.blockIds.length > 0) {
-        scrollToBlock(chunk.blockIds[0]);
+      if (chunk && chunk.blockIds.length > 0 && navigateToBlockRef.current) {
+        navigateToBlockRef.current(chunk.blockIds[0]);
       }
     },
-    [chunks, scrollToBlock],
+    [chunks],
   );
 
   return (
@@ -65,7 +75,11 @@ export default function App() {
 
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 relative" style={{ minHeight: 0 }}>
-            <GraphView blocks={blocks} onExpandBlock={overlay.open} />
+            <GraphView
+              blocks={blocks}
+              onExpandBlock={overlay.open}
+              onNavigateReady={handleNavigateReady}
+            />
           </main>
 
           {/* Resize handle on left edge of sidebar */}
