@@ -8,7 +8,6 @@
 set -e
 
 # All arguments after "npm run dev --" are forwarded to the server
-SERVER_ARGS="$*"
 
 cleanup() {
   # Kill all background jobs on exit
@@ -22,7 +21,7 @@ npx vite &
 VITE_PID=$!
 
 # Start the backend server with tsx watch, forwarding all args
-npx tsx watch src/server/index.ts $SERVER_ARGS &
+npx tsx watch src/server/index.ts "$@" &
 SERVER_PID=$!
 
 # Wait for both processes (compatible with bash 3.2 on macOS)

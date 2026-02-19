@@ -56,10 +56,13 @@ export class BlockSearch implements SearchEngine {
     return results.slice(0, limit).map((r) => ({
       blockId: r.id as string,
       score: r.score,
-      matches: Object.entries(r.match).map(([field, terms]: [string, unknown]) => ({
-        field,
-        snippet: Array.from(terms as Iterable<string>).join(', '),
-      })),
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- r.match can be undefined at runtime
+      matches: r.match
+        ? Object.entries(r.match).map(([field, terms]: [string, unknown]) => ({
+            field,
+            snippet: Array.from(terms as Iterable<string>).join(', '),
+          }))
+        : [],
     }));
   }
 
