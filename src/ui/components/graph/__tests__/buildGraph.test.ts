@@ -24,7 +24,7 @@ function makeToolBlock(id: string, parentId: string, toolName: string): ToolBloc
 }
 
 describe('buildGraph', () => {
-  const noop = () => {};
+  const noop = () => { /* no-op for test */ };
 
   it('creates nodes with correct types', () => {
     const blocks = [makeUserBlock('u1', 'hello'), makeAgentBlock('a1', 'hi')];
