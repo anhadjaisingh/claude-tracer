@@ -40,7 +40,16 @@
       "Bash(kill:*)",
       "Bash(lsof*)",
       "Bash(npx vite*)",
-      "Bash(gh pr checks:*)"
+      "Bash(gh *)",
+      "Bash(git push*)",
+      "Bash(git pull*)",
+      "Bash(git fetch*)",
+      "Bash(git rebase*)",
+      "Bash(sleep*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npm view:*)",
+      "WebFetch(domain:eclipse.dev)",
+      "WebFetch(domain:reactflow.dev)"
     ]
   }
 }
