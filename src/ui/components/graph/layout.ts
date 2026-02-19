@@ -47,10 +47,7 @@ function estimateHeight(node: Node): number {
   }
 }
 
-export function layoutGraph(
-  nodes: Node[],
-  edges: Edge[],
-): { nodes: Node[]; edges: Edge[] } {
+export function layoutGraph(nodes: Node[], edges: Edge[]): { nodes: Node[]; edges: Edge[] } {
   if (nodes.length === 0) {
     return { nodes: [], edges: [] };
   }
