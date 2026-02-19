@@ -25,7 +25,7 @@ export function buildGraph(
     id: block.id,
     type: getNodeType(block),
     data: { block, onExpandBlock },
-    position: { x: 0, y: 0 }, // elkjs will set this
+    position: { x: 0, y: 0 }, // layoutGraph will set this
   }));
 
   const edges: Edge[] = [];
