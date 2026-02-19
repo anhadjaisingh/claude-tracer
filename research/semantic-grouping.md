@@ -3,7 +3,41 @@
 Research on approaches for automatically (and manually) grouping blocks in claude-tracer into collapsible, navigable sub-graphs representing logical units of work.
 
 **Date:** 2026-02-19
-**Status:** Research complete, ready for design decisions
+**Status:** Research complete; elkjs integration done (PR #14), grouping not yet implemented
+**Last updated:** 2026-02-19
+
+---
+
+## Current State (post-elkjs integration)
+
+As of PR #14, **dagre has been fully replaced by elkjs** as the graph layout
+engine. The current implementation lives in `src/ui/components/graph/layout.ts`
+and uses the following configuration:
+
+- **Algorithm:** `layered` with `elk.direction: RIGHT`
+- **Partitioning:** `elk.partitioning.activate: true` -- each block type is
+  assigned to a fixed partition (column) based on its type. The partition map
+  is: tool=0, team-message=1, agent=2, meta=3, user=4. This produces a
+  columnar layout where horizontal position encodes block type and vertical
+  position encodes time.
+- **Async layout:** `elk.layout()` returns a Promise; the graph view uses
+  `useEffect` + `useState` instead of synchronous `useMemo`.
+- **No compound nodes yet:** The current elkjs setup treats all nodes as flat
+  children of the root graph. Compound node support (nested `children` arrays)
+  is available in elkjs but has not been wired up for grouping.
+
+This means the foundational layout migration described in Section 3.4 is
+**complete**. The remaining work for semantic grouping is:
+
+1. Heuristic boundary detection (Section 1) -- not started
+2. Compound node layout using elkjs's native nesting (Section 3.4) -- elkjs is
+   in place, but the graph structure needs to switch from flat to nested
+3. Group node UI (expand/collapse, labels, badges) -- not started
+4. LLM-assisted labeling (Section 4) -- not started
+5. Manual grouping (Section 5) -- not started
+
+See `docs/plans/2026-02-19-elkjs-columnar-layout-design.md` for the design
+document that was implemented in PR #14.
 
 ---
 
@@ -564,13 +598,18 @@ When collapsed, the group node should render as a single compact node showing:
 
 When expanded, it renders as a container with all child nodes visible inside.
 
-### 3.4 Layout with ELK.js (Recommended Over Dagre for Sub-Graphs)
+### 3.4 Layout with ELK.js for Sub-Graphs
 
-**Critical finding: dagre does not support sub-flows / compound nodes.** Our current
-layout uses dagre, which treats all nodes as flat. To support hierarchical grouping,
-we should migrate to ELK.js which has native support for compound nodes.
+> **Update:** The dagre-to-elkjs migration is **complete** (PR #14). The layout
+> engine in `src/ui/components/graph/layout.ts` already uses elkjs with the
+> `layered` algorithm and `partitioning` for columnar layout. The current setup
+> treats all nodes as flat children of the root graph. To support hierarchical
+> grouping, the next step is to switch from the flat `children` array to a
+> nested structure where group nodes contain their own `children` and `edges`
+> arrays. No additional npm dependencies are needed -- elkjs is already
+> installed and configured.
 
-**ELK.js hierarchical layout:**
+**ELK.js hierarchical layout (next step -- add compound nodes):**
 
 ```typescript
 import ELK from 'elkjs/lib/elk.bundled.js';
@@ -651,20 +690,22 @@ async function layoutWithGroups(
 }
 ```
 
-**ELK.js vs dagre comparison:**
+**ELK.js vs dagre comparison (historical -- dagre has been removed):**
 
-| Feature                  | dagre       | ELK.js                    |
-| ------------------------ | ----------- | ------------------------- |
-| Compound/nested nodes    | No          | Yes (native)              |
-| Layout algorithms        | 1 (layered) | 10+ (layered, force, etc) |
-| Configuration options    | Minimal     | Extensive                 |
-| Bundle size              | ~30KB       | ~140KB (bundled)          |
-| Async layout             | No          | Yes (Web Worker support)  |
-| Layout speed (1K nodes)  | ~50ms       | ~100ms                    |
-| Layout speed (10K nodes) | ~500ms      | ~1-2s                     |
+| Feature                  | dagre (removed) | ELK.js (current)          |
+| ------------------------ | --------------- | ------------------------- |
+| Compound/nested nodes    | No              | Yes (native)              |
+| Layout algorithms        | 1 (layered)     | 10+ (layered, force, etc) |
+| Configuration options    | Minimal         | Extensive                 |
+| Bundle size              | ~30KB           | ~140KB (bundled)          |
+| Async layout             | No              | Yes (Web Worker support)  |
+| Layout speed (1K nodes)  | ~50ms           | ~100ms                    |
+| Layout speed (10K nodes) | ~500ms          | ~1-2s                     |
 
-**Migration path:** We can keep dagre as the default for flat views and use ELK.js
-only when grouping is enabled, lazy-loading the ELK.js bundle.
+**Current state:** dagre has been fully removed. elkjs is the sole layout
+engine. The bundled import (`elkjs/lib/elk.bundled.js`) is used directly --
+no Web Worker setup yet, but that remains an option for performance
+optimization with very large sessions.
 
 ### 3.5 Performance Considerations
 
@@ -708,8 +749,17 @@ renders only ~100 nodes initially.
 
 ### 3.6 Two-Level View Architecture
 
-To support the granularity control described in `docs/ui-requirements.md`, implement
-two rendering modes that share the same data model:
+> **Re-evaluation note:** This section was written when dagre was the layout
+> engine and nested sub-graphs seemed too complex to implement. Now that elkjs
+> is integrated with native compound node support, the "nested sub-graphs"
+> approach (Section 3.4) is more practical than it was originally. The
+> two-level view architecture described below remains a valid simpler
+> alternative, but nested sub-graphs with expand/collapse should be considered
+> first since the layout engine now supports them natively.
+
+To support the granularity control described in `docs/ui-requirements.md`, an
+alternative to nested sub-graphs is two rendering modes that share the same
+data model:
 
 **Overview Mode (default for large sessions):**
 
@@ -956,12 +1006,15 @@ individual block reassignments.
 
 **What NOT to build yet:**
 
-- ELK.js layout (keep dagre for now, render overview as flat graph)
+- ~~ELK.js layout (keep dagre for now, render overview as flat graph)~~ --
+  **Done.** elkjs is already integrated (PR #14). Phase 1 can use the existing
+  flat elkjs layout for the overview graph.
 - Nested sub-graphs (use view-switching instead)
 - Manual grouping
 - LLM labels
 
-**Dependencies:** None new. Uses existing parser, chunker, and React Flow.
+**Dependencies:** None new. Uses existing parser, chunker, React Flow, and
+elkjs (already installed).
 
 **Data model changes:**
 
@@ -995,18 +1048,26 @@ type BoundarySignal =
   | { type: 'task-spawn'; agentId: string };
 ```
 
-### Phase 2: React Flow Sub-Graphs + ELK.js (5-7 days)
+### Phase 2: React Flow Sub-Graphs with ELK.js Compound Nodes (3-5 days)
+
+> **Updated estimate:** Original estimate was 5-7 days when this included
+> migrating from dagre to elkjs. Since elkjs is now integrated (PR #14), the
+> layout migration is done. The remaining work is extending the existing flat
+> elkjs layout to use compound (nested) nodes for group containers, plus
+> building the group node UI. Revised estimate: **3-5 days**.
 
 **What to build:**
 
-- Migrate layout engine from dagre to ELK.js (with dagre as fallback)
+- ~~Migrate layout engine from dagre to ELK.js~~ -- **Done** (PR #14)
+- Extend `layout.ts` to accept compound node structure (group nodes with
+  nested `children` arrays) instead of the current flat node list
 - Implement proper nested sub-graph rendering with `parentId`
 - Custom `TaskGroupNode` component with label, block count, duration
 - Collapse/expand with animation (resize group node, toggle child `hidden`)
 - Keyboard navigation (arrow keys to expand/collapse)
 - Sub-agent spawning (`Task` tool) creates nested sub-graphs automatically
 
-**Dependencies:** `elkjs` npm package (~140KB bundled)
+**Dependencies:** None new -- `elkjs` is already installed
 
 ### Phase 3: LLM-Assisted Labels (2-3 days)
 
@@ -1090,7 +1151,25 @@ setEdges(edges => edges.map(e => ({
 })));
 ```
 
-## Appendix C: ELK.js Configuration for Hierarchical Layout
+## Appendix C: ELK.js Configuration
+
+**Current configuration** (flat layout with partitioning, from
+`src/ui/components/graph/layout.ts`):
+
+```typescript
+const elkOptions = {
+  'elk.algorithm': 'layered',
+  'elk.direction': 'RIGHT',
+  'elk.partitioning.activate': 'true',
+  'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+  'elk.spacing.nodeNode': '50',
+};
+
+// Per-node partition assignment:
+// tool=0, team-message=1, agent=2, meta=3, user=4
+```
+
+**Future configuration** (hierarchical layout for compound group nodes):
 
 ```typescript
 const elkOptions = {
