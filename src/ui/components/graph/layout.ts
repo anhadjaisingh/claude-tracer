@@ -55,8 +55,8 @@ export async function layoutGraph(
       'elk.algorithm': 'layered',
       'elk.direction': 'RIGHT',
       'elk.partitioning.activate': 'true',
-      'elk.layered.spacing.nodeNodeBetweenLayers': '80',
-      'elk.spacing.nodeNode': '50',
+      'elk.layered.spacing.nodeNodeBetweenLayers': '100',
+      'elk.spacing.nodeNode': '60',
     },
     children: nodes.map((node) => ({
       id: node.id,
@@ -77,7 +77,9 @@ export async function layoutGraph(
 
   const positionMap = new Map<string, { x: number; y: number }>();
   for (const child of layoutResult.children ?? []) {
-    positionMap.set(child.id, { x: child.x ?? 0, y: child.y ?? 0 });
+    // Swap x/y: ELK lays out RIGHT (partitions=columns, flow=horizontal)
+    // Swapping rotates to DOWN (partitions=columns, flow=vertical)
+    positionMap.set(child.id, { x: child.y ?? 0, y: child.x ?? 0 });
   }
 
   const layoutedNodes = nodes.map((node) => {
