@@ -17,5 +17,6 @@ export const darkTheme: Theme = {
     teamMessageBg: '#1e1b4b', // indigo-950
     teamMessageText: '#c7d2fe', // indigo-200
     teamMessageAccent: '#818cf8', // indigo-400
+    edgeColor: '#9ca3af', // gray-400
   },
 };
