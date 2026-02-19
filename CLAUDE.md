@@ -55,6 +55,8 @@ npm run typecheck    # TypeScript type checking
 - **Nothing is "done" until it's committed, published as a PR, and merged.** Local-only work doesn't count.
 - For feature work, create a branch and open a PR for review.
 - For smaller changes (docs, config, fixes), pushing directly to main is fine.
+- **Prefer rebase merges** (`gh pr merge --rebase`) for clean linear history. Only use squash or three-way merges when rebase creates excessive noise (e.g., many trivial fixup commits that should be combined).
+- **Rebase before merging** when a PR has conflicts with main. Checkout the branch, `git rebase origin/main`, resolve conflicts, `git push --force-with-lease`.
 
 ## PR and Code Review Process
 
@@ -76,6 +78,18 @@ The TL agent's primary job is to **stay available to the human** for planning, d
 - **Coordinate and integrate.** After parallel agent work completes, verify integration, open PRs, and monitor CI. If CI fails, dispatch a sub-agent to fix it.
 - **Escalate, don't block.** If something needs human judgment, tag @anhad on the PR or surface it in conversation. Don't sit on blockers.
 - **Persist instructions in CLAUDE.md**, not just memory files. All operational rules, workflow expectations, and team guidelines must be written to CLAUDE.md (and team docs if applicable) so they survive across sessions and agents.
+
+### PR Shepherd Role
+
+When running a team with multiple PRs, **always spawn a dedicated PR Shepherd agent**. This agent's sole job is to keep the PR queue moving:
+
+- **Monitor all open PRs continuously.** Check CI status on every open PR. If a PR's CI is green and it's mergeable, merge it (rebase merge).
+- **Rebase PRs that have conflicts.** When a merge introduces conflicts on downstream PRs, the shepherd rebases them on main, resolves conflicts, and pushes.
+- **Dispatch fix agents for CI failures.** If a PR fails CI, the shepherd fires off a sub-agent to diagnose and fix the issue, then monitors the fix.
+- **Report status to the TL.** After each merge or when blocked, send a summary to the TL. The TL should never need to manually check PR status.
+- **Merge in dependency order.** When PRs depend on each other (shared files, build order), merge the least-conflicting PRs first and rebase the rest.
+
+The PR Shepherd runs as a background agent for the duration of any multi-PR workflow. The TL spawns it once at the start and it keeps working until all PRs are merged or it reports a blocker.
 
 ### Teammate / Sub-agent Responsibilities
 
