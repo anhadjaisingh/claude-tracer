@@ -50,6 +50,20 @@ npm run typecheck    # TypeScript type checking
 - **Run E2E tests** (`npm run test:e2e`) when changes might break integration or when additional testing confidence is needed
 - For UI changes, include before/after screenshots of the affected flow in the PR description
 
+## Visual Verification
+
+- **Use Playwright to verify UI changes.** Before calling any UI work "done", open the app in a Playwright browser, take a screenshot, and visually confirm the feature looks and works as expected based on the design/discussion. Don't rely solely on test output — look at it yourself.
+- **Compare against requirements.** Check the screenshot against `docs/ui-requirements.md` constraints. If something looks wrong, flag it before merging.
+- **Include screenshots in PR descriptions** for any UI-affecting change. Before/after if modifying existing behavior.
+- **Clean up Playwright browsers.** After finishing with Playwright (screenshots, snapshots, testing), close the browser. Use a 60s background delay so the human can glance at the window: `sleep 60 && <close browser>` as a background bash task. Never leave Chrome windows open and cluttering the desktop.
+- **Agents must self-verify.** Sub-agents working on UI features must take screenshots as part of their verification step before submitting a PR. "Tests pass" is necessary but not sufficient — the feature must also visually look correct.
+
+## Resource Cleanup
+
+- **Don't blanket-kill processes on ports.** Pick an unused port or let the tool find one. Never run `lsof -ti:PORT | xargs kill -9` against ports that might have other users' processes.
+- **Clean up worktrees** after PRs are merged: `git worktree remove <path>`.
+- **Clean up background servers** you started for testing. Track the port you used and kill only that specific process when done.
+
 ## Git Workflow
 
 - **Nothing is "done" until it's committed, published as a PR, and merged.** Local-only work doesn't count.
