@@ -34,3 +34,9 @@ body {
   border-style: solid;
   animation: tracer-spin 0.8s linear infinite;
 }
+
+/* Search result highlight — applied via React Flow node className */
+.react-flow__node.search-highlight > div {
+  border: 3px solid #fde047 !important;
+  box-shadow: 0 0 12px rgba(253, 224, 71, 0.5);
+}

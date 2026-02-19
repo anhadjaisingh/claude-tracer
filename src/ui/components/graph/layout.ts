@@ -11,19 +11,19 @@ const GROUP_PADDING_TOP = 44; // header height + margin
 const GROUP_PADDING_BOTTOM = 16;
 const GROUP_PADDING_X = 16;
 
-/** Canonical left-to-right ordering of column types. */
-const TYPE_ORDER = ['tool', 'team-message', 'agent', 'meta', 'user'] as const;
+/** Canonical left-to-right ordering of column types. Meta shares the user column. */
+const TYPE_ORDER = ['tool', 'team-message', 'agent', 'user'] as const;
 
-/** Column index for a node type (0=tool/leftmost, 4=user/rightmost). */
+/** Column index for a node type (0=tool/leftmost, 3=user/rightmost). Meta shares user column. */
 export function getColumnIndex(nodeType: string | undefined): number {
   const map: Record<string, number> = {
     tool: 0,
     'team-message': 1,
     agent: 2,
-    meta: 3,
-    user: 4,
+    meta: 3, // same as user
+    user: 3,
   };
-  return map[nodeType ?? 'user'] ?? 4;
+  return map[nodeType ?? 'user'] ?? 3;
 }
 
 /**
@@ -33,7 +33,13 @@ export function getColumnIndex(nodeType: string | undefined): number {
 export function buildColumnX(nodes: Node[]): Record<string, number> {
   // Only consider non-group, non-hidden block nodes for column calculation
   const blockNodes = nodes.filter((n) => n.type !== 'chunkGroup' && !n.hidden);
-  const presentTypes = new Set(blockNodes.map((n) => n.type ?? 'user'));
+  const presentTypes = new Set(
+    blockNodes.map((n) => {
+      // Meta nodes share the user column
+      const type = n.type ?? 'user';
+      return type === 'meta' ? 'user' : type;
+    }),
+  );
   const columnX: Record<string, number> = {};
   let colIndex = 0;
   for (const type of TYPE_ORDER) {
@@ -42,6 +48,8 @@ export function buildColumnX(nodes: Node[]): Record<string, number> {
       colIndex++;
     }
   }
+  // Meta nodes use the same X position as user nodes
+  columnX.meta = columnX.user;
   return columnX;
 }
 

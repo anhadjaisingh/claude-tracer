@@ -101,6 +101,7 @@ export default function App() {
               onExpandBlock={overlay.open}
               onNavigateReady={handleNavigateReady}
               nodesDraggable={nodesDraggable}
+              highlightedBlockId={search.currentBlockId}
             />
           </main>
 

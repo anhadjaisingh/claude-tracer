@@ -1,6 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { useTheme } from '../../../themes';
+import { getToolRenderer } from '../../../renderers';
 import type { ToolBlock, McpBlock } from '@/types';
 import type { AnyBlock } from '@/types';
 
@@ -13,43 +14,6 @@ interface ToolNodeData {
 function getToolName(block: ToolBlock | McpBlock): string {
   if (block.type === 'tool') return block.toolName;
   return `${block.serverName}/${block.method}`;
-}
-
-function getInputSummary(input: unknown): string {
-  if (typeof input === 'string') {
-    return input.length > 60 ? input.slice(0, 60) + '...' : input;
-  }
-  const str = JSON.stringify(input);
-  return str.length > 60 ? str.slice(0, 60) + '...' : str;
-}
-
-function safeString(value: unknown): string {
-  if (typeof value === 'string') return value;
-  if (value == null) return '';
-  return JSON.stringify(value);
-}
-
-function getToolSummary(block: ToolBlock | McpBlock): { label: string; detail: string } {
-  const input = block.input as Record<string, unknown> | undefined;
-  if (!input) return { label: getToolName(block), detail: '' };
-
-  const name = getToolName(block);
-  switch (name) {
-    case 'Read':
-      return { label: name, detail: safeString(input.file_path) };
-    case 'Write':
-      return { label: name, detail: safeString(input.file_path) };
-    case 'Edit':
-      return { label: name, detail: safeString(input.file_path) };
-    case 'Bash':
-      return { label: name, detail: safeString(input.command).slice(0, 80) };
-    case 'Grep':
-      return { label: name, detail: `pattern: ${safeString(input.pattern)}` };
-    case 'Glob':
-      return { label: name, detail: `pattern: ${safeString(input.pattern)}` };
-    default:
-      return { label: name, detail: getInputSummary(input) };
-  }
 }
 
 function getStatusColor(status: string): string {
@@ -69,8 +33,13 @@ export function ToolNode({ data }: NodeProps) {
   const theme = useTheme();
   const { block, onExpandBlock } = data as unknown as ToolNodeData;
 
-  const { label, detail } = getToolSummary(block);
+  const toolName = getToolName(block);
+  const renderer = getToolRenderer(toolName);
   const statusColor = getStatusColor(block.status);
+
+  const headerText = renderer.headerSummary(block.input, block.output);
+  // Truncate header for the compact node view
+  const headerTruncated = headerText.length > 60 ? headerText.slice(0, 60) + '...' : headerText;
 
   return (
     <div
@@ -96,20 +65,23 @@ export function ToolNode({ data }: NodeProps) {
       />
 
       <div className="flex items-center gap-2 mb-1">
+        <span className="shrink-0 text-xs">{renderer.icon}</span>
         <span
           className="px-2 py-0.5 rounded text-xs font-bold"
           style={{ backgroundColor: statusColor, color: '#ffffff' }}
         >
-          {label}
+          {toolName}
         </span>
         <span className="text-xs opacity-50">{block.status}</span>
       </div>
 
-      {detail && (
-        <div className="text-xs opacity-70 truncate" title={detail}>
-          {detail}
+      {headerTruncated && (
+        <div className="text-xs opacity-70 truncate" title={headerText}>
+          {headerTruncated}
         </div>
       )}
+
+      <div className="mt-1">{renderer.preview(block.input, block.output)}</div>
 
       <Handle
         type="source"

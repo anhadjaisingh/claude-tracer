@@ -28,33 +28,33 @@ describe('getColumnIndex', () => {
     expect(getColumnIndex('agent')).toBe(2);
   });
 
-  it('assigns column 3 to meta nodes', () => {
+  it('assigns column 3 to meta nodes (same as user)', () => {
     expect(getColumnIndex('meta')).toBe(3);
   });
 
-  it('assigns column 4 to user nodes', () => {
-    expect(getColumnIndex('user')).toBe(4);
+  it('assigns column 3 to user nodes', () => {
+    expect(getColumnIndex('user')).toBe(3);
   });
 
-  it('defaults to column 4 for undefined type', () => {
-    expect(getColumnIndex(undefined)).toBe(4);
+  it('defaults to column 3 for undefined type', () => {
+    expect(getColumnIndex(undefined)).toBe(3);
   });
 
-  it('defaults to column 4 for unknown type', () => {
-    expect(getColumnIndex('unknown')).toBe(4);
+  it('defaults to column 3 for unknown type', () => {
+    expect(getColumnIndex('unknown')).toBe(3);
   });
 });
 
 describe('buildColumnX', () => {
-  it('only allocates columns for present types', () => {
+  it('only allocates columns for present types (meta always maps to user)', () => {
     const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent')];
     const columnX = buildColumnX(nodes);
-    expect(Object.keys(columnX)).toEqual(['agent', 'user']);
     expect(columnX.agent).toBe(0);
     expect(columnX.user).toBe(400);
+    expect(columnX.meta).toBe(400); // meta shares user column
   });
 
-  it('allocates all columns when all types are present', () => {
+  it('allocates all columns when all types are present (meta shares user column)', () => {
     const nodes = [
       makeNode('t1', 'tool'),
       makeNode('tm1', 'team-message'),
@@ -66,8 +66,8 @@ describe('buildColumnX', () => {
     expect(columnX.tool).toBe(0);
     expect(columnX['team-message']).toBe(400);
     expect(columnX.agent).toBe(800);
-    expect(columnX.meta).toBe(1200);
-    expect(columnX.user).toBe(1600);
+    expect(columnX.user).toBe(1200);
+    expect(columnX.meta).toBe(1200); // meta shares user column
   });
 
   it('preserves left-to-right ordering even with subset', () => {
@@ -202,7 +202,7 @@ describe('layoutGraph', () => {
     if (!userNode || !agentNode || !toolNode) {
       throw new Error('Expected all nodes to exist');
     }
-    // With dynamic columns: tool=0, agent=400, user=800
+    // With dynamic columns: tool=0, agent=400, user=800 (meta not present, no change)
     expect(toolNode.position.x).toBe(0);
     expect(agentNode.position.x).toBe(400);
     expect(userNode.position.x).toBe(800);

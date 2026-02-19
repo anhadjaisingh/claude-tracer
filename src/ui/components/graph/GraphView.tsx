@@ -98,6 +98,7 @@ interface Props {
   onExpandBlock: (block: AnyBlock) => void;
   onNavigateReady?: (navigateToBlock: NavigateToBlockFn) => void;
   nodesDraggable?: boolean;
+  highlightedBlockId?: string | null;
 }
 
 /** Half the default node width, used to compute node center for setCenter(). */
@@ -111,6 +112,7 @@ function GraphViewInner({
   onExpandBlock,
   onNavigateReady,
   nodesDraggable = false,
+  highlightedBlockId,
 }: Props) {
   const theme = useTheme();
   const { setCenter } = useReactFlow();
@@ -234,6 +236,16 @@ function GraphViewInner({
     collapsedGroupsRef,
     handleToggleCollapse,
   ]);
+
+  // Update node className when search result changes for visual highlight
+  useEffect(() => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => ({
+        ...node,
+        className: node.id === highlightedBlockId ? 'search-highlight' : undefined,
+      })),
+    );
+  }, [highlightedBlockId, setNodes]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
