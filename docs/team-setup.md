@@ -216,6 +216,35 @@ interface SearchEngine {
 - `src/types/` changes are coordinated through Team Lead
 - No two teammates edit the same file
 
+#### PR Shepherd
+
+A dedicated background agent responsible for cross-agent PR coordination. Spawned
+by the TL at the start of any multi-PR workflow and runs until all PRs are merged.
+
+**When to spawn:** Any time there are 2+ open PRs from parallel agent work.
+
+**What it does:**
+
+- Monitors CI on all open PRs. When a PR's core checks are green and it's
+  mergeable, merges it (rebase merge: `gh pr merge --rebase --delete-branch`).
+- When a merge introduces conflicts on downstream PRs, rebases them on main,
+  resolves conflicts, and pushes.
+- When a PR fails CI, dispatches a sub-agent to diagnose and fix the issue,
+  then monitors the fix push.
+- Reports status to the TL after each merge or when blocked on something that
+  needs a human decision.
+- Merges in dependency order — least-conflicting PRs first, then rebases the rest.
+
+**What it does NOT do:**
+
+- It does not monitor individual agent PRs during initial development — each
+  agent is responsible for getting their own PR to CI-green.
+- It only steps in for cross-agent coordination: rebases after upstream merges,
+  merging green PRs, and fixing stuck queues when original agents have finished.
+
+**The TL and the human should never need to manually check PR status, run
+rebases, or do merges.** That is always the shepherd's job.
+
 ### Git Worktree Strategy
 
 Each teammate works in a separate git worktree:

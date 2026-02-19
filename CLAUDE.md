@@ -81,21 +81,29 @@ The TL agent's primary job is to **stay available to the human** for planning, d
 
 ### PR Shepherd Role
 
-When running a team with multiple PRs, **always spawn a dedicated PR Shepherd agent**. This agent's sole job is to keep the PR queue moving:
+When running parallel agents that produce multiple PRs, **always spawn a PR Shepherd background agent**. The shepherd handles cross-agent PR coordination so neither the TL nor the human needs to worry about merges, rebases, or stuck queues.
 
-- **Monitor all open PRs continuously.** Check CI status on every open PR. If a PR's CI is green and it's mergeable, merge it (rebase merge).
-- **Rebase PRs that have conflicts.** When a merge introduces conflicts on downstream PRs, the shepherd rebases them on main, resolves conflicts, and pushes.
-- **Dispatch fix agents for CI failures.** If a PR fails CI, the shepherd fires off a sub-agent to diagnose and fix the issue, then monitors the fix.
-- **Report status to the TL.** After each merge or when blocked, send a summary to the TL. The TL should never need to manually check PR status.
-- **Merge in dependency order.** When PRs depend on each other (shared files, build order), merge the least-conflicting PRs first and rebase the rest.
+- **Steps in after agents finish.** Each agent is responsible for getting their own PR to CI-green. The shepherd handles what happens next: merging green PRs, rebasing downstream PRs after upstream merges, and fixing stuck queues.
+- **Merges green PRs** (rebase merge) in dependency order — least-conflicting first.
+- **Rebases conflicting PRs** when earlier merges cause conflicts on downstream branches.
+- **Dispatches fix agents** for CI failures it encounters during the merge process.
+- **Reports to the TL** after each merge or when blocked on something needing a human decision.
 
-The PR Shepherd runs as a background agent for the duration of any multi-PR workflow. The TL spawns it once at the start and it keeps working until all PRs are merged or it reports a blocker.
+The TL and human should never manually check PR status, run rebases, or do merges. See `docs/team-setup.md` for the full PR Shepherd specification.
 
 ### Teammate / Sub-agent Responsibilities
 
 - **Drive work to PR submission.** Each agent is responsible for committing, pushing, and opening PRs for their workstream.
 - **Monitor CI after pushing.** If CI fails on your PR, investigate and fix. Don't leave broken CI for someone else.
 - **Surface blockers immediately** to the TL agent. If the issue is non-trivial or needs a decision, the TL escalates to the human reviewer via GitHub PR comment or direct conversation.
+
+## Essential Docs (Read on Spawn)
+
+When starting a new session or spawning a new agent, **always read these docs** to get full context. They contain operational details that don't fit in CLAUDE.md and may be lost on context compaction:
+
+- **`docs/team-setup.md`** — Team structure, agent roles (including PR Shepherd), file ownership, coordination protocol, spawning instructions.
+- **`docs/agent-isolation.md`** — Git worktrees, port isolation, how agents avoid stepping on each other.
+- **`docs/plans/`** — Design docs and implementation plans for current/upcoming work.
 
 ## Port Allocation
 

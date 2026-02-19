@@ -118,18 +118,3 @@ via git, so installs will be deterministic.
 **Recommendation: Use git worktrees + port isolation.** It fully solves all three
 categories of conflict with minimal overhead. Reserve Docker-based isolation for
 CI or when agents need different Node versions.
-
-## PR Shepherd
-
-When running parallel agents that produce multiple PRs, always spawn a dedicated
-**PR Shepherd** background agent. Its responsibilities:
-
-1. Monitor CI on all open PRs
-2. Merge PRs (rebase merge) as soon as CI is green
-3. Rebase downstream PRs when earlier merges create conflicts
-4. Dispatch sub-agents to fix CI failures
-5. Report status to the TL after each merge or when blocked
-
-The shepherd runs for the duration of any multi-PR workflow. The TL spawns it
-once and it keeps working autonomously until all PRs are merged. See the
-"PR Shepherd Role" section in `CLAUDE.md` for the full specification.
