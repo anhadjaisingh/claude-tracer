@@ -1,4 +1,4 @@
-import { useMemo, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -7,8 +7,10 @@ import {
   BackgroundVariant,
   useNodesState,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react';
-import type { NodeMouseHandler } from '@xyflow/react';
+import type { Node, Edge, NodeMouseHandler } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { useTheme } from '../../themes';
@@ -24,11 +26,6 @@ const nodeTypes = {
   meta: MetaNode,
   'team-message': TeamMessageNode,
 };
-
-interface Props {
-  blocks: AnyBlock[];
-  onExpandBlock: (block: AnyBlock) => void;
-}
 
 function minimapNodeColor(node: { type?: string }): string {
   switch (node.type) {
@@ -47,28 +44,58 @@ function minimapNodeColor(node: { type?: string }): string {
   }
 }
 
-export function GraphView({ blocks, onExpandBlock }: Props) {
-  const theme = useTheme();
+interface Props {
+  blocks: AnyBlock[];
+  onExpandBlock: (block: AnyBlock) => void;
+}
 
-  const { layoutedNodes, layoutedEdges } = useMemo(() => {
+function GraphViewInner({ blocks, onExpandBlock }: Props) {
+  const theme = useTheme();
+  const { setViewport } = useReactFlow();
+  const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
+  const initialViewportSet = useRef(false);
+
+  useEffect(() => {
     if (blocks.length === 0) {
-      return { layoutedNodes: [], layoutedEdges: [] };
+      setNodes([]);
+      setEdges([]);
+      return;
     }
 
     const { nodes: rawNodes, edges: rawEdges } = buildGraph(blocks, onExpandBlock);
-    const { nodes: positioned, edges: finalEdges } = layoutGraph(rawNodes, rawEdges);
 
-    return { layoutedNodes: positioned, layoutedEdges: finalEdges };
-  }, [blocks, onExpandBlock]);
+    let cancelled = false;
+    void layoutGraph(rawNodes, rawEdges).then((result) => {
+      if (cancelled) return;
+      setNodes(result.nodes);
+      setEdges(result.edges);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
+      // Set initial viewport to show the first node near the top-right
+      if (!initialViewportSet.current && result.nodes.length > 0) {
+        initialViewportSet.current = true;
 
-  // Sync nodes/edges when blocks change (WebSocket updates)
-  useEffect(() => {
-    setNodes(layoutedNodes);
-    setEdges(layoutedEdges);
-  }, [layoutedNodes, layoutedEdges, setNodes, setEdges]);
+        // Find the topmost node (smallest y)
+        let topNode = result.nodes[0];
+        for (const node of result.nodes) {
+          if (node.position.y < topNode.position.y) {
+            topNode = node;
+          }
+        }
+
+        // Position viewport so the top node is visible with some padding
+        void setViewport({
+          x: -(topNode.position.x - 100),
+          y: -(topNode.position.y - 50),
+          zoom: 1,
+        });
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [blocks, onExpandBlock, setNodes, setEdges, setViewport]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
@@ -98,11 +125,11 @@ export function GraphView({ blocks, onExpandBlock }: Props) {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
-        fitView
         minZoom={0.1}
         maxZoom={2}
         defaultEdgeOptions={{
           type: 'smoothstep',
+          style: { stroke: theme.colors.edgeColor, strokeWidth: 2 },
         }}
         proOptions={{ hideAttribution: true }}
       >
@@ -127,5 +154,13 @@ export function GraphView({ blocks, onExpandBlock }: Props) {
         />
       </ReactFlow>
     </div>
+  );
+}
+
+export function GraphView(props: Props) {
+  return (
+    <ReactFlowProvider>
+      <GraphViewInner {...props} />
+    </ReactFlowProvider>
   );
 }
