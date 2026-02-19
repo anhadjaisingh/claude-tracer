@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npx tsx src/server/index.ts ./e2e/fixtures/sessions/simple-chat.jsonl',
+    command: 'npx tsx src/server/index.ts ./e2e/fixtures/sessions/multi-turn-nav.jsonl',
     url: 'http://localhost:3000',
     timeout: 30_000,
     reuseExistingServer: !process.env.CI,
