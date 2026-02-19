@@ -11,10 +11,20 @@ export function useSettings() {
     return 'claude';
   });
 
+  const [nodesDraggable, setNodesDraggableState] = useState<boolean>(() => {
+    const stored = localStorage.getItem('claude-tracer-nodes-draggable');
+    return stored === 'true';
+  });
+
   const setThemeName = useCallback((name: ThemeName) => {
     setThemeNameState(name);
     localStorage.setItem('claude-tracer-theme', name);
   }, []);
 
-  return { themeName, setThemeName };
+  const setNodesDraggable = useCallback((value: boolean) => {
+    setNodesDraggableState(value);
+    localStorage.setItem('claude-tracer-nodes-draggable', String(value));
+  }, []);
+
+  return { themeName, setThemeName, nodesDraggable, setNodesDraggable };
 }

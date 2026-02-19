@@ -5,6 +5,8 @@ import type { ThemeName } from '../hooks/useSettings';
 interface Props {
   themeName: ThemeName;
   onThemeChange: (name: ThemeName) => void;
+  nodesDraggable: boolean;
+  onNodesDraggableChange: (value: boolean) => void;
   onClose: () => void;
 }
 
@@ -14,7 +16,7 @@ const themeOptions: { value: ThemeName; label: string }[] = [
   { value: 'claude', label: 'Claude' },
 ];
 
-export function SettingsPanel({ themeName, onThemeChange, onClose }: Props) {
+export function SettingsPanel({ themeName, onThemeChange, nodesDraggable, onNodesDraggableChange, onClose }: Props) {
   const theme = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +53,7 @@ export function SettingsPanel({ themeName, onThemeChange, onClose }: Props) {
     >
       <h3 className="text-sm font-semibold mb-3">Settings</h3>
 
-      <div>
+      <div className="mb-3">
         <label className="text-xs opacity-70 block mb-2">Theme</label>
         <div className="flex flex-col gap-1">
           {themeOptions.map((option) => (
@@ -76,6 +78,27 @@ export function SettingsPanel({ themeName, onThemeChange, onClose }: Props) {
             </button>
           ))}
         </div>
+      </div>
+
+      <div>
+        <label className="text-xs opacity-70 block mb-2">Graph</label>
+        <button
+          onClick={() => {
+            onNodesDraggableChange(!nodesDraggable);
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded text-sm text-left transition-colors w-full"
+          style={{
+            backgroundColor: nodesDraggable ? 'rgba(255,255,255,0.15)' : 'transparent',
+          }}
+        >
+          <span
+            className="w-3 h-3 rounded-full border border-white/30"
+            style={{
+              backgroundColor: nodesDraggable ? theme.colors.accent : 'transparent',
+            }}
+          />
+          Node Dragging
+        </button>
       </div>
     </div>
   );

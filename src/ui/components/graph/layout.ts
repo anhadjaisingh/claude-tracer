@@ -1,16 +1,12 @@
 import type { Node, Edge } from '@xyflow/react';
 
 const NODE_WIDTH = 320;
-const COLUMN_GAP = 420;
+const COLUMN_GAP = 80;
+const COLUMN_SPACING = NODE_WIDTH + COLUMN_GAP; // 400px between column starts
 const ROW_GAP = 40;
 
-const COLUMN_X: Record<string, number> = {
-  tool: 0,
-  'team-message': COLUMN_GAP,
-  agent: COLUMN_GAP * 2,
-  meta: COLUMN_GAP * 3,
-  user: COLUMN_GAP * 4,
-};
+/** Canonical left-to-right ordering of column types. */
+const TYPE_ORDER = ['tool', 'team-message', 'agent', 'meta', 'user'] as const;
 
 /** Column index for a node type (0=tool/leftmost, 4=user/rightmost). */
 export function getColumnIndex(nodeType: string | undefined): number {
@@ -22,6 +18,23 @@ export function getColumnIndex(nodeType: string | undefined): number {
     user: 4,
   };
   return map[nodeType ?? 'user'] ?? 4;
+}
+
+/**
+ * Build dynamic column X positions based on which node types are actually
+ * present in the graph. This avoids wasting horizontal space on empty columns.
+ */
+export function buildColumnX(nodes: Node[]): Record<string, number> {
+  const presentTypes = new Set(nodes.map((n) => n.type ?? 'user'));
+  const columnX: Record<string, number> = {};
+  let colIndex = 0;
+  for (const type of TYPE_ORDER) {
+    if (presentTypes.has(type)) {
+      columnX[type] = colIndex * COLUMN_SPACING;
+      colIndex++;
+    }
+  }
+  return columnX;
 }
 
 function estimateHeight(node: Node): number {
@@ -51,6 +64,9 @@ export function layoutGraph(nodes: Node[], edges: Edge[]): { nodes: Node[]; edge
   if (nodes.length === 0) {
     return { nodes: [], edges: [] };
   }
+
+  // Build dynamic column positions based on present types
+  const columnX = buildColumnX(nodes);
 
   // Build lookup maps
   const nodeMap = new Map<string, Node>();
@@ -85,7 +101,8 @@ export function layoutGraph(nodes: Node[], edges: Edge[]): { nodes: Node[]; edge
     // Skip tool children - they are placed when their parent agent is processed
     if (toolChildIds.has(node.id)) continue;
 
-    const x = COLUMN_X[node.type ?? 'user'] ?? COLUMN_X.user;
+    const nodeType = node.type ?? 'user';
+    const x = columnX[nodeType] ?? 0;
 
     if (node.type === 'agent') {
       const children = childrenOf.get(node.id) ?? [];
@@ -97,7 +114,7 @@ export function layoutGraph(nodes: Node[], edges: Edge[]): { nodes: Node[]; edge
         globalY += agentHeight + ROW_GAP;
       } else {
         // Agent with tool calls: place them side by side at the same Y
-        const toolX = COLUMN_X.tool;
+        const toolX = columnX.tool ?? 0; // eslint-disable-line @typescript-eslint/no-unnecessary-condition
         let toolY = globalY;
         let totalToolHeight = 0;
 

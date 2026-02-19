@@ -10,6 +10,8 @@ interface Props {
   onToggleSettings: () => void;
   themeName: ThemeName;
   onThemeChange: (name: ThemeName) => void;
+  nodesDraggable: boolean;
+  onNodesDraggableChange: (value: boolean) => void;
 }
 
 function extractFileName(fullPath: string): string {
@@ -25,6 +27,8 @@ export function Footer({
   onToggleSettings,
   themeName,
   onThemeChange,
+  nodesDraggable,
+  onNodesDraggableChange,
 }: Props) {
   const theme = useTheme();
 
@@ -68,6 +72,8 @@ export function Footer({
           <SettingsPanel
             themeName={themeName}
             onThemeChange={onThemeChange}
+            nodesDraggable={nodesDraggable}
+            onNodesDraggableChange={onNodesDraggableChange}
             onClose={onToggleSettings}
           />
         )}

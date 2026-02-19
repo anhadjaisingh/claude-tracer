@@ -51,6 +51,7 @@ import {
   useEdgesState,
   useReactFlow,
   ReactFlowProvider,
+  MarkerType,
 } from '@xyflow/react';
 import type { Node, Edge, NodeMouseHandler } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -92,6 +93,7 @@ interface Props {
   blocks: AnyBlock[];
   onExpandBlock: (block: AnyBlock) => void;
   onNavigateReady?: (navigateToBlock: NavigateToBlockFn) => void;
+  nodesDraggable?: boolean;
 }
 
 /** Half the default node width, used to compute node center for setCenter(). */
@@ -99,9 +101,9 @@ const NODE_CENTER_OFFSET_X = 160;
 /** Half the default node height, used to compute node center for setCenter(). */
 const NODE_CENTER_OFFSET_Y = 40;
 
-function GraphViewInner({ blocks, onExpandBlock, onNavigateReady }: Props) {
+function GraphViewInner({ blocks, onExpandBlock, onNavigateReady, nodesDraggable = false }: Props) {
   const theme = useTheme();
-  const { setViewport, setCenter } = useReactFlow();
+  const { setCenter } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
 
@@ -145,26 +147,20 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady }: Props) {
     setNodes(result.nodes);
     setEdges(result.edges);
 
-    // Set initial viewport to show the first node near the top-right
+    // Set initial viewport centered on the first node
     if (!initialViewportSet.current && result.nodes.length > 0) {
       initialViewportSet.current = true;
 
-      // Find the topmost node (smallest y)
-      let topNode = result.nodes[0];
-      for (const node of result.nodes) {
-        if (node.position.y < topNode.position.y) {
-          topNode = node;
-        }
-      }
-
-      // Position viewport so the top node is visible with some padding
-      void setViewport({
-        x: -(topNode.position.x - 100),
-        y: -(topNode.position.y - 50),
-        zoom: 1,
-      });
+      // Find the first node in the blocks array (chronologically first)
+      const firstNode = result.nodes[0];
+      // Center the viewport on this node with reasonable zoom
+      void setCenter(
+        firstNode.position.x + NODE_CENTER_OFFSET_X, // half node width
+        firstNode.position.y + NODE_CENTER_OFFSET_Y,  // half node height
+        { zoom: 0.85, duration: 0 },
+      );
     }
-  }, [blocks, onExpandBlock, setNodes, setEdges, setViewport]);
+  }, [blocks, onExpandBlock, setNodes, setEdges, setCenter]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_event, node) => {
@@ -213,11 +209,13 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady }: Props) {
         onEdgesChange={onEdgesChange}
         onNodeClick={onNodeClick}
         nodeTypes={nodeTypes}
+        nodesDraggable={nodesDraggable}
         minZoom={0.1}
         maxZoom={2}
         defaultEdgeOptions={{
-          type: 'smoothstep',
-          style: { stroke: theme.colors.edgeColor, strokeWidth: 2 },
+          type: 'bezier',
+          markerEnd: { type: MarkerType.ArrowClosed, width: 15, height: 15 },
+          style: { stroke: theme.colors.edgeColor, strokeWidth: 1.5 },
         }}
         proOptions={{ hideAttribution: true }}
       >
@@ -230,6 +228,8 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady }: Props) {
         <MiniMap
           nodeColor={minimapNodeColor}
           maskColor="rgba(0,0,0,0.3)"
+          pannable
+          zoomable
           style={{
             backgroundColor: theme.colors.headerBg,
           }}

@@ -15,7 +15,7 @@ import { useResizable } from './hooks/useResizable';
 export default function App() {
   const { blocks, chunks, isConnected, connectionStatus, filePath } = useSession();
   const search = useHybridSearch(blocks);
-  const { themeName, setThemeName } = useSettings();
+  const { themeName, setThemeName, nodesDraggable, setNodesDraggable } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const overlay = useOverlay();
   const sidebar = useResizable({
@@ -99,6 +99,7 @@ export default function App() {
               blocks={blocks}
               onExpandBlock={overlay.open}
               onNavigateReady={handleNavigateReady}
+              nodesDraggable={nodesDraggable}
             />
           </main>
 
@@ -127,6 +128,8 @@ export default function App() {
           onToggleSettings={toggleSettings}
           themeName={themeName}
           onThemeChange={setThemeName}
+          nodesDraggable={nodesDraggable}
+          onNodesDraggableChange={setNodesDraggable}
         />
       </div>
 

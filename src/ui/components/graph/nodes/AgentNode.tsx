@@ -63,6 +63,12 @@ export function AgentNode({ data }: NodeProps) {
         position={Position.Bottom}
         style={{ background: theme.colors.accent }}
       />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id="tool-out"
+        style={{ background: theme.colors.accent }}
+      />
     </div>
   );
 }

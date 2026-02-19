@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Node, Edge } from '@xyflow/react';
-import { layoutGraph, getColumnIndex } from '../layout';
+import { layoutGraph, getColumnIndex, buildColumnX } from '../layout';
 
 function makeNode(id: string, type: string, block?: Record<string, unknown>): Node {
   return {
@@ -42,6 +42,39 @@ describe('getColumnIndex', () => {
 
   it('defaults to column 4 for unknown type', () => {
     expect(getColumnIndex('unknown')).toBe(4);
+  });
+});
+
+describe('buildColumnX', () => {
+  it('only allocates columns for present types', () => {
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent')];
+    const columnX = buildColumnX(nodes);
+    expect(Object.keys(columnX)).toEqual(['agent', 'user']);
+    expect(columnX.agent).toBe(0);
+    expect(columnX.user).toBe(400);
+  });
+
+  it('allocates all columns when all types are present', () => {
+    const nodes = [
+      makeNode('t1', 'tool'),
+      makeNode('tm1', 'team-message'),
+      makeNode('a1', 'agent'),
+      makeNode('m1', 'meta'),
+      makeNode('u1', 'user'),
+    ];
+    const columnX = buildColumnX(nodes);
+    expect(columnX.tool).toBe(0);
+    expect(columnX['team-message']).toBe(400);
+    expect(columnX.agent).toBe(800);
+    expect(columnX.meta).toBe(1200);
+    expect(columnX.user).toBe(1600);
+  });
+
+  it('preserves left-to-right ordering even with subset', () => {
+    const nodes = [makeNode('t1', 'tool'), makeNode('u1', 'user')];
+    const columnX = buildColumnX(nodes);
+    expect(columnX.tool).toBe(0);
+    expect(columnX.user).toBe(400);
   });
 });
 
@@ -149,10 +182,29 @@ describe('layoutGraph', () => {
     if (!t1 || !t2) {
       throw new Error('Expected tool nodes to exist');
     }
-    // Both tools should be in the tool column (x = 0)
+    // Both tools should be in the tool column (x = 0 since tool is leftmost present type)
     expect(t1.position.x).toBe(0);
     expect(t2.position.x).toBe(0);
     // Second tool should be below first tool
     expect(t2.position.y).toBeGreaterThan(t1.position.y);
+  });
+
+  it('uses compact columns when only a subset of types is present', () => {
+    // Only tool + agent + user: should be 3 columns, not 5
+    const nodes = [makeNode('u1', 'user'), makeNode('a1', 'agent'), makeNode('t1', 'tool')];
+    const edges = [makeEdge('u1', 'a1'), makeEdge('a1', 't1')];
+
+    const result = layoutGraph(nodes, edges);
+
+    const userNode = result.nodes.find((n) => n.id === 'u1');
+    const agentNode = result.nodes.find((n) => n.id === 'a1');
+    const toolNode = result.nodes.find((n) => n.id === 't1');
+    if (!userNode || !agentNode || !toolNode) {
+      throw new Error('Expected all nodes to exist');
+    }
+    // With dynamic columns: tool=0, agent=400, user=800
+    expect(toolNode.position.x).toBe(0);
+    expect(agentNode.position.x).toBe(400);
+    expect(userNode.position.x).toBe(800);
   });
 });

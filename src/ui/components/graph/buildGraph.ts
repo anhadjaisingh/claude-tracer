@@ -31,24 +31,28 @@ export function buildGraph(
   const edges: Edge[] = [];
   const edgeIds = new Set<string>();
 
-  function addEdge(source: string, target: string): void {
+  function addEdge(source: string, target: string, sourceHandle?: string, targetHandle?: string): void {
     const edgeId = `${source}->${target}`;
     if (edgeIds.has(edgeId)) return;
     edgeIds.add(edgeId);
 
-    edges.push({
+    const edge: Edge = {
       id: edgeId,
       source,
       target,
-    });
+    };
+    if (sourceHandle) edge.sourceHandle = sourceHandle;
+    if (targetHandle) edge.targetHandle = targetHandle;
+
+    edges.push(edge);
   }
 
-  // 1. Build edges from agent toolCalls (agent -> tool)
+  // 1. Build edges from agent toolCalls (agent -> tool) using side handles
   for (const block of blocks) {
     if (isAgentBlock(block)) {
       for (const toolCallId of block.toolCalls) {
         if (blockMap.has(toolCallId)) {
-          addEdge(block.id, toolCallId);
+          addEdge(block.id, toolCallId, 'tool-out', 'agent-in');
         }
       }
     }
@@ -64,7 +68,7 @@ export function buildGraph(
         // If this tool was not in the parent's toolCalls, add the link.
         const edgeId = `${block.parentId}->${block.id}`;
         if (!edgeIds.has(edgeId)) {
-          addEdge(block.parentId, block.id);
+          addEdge(block.parentId, block.id, 'tool-out', 'agent-in');
         }
       }
     }

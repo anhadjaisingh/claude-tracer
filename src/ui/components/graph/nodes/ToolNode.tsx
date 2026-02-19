@@ -23,13 +23,54 @@ function getInputSummary(input: unknown): string {
   return str.length > 60 ? str.slice(0, 60) + '...' : str;
 }
 
+function safeString(value: unknown): string {
+  if (typeof value === 'string') return value;
+  if (value == null) return '';
+  return JSON.stringify(value);
+}
+
+function getToolSummary(block: ToolBlock | McpBlock): { label: string; detail: string } {
+  const input = block.input as Record<string, unknown> | undefined;
+  if (!input) return { label: getToolName(block), detail: '' };
+
+  const name = getToolName(block);
+  switch (name) {
+    case 'Read':
+      return { label: name, detail: safeString(input.file_path) };
+    case 'Write':
+      return { label: name, detail: safeString(input.file_path) };
+    case 'Edit':
+      return { label: name, detail: safeString(input.file_path) };
+    case 'Bash':
+      return { label: name, detail: safeString(input.command).slice(0, 80) };
+    case 'Grep':
+      return { label: name, detail: `pattern: ${safeString(input.pattern)}` };
+    case 'Glob':
+      return { label: name, detail: `pattern: ${safeString(input.pattern)}` };
+    default:
+      return { label: name, detail: getInputSummary(input) };
+  }
+}
+
+function getStatusColor(status: string): string {
+  switch (status) {
+    case 'success':
+      return '#166534';
+    case 'error':
+      return '#991b1b';
+    case 'pending':
+      return '#854d0e';
+    default:
+      return '#6b7280';
+  }
+}
+
 export function ToolNode({ data }: NodeProps) {
   const theme = useTheme();
   const { block, onExpandBlock } = data as unknown as ToolNodeData;
 
-  const toolName = getToolName(block);
-  const inputSummary = getInputSummary(block.input);
-  const statusColor = block.status === 'success' ? '#166534' : '#991b1b';
+  const { label, detail } = getToolSummary(block);
+  const statusColor = getStatusColor(block.status);
 
   return (
     <div
@@ -47,18 +88,28 @@ export function ToolNode({ data }: NodeProps) {
       }}
     >
       <Handle type="target" position={Position.Top} style={{ background: theme.colors.accent }} />
+      <Handle
+        type="target"
+        position={Position.Right}
+        id="agent-in"
+        style={{ background: theme.colors.accent }}
+      />
 
       <div className="flex items-center gap-2 mb-1">
         <span
-          className="px-2 py-0.5 rounded text-xs"
+          className="px-2 py-0.5 rounded text-xs font-bold"
           style={{ backgroundColor: statusColor, color: '#ffffff' }}
         >
-          {toolName}
+          {label}
         </span>
         <span className="text-xs opacity-50">{block.status}</span>
       </div>
 
-      <div className="text-xs opacity-70 truncate">{inputSummary}</div>
+      {detail && (
+        <div className="text-xs opacity-70 truncate" title={detail}>
+          {detail}
+        </div>
+      )}
 
       <Handle
         type="source"
