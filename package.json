@@ -25,7 +25,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "cp scripts/pre-commit .git/hooks/pre-commit 2>/dev/null; chmod +x .git/hooks/pre-commit 2>/dev/null; true"
   },
   "repository": {
     "type": "git",
@@ -61,7 +62,7 @@
     "@playwright/test": "^1.58.2",
     "@types/dagre": "^0.7.53",
     "@types/express": "^5.0.6",
-    "@types/node": "^25.2.3",
+    "@types/node": "^25.3.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/react-window": "^1.8.8",
