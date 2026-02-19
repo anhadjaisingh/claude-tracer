@@ -56,7 +56,12 @@ simple back-and-forth; a wide graph means deep tool use or multi-agent work.
 ### Navigation
 
 - Scroll/pan to navigate the graph. Zoom in/out with mouse wheel or pinch.
-- Sidebar chunk list: clicking a chunk scrolls/pans the graph to that section.
+- **Sidebar chunk navigation (CRITICAL):** Clicking a chunk in the sidebar MUST
+  pan the React Flow graph viewport to show the first block of that chunk.
+  This means the sidebar needs access to React Flow's viewport API (e.g.,
+  `setCenter` or `setViewport` from `useReactFlow`). This has been a recurring
+  bug — any change to the graph or sidebar must include an e2e test verifying
+  that clicking a sidebar chunk actually moves the viewport.
 - Search results: navigating between results pans to the matched block.
 
 ## Blocks
