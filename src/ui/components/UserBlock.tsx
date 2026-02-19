@@ -10,10 +10,35 @@ export function UserBlock({ block }: Props) {
   const [isExpanded, setIsExpanded] = useState(false);
   const theme = useTheme();
 
+  // Compact rendering for system-injected (isMeta) messages
+  if (block.isMeta) {
+    return (
+      <div id={`block-${block.id}`} className="flex justify-end mb-2">
+        <div
+          className="px-3 py-1.5 rounded-full text-xs opacity-60 cursor-pointer hover:opacity-80"
+          style={{
+            backgroundColor: theme.colors.userBg + '80',
+            color: theme.colors.userText,
+          }}
+          onClick={() => {
+            setIsExpanded(!isExpanded);
+          }}
+        >
+          {isExpanded ? (
+            <div className="whitespace-pre-wrap font-mono text-xs max-w-xl">
+              {block.content.slice(0, 500)}
+              {block.content.length > 500 && '...'}
+            </div>
+          ) : (
+            <span>{block.metaLabel ?? 'system'}</span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   const preview =
-    block.content.length > 100 && !isExpanded
-      ? block.content.slice(0, 100) + '...'
-      : block.content;
+    block.content.length > 100 && !isExpanded ? block.content.slice(0, 100) + '...' : block.content;
 
   return (
     <div id={`block-${block.id}`} className="flex justify-end mb-4">

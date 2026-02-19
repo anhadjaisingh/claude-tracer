@@ -4,10 +4,12 @@ import type { AnyBlock, ParsedSession } from '@/types';
 
 class TestParser extends BaseParser {
   parse(content: string): ParsedSession {
+    void content;
     return this.createSession('test.jsonl', []);
   }
 
   parseLine(line: string): AnyBlock | null {
+    void line;
     return null;
   }
 

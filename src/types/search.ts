@@ -13,7 +13,7 @@ export interface SearchMatch {
 
 export interface SearchOptions {
   limit?: number;
-  types?: Array<'user' | 'agent' | 'tool' | 'mcp'>;
+  types?: ('user' | 'agent' | 'tool' | 'mcp')[];
   chunkId?: string;
 }
 

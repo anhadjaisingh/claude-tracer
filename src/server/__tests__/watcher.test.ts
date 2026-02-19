@@ -39,7 +39,7 @@ describe('SessionWatcher', () => {
     await watcher.watch(testFile, callback);
 
     expect(callback).toHaveBeenCalled();
-    const blocks = callback.mock.calls[0][0];
+    const blocks = callback.mock.calls[0][0] as unknown[];
     expect(blocks.length).toBe(1);
   });
 
@@ -59,7 +59,7 @@ describe('SessionWatcher', () => {
         callCount++;
         if (callCount === 2) resolve();
       });
-      watcher.watch(testFile, callback).then(async () => {
+      void watcher.watch(testFile, callback).then(async () => {
         // Give chokidar polling a moment to stabilize after "ready"
         await new Promise((r) => setTimeout(r, 300));
         const line2 = JSON.stringify({
@@ -73,9 +73,11 @@ describe('SessionWatcher', () => {
 
     await Promise.race([
       secondCall,
-      new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timed out waiting for file change')), 8000),
-      ),
+      new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Timed out waiting for file change'));
+        }, 8000);
+      }),
     ]);
   });
 });

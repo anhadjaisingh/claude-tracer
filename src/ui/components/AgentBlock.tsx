@@ -12,9 +12,7 @@ export function AgentBlock({ block }: Props) {
   const theme = useTheme();
 
   const preview =
-    block.content.length > 200 && !isExpanded
-      ? block.content.slice(0, 200) + '...'
-      : block.content;
+    block.content.length > 200 && !isExpanded ? block.content.slice(0, 200) + '...' : block.content;
 
   return (
     <div id={`block-${block.id}`} className="flex justify-start mb-4">
@@ -32,9 +30,7 @@ export function AgentBlock({ block }: Props) {
           <span>agent</span>
           {block.tokensIn && <span>{block.tokensIn} in</span>}
           {block.tokensOut && <span>{block.tokensOut} out</span>}
-          {block.wallTimeMs && (
-            <span>{(block.wallTimeMs / 1000).toFixed(1)}s</span>
-          )}
+          {block.wallTimeMs && <span>{(block.wallTimeMs / 1000).toFixed(1)}s</span>}
         </div>
 
         {block.thinking && (

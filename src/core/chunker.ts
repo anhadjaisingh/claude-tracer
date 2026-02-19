@@ -17,6 +17,14 @@ export class Chunker {
 
     for (const block of blocks) {
       if (isUserBlock(block)) {
+        const userBlock = block;
+        if (userBlock.isMeta) {
+          // isMeta user blocks don't start new turns
+          if (currentTurn) {
+            currentTurn.blockIds.push(block.id);
+          }
+          continue;
+        }
         // Start a new turn
         if (currentTurn) {
           this.finalizeChunk(currentTurn, blocks);
@@ -25,10 +33,7 @@ export class Chunker {
         currentTurn = this.createChunk('turn', this.getTurnLabel(block));
         currentTurn.blockIds.push(block.id);
       } else if (isAgentBlock(block)) {
-        if (!currentTurn) {
-          // Agent without preceding user (e.g., system prompt response)
-          currentTurn = this.createChunk('turn', 'Agent response');
-        }
+        currentTurn ??= this.createChunk('turn', 'Agent response');
         currentTurn.blockIds.push(block.id);
       } else if ((isToolBlock(block) || isMcpBlock(block)) && currentTurn) {
         currentTurn.blockIds.push(block.id);
@@ -46,7 +51,7 @@ export class Chunker {
 
   private createChunk(level: ChunkLevel, label: string): Chunk {
     return {
-      id: `chunk-${++this.chunkIdCounter}`,
+      id: `chunk-${String(++this.chunkIdCounter)}`,
       level,
       label,
       blockIds: [],
@@ -66,19 +71,10 @@ export class Chunker {
   }
 
   private finalizeChunk(chunk: Chunk, allBlocks: AnyBlock[]): void {
-    const chunkBlocks = allBlocks.filter(b => chunk.blockIds.includes(b.id));
+    const chunkBlocks = allBlocks.filter((b) => chunk.blockIds.includes(b.id));
 
-    chunk.totalTokensIn = chunkBlocks.reduce(
-      (sum, b) => sum + (b.tokensIn || 0),
-      0,
-    );
-    chunk.totalTokensOut = chunkBlocks.reduce(
-      (sum, b) => sum + (b.tokensOut || 0),
-      0,
-    );
-    chunk.totalWallTimeMs = chunkBlocks.reduce(
-      (sum, b) => sum + (b.wallTimeMs || 0),
-      0,
-    );
+    chunk.totalTokensIn = chunkBlocks.reduce((sum, b) => sum + (b.tokensIn ?? 0), 0);
+    chunk.totalTokensOut = chunkBlocks.reduce((sum, b) => sum + (b.tokensOut ?? 0), 0);
+    chunk.totalWallTimeMs = chunkBlocks.reduce((sum, b) => sum + (b.wallTimeMs ?? 0), 0);
   }
 }

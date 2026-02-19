@@ -11,6 +11,8 @@ export interface Block {
 export interface UserBlock extends Block {
   type: 'user';
   content: string;
+  isMeta?: boolean;
+  metaLabel?: string;
 }
 
 export interface AgentBlock extends Block {

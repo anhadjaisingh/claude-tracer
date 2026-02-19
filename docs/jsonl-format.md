@@ -32,14 +32,14 @@ Where `<encoded-directory-path>` is the project path with `/` replaced by `-` (e
 
 Each JSONL line is a JSON object with a `type` field. Observed types and their frequency in a typical session:
 
-| Type | Description | Frequency |
-|------|-------------|-----------|
-| `assistant` | Agent response (text, tool calls, thinking) | Very common |
-| `user` | User message or tool result | Very common |
-| `progress` | Progress events (hooks, bash, MCP, agent) | Very common |
-| `file-history-snapshot` | File backup state at each user turn | Common |
-| `system` | System events (turn duration, hooks, compaction) | Moderate |
-| `queue-operation` | Message queue operations (enqueue/remove) | Rare |
+| Type                    | Description                                      | Frequency   |
+| ----------------------- | ------------------------------------------------ | ----------- |
+| `assistant`             | Agent response (text, tool calls, thinking)      | Very common |
+| `user`                  | User message or tool result                      | Very common |
+| `progress`              | Progress events (hooks, bash, MCP, agent)        | Very common |
+| `file-history-snapshot` | File backup state at each user turn              | Common      |
+| `system`                | System events (turn duration, hooks, compaction) | Moderate    |
+| `queue-operation`       | Message queue operations (enqueue/remove)        | Rare        |
 
 ## Common Fields
 
@@ -47,18 +47,18 @@ Most entry types share these fields:
 
 ```typescript
 interface BaseEntry {
-  type: string;                    // Entry type discriminator
-  uuid: string;                    // Unique ID for this entry
-  parentUuid: string | null;       // Parent entry UUID (forms a tree, NOT a flat list)
-  sessionId: string;               // Session UUID
-  timestamp: string;               // ISO-8601 (e.g., "2026-02-18T11:30:21.796Z")
-  version: string;                 // Claude Code version (e.g., "2.1.12", "2.1.37")
-  cwd: string;                     // Working directory
-  gitBranch: string;               // Active git branch
-  isSidechain: boolean;            // true for sub-agent messages
-  userType: string;                // Always "external" in observed data
-  slug?: string;                   // Session slug (e.g., "wiggly-imagining-wolf")
-  agentId?: string;                // Present on sub-agent entries (e.g., "a4e80a2")
+  type: string; // Entry type discriminator
+  uuid: string; // Unique ID for this entry
+  parentUuid: string | null; // Parent entry UUID (forms a tree, NOT a flat list)
+  sessionId: string; // Session UUID
+  timestamp: string; // ISO-8601 (e.g., "2026-02-18T11:30:21.796Z")
+  version: string; // Claude Code version (e.g., "2.1.12", "2.1.37")
+  cwd: string; // Working directory
+  gitBranch: string; // Active git branch
+  isSidechain: boolean; // true for sub-agent messages
+  userType: string; // Always "external" in observed data
+  slug?: string; // Session slug (e.g., "wiggly-imagining-wolf")
+  agentId?: string; // Present on sub-agent entries (e.g., "a4e80a2")
 }
 ```
 
@@ -83,13 +83,12 @@ User messages and tool results. The `message.content` field can be either a stri
   "uuid": "abc123",
   "timestamp": "2026-02-18T11:43:58.858Z",
   "thinkingMetadata": { "level": "high", "disabled": false, "triggers": [] },
-  "todos": [
-    { "content": "Task name", "status": "in_progress", "activeForm": "Working on task" }
-  ]
+  "todos": [{ "content": "Task name", "status": "in_progress", "activeForm": "Working on task" }]
 }
 ```
 
 **Extra fields on user entries:**
+
 - `thinkingMetadata` - Present when user sends a message; indicates thinking level
 - `todos` - Snapshot of the todo list at time of message
 - `isMeta` - Boolean, true for system-injected messages (skill content, caveats)
@@ -123,14 +122,14 @@ Tool results come back as `type: "user"` entries where `message.content` is an a
 
 **`toolUseResult` variants by tool type:**
 
-| Tool | Fields |
-|------|--------|
-| Bash | `stdout`, `stderr`, `interrupted`, `isImage` |
-| Read | `type: "text"`, `file: { filePath, content, numLines, startLine, totalLines }` |
-| Glob | `filenames: string[]`, `durationMs`, `numFiles`, `truncated` |
-| TodoWrite | `oldTodos: Todo[]`, `newTodos: Todo[]` |
-| Skill | `success: boolean`, `commandName: string` |
-| Write/Edit | `success: boolean` |
+| Tool       | Fields                                                                         |
+| ---------- | ------------------------------------------------------------------------------ |
+| Bash       | `stdout`, `stderr`, `interrupted`, `isImage`                                   |
+| Read       | `type: "text"`, `file: { filePath, content, numLines, startLine, totalLines }` |
+| Glob       | `filenames: string[]`, `durationMs`, `numFiles`, `truncated`                   |
+| TodoWrite  | `oldTodos: Todo[]`, `newTodos: Todo[]`                                         |
+| Skill      | `success: boolean`, `commandName: string`                                      |
+| Write/Edit | `success: boolean`                                                             |
 
 ### Command messages
 
@@ -173,7 +172,9 @@ Agent responses. The `message` field contains the **full Anthropic API response 
     "id": "msg_017TKwBGQSY9phGZp1ZFrNiJ",
     "type": "message",
     "role": "assistant",
-    "content": [ /* content blocks */ ],
+    "content": [
+      /* content blocks */
+    ],
     "stop_reason": null,
     "stop_sequence": null,
     "usage": {
@@ -196,6 +197,7 @@ Agent responses. The `message` field contains the **full Anthropic API response 
 ```
 
 **Key differences from what you might expect:**
+
 - Token counts are at `message.usage.*`, NOT at the top level
 - `message.model` identifies the model used (e.g., `"claude-opus-4-5-20251101"`, `"claude-opus-4-6"`)
 - `stop_reason` can be `null` (for multi-block streamed responses), `"end_turn"`, `"tool_use"`, etc.
@@ -204,11 +206,13 @@ Agent responses. The `message` field contains the **full Anthropic API response 
 ### Content block types in assistant messages
 
 **Text:**
+
 ```json
 { "type": "text", "text": "I'll implement the feature..." }
 ```
 
 **Tool use:**
+
 ```json
 {
   "type": "tool_use",
@@ -220,6 +224,7 @@ Agent responses. The `message` field contains the **full Anthropic API response 
 ```
 
 **Thinking (extended thinking / chain-of-thought):**
+
 ```json
 {
   "type": "thinking",
@@ -244,16 +249,17 @@ All share the same `requestId` and same `message.id`.
 
 Real-time progress events. The `data.type` field discriminates subtypes:
 
-| `data.type` | Description | Fields |
-|-------------|-------------|--------|
-| `hook_progress` | Hook execution | `hookEvent`, `hookName`, `command` |
-| `bash_progress` | Bash command progress | `output`, `fullOutput`, `elapsedTimeSeconds`, `totalLines`, `timeoutMs` |
-| `agent_progress` | Sub-agent dispatch | `message` (contains the sub-agent's initial prompt) |
-| `mcp_progress` | MCP tool progress | `status`, `serverName`, `toolName` |
-| `query_update` | Web search progress | `query` |
-| `search_results_received` | Search results arrived | `resultCount`, `query` |
+| `data.type`               | Description            | Fields                                                                  |
+| ------------------------- | ---------------------- | ----------------------------------------------------------------------- |
+| `hook_progress`           | Hook execution         | `hookEvent`, `hookName`, `command`                                      |
+| `bash_progress`           | Bash command progress  | `output`, `fullOutput`, `elapsedTimeSeconds`, `totalLines`, `timeoutMs` |
+| `agent_progress`          | Sub-agent dispatch     | `message` (contains the sub-agent's initial prompt)                     |
+| `mcp_progress`            | MCP tool progress      | `status`, `serverName`, `toolName`                                      |
+| `query_update`            | Web search progress    | `query`                                                                 |
+| `search_results_received` | Search results arrived | `resultCount`, `query`                                                  |
 
 ### hook_progress example
+
 ```json
 {
   "type": "progress",
@@ -269,6 +275,7 @@ Real-time progress events. The `data.type` field discriminates subtypes:
 ```
 
 ### bash_progress example
+
 ```json
 {
   "type": "progress",
@@ -286,6 +293,7 @@ Real-time progress events. The `data.type` field discriminates subtypes:
 ```
 
 ### agent_progress example
+
 ```json
 {
   "type": "progress",
@@ -336,6 +344,7 @@ Written before each user turn to track file backup state. These are very frequen
 System events. Discriminated by `subtype`:
 
 ### system:turn_duration
+
 ```json
 {
   "type": "system",
@@ -346,14 +355,13 @@ System events. Discriminated by `subtype`:
 ```
 
 ### system:stop_hook_summary
+
 ```json
 {
   "type": "system",
   "subtype": "stop_hook_summary",
   "hookCount": 2,
-  "hookInfos": [
-    { "command": "terminal-notifier -title \"Claude Code\" -message \"Done\"" }
-  ],
+  "hookInfos": [{ "command": "terminal-notifier -title \"Claude Code\" -message \"Done\"" }],
   "hookErrors": [],
   "preventedContinuation": false,
   "stopReason": "",
@@ -363,6 +371,7 @@ System events. Discriminated by `subtype`:
 ```
 
 ### system:compact_boundary
+
 Marks where context compaction occurred (older messages were summarized to fit context window).
 
 ---
@@ -381,11 +390,13 @@ Message queue operations for queued user messages:
 ## Sub-agent Files
 
 Sub-agent transcripts are stored at:
+
 ```
 <session-uuid>/subagents/agent-<agent-id>.jsonl
 ```
 
 They use the same format as main session files but:
+
 - All entries have `isSidechain: true`
 - All entries have `agentId: "<id>"` (e.g., `"a4e80a2"`)
 - The first entry is `type: "user"` with the sub-agent's initial prompt
@@ -427,22 +438,22 @@ Parallel tool calls from the same assistant turn share the same `requestId` but 
 
 These tools parse the same format and serve as additional reference:
 
-| Tool | Language | URL |
-|------|----------|-----|
-| claude-code-log | Python | https://github.com/daaain/claude-code-log |
-| claude-JSONL-browser | Web | https://github.com/withLinda/claude-JSONL-browser |
-| cctrace | Python | https://github.com/jimmc414/cctrace |
-| ccusage | TypeScript | https://github.com/ryoppippi/ccusage |
-| claude-code-data | Python | https://github.com/osolmaz/claude-code-data |
-| clog | TypeScript | https://github.com/HillviewCap/clog |
+| Tool                 | Language   | URL                                               |
+| -------------------- | ---------- | ------------------------------------------------- |
+| claude-code-log      | Python     | https://github.com/daaain/claude-code-log         |
+| claude-JSONL-browser | Web        | https://github.com/withLinda/claude-JSONL-browser |
+| cctrace              | Python     | https://github.com/jimmc414/cctrace               |
+| ccusage              | TypeScript | https://github.com/ryoppippi/ccusage              |
+| claude-code-data     | Python     | https://github.com/osolmaz/claude-code-data       |
+| clog                 | TypeScript | https://github.com/HillviewCap/clog               |
 
 ---
 
 ## Version History
 
-| Claude Code Version | Observed Changes |
-|--------------------|------------------|
-| 2.1.12 | Base format documented here |
-| 2.1.37 | Same format, added `slug` field, `mcp_progress` subtype |
+| Claude Code Version | Observed Changes                                        |
+| ------------------- | ------------------------------------------------------- |
+| 2.1.12              | Base format documented here                             |
+| 2.1.37              | Same format, added `slug` field, `mcp_progress` subtype |
 
 > This document should be updated as new entry types or format changes are discovered.

@@ -1,10 +1,5 @@
 import MiniSearch from 'minisearch';
-import type {
-  AnyBlock,
-  SearchEngine,
-  SearchOptions,
-  SearchResult,
-} from '@/types';
+import type { AnyBlock, SearchEngine, SearchOptions, SearchResult } from '@/types';
 import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock } from '@/types';
 
 interface IndexedBlock {
@@ -19,10 +14,10 @@ interface IndexedBlock {
  */
 export class BlockSearch implements SearchEngine {
   private miniSearch: MiniSearch<IndexedBlock>;
-  private blockTypes: Map<string, string> = new Map();
+  private blockTypes = new Map<string, string>();
 
   constructor() {
-    this.miniSearch = new MiniSearch<IndexedBlock>({
+    this.miniSearch = new MiniSearch({
       fields: ['content', 'toolName'],
       storeFields: ['id', 'type'],
       searchOptions: {
@@ -34,9 +29,9 @@ export class BlockSearch implements SearchEngine {
   }
 
   index(blocks: AnyBlock[]): void {
-    const documents = blocks.map(block => this.blockToDocument(block));
+    const documents = blocks.map((block) => this.blockToDocument(block));
     this.miniSearch.addAll(documents);
-    blocks.forEach(b => this.blockTypes.set(b.id, b.type));
+    blocks.forEach((b) => this.blockTypes.set(b.id, b.type));
   }
 
   addBlock(block: AnyBlock): void {
@@ -52,21 +47,22 @@ export class BlockSearch implements SearchEngine {
 
     // Filter by type if specified
     if (types && types.length > 0) {
-      results = results.filter(r => {
-        const blockType = this.blockTypes.get(r.id);
-        return blockType && (types as string[]).includes(blockType);
+      results = results.filter((r) => {
+        const blockType = this.blockTypes.get(r.id as string);
+        return blockType && (types as readonly string[]).includes(blockType);
       });
     }
 
-    return results.slice(0, limit).map(r => ({
-      blockId: r.id,
+    return results.slice(0, limit).map((r) => ({
+      blockId: r.id as string,
       score: r.score,
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- r.match can be undefined at runtime
       matches: r.match
-        ? Object.entries(r.match).map(([field, terms]) => ({
+        ? Object.entries(r.match).map(([field, terms]: [string, unknown]) => ({
             field,
-            snippet: Array.from(terms as unknown as Iterable<string>).join(', '),
+            snippet: Array.from(terms as Iterable<string>).join(', '),
           }))
-        : undefined,
+        : [],
     }));
   }
 
@@ -103,9 +99,7 @@ export class BlockSearch implements SearchEngine {
     if (isToolBlock(block) || isMcpBlock(block)) {
       return [
         JSON.stringify(block.input),
-        typeof block.output === 'string'
-          ? block.output
-          : JSON.stringify(block.output),
+        typeof block.output === 'string' ? block.output : JSON.stringify(block.output),
       ].join(' ');
     }
     return '';

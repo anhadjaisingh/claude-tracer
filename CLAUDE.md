@@ -52,17 +52,42 @@ npm run typecheck    # TypeScript type checking
 
 ## Git Workflow
 
-- **Push significant changes upstream.** Don't let work sit only locally -- if no one else can see it, it doesn't count. After committing meaningful work, push to the remote or open a PR.
+- **Nothing is "done" until it's committed, published as a PR, and merged.** Local-only work doesn't count.
 - For feature work, create a branch and open a PR for review.
 - For smaller changes (docs, config, fixes), pushing directly to main is fine.
 
 ## PR and Code Review Process
 
-- **Agent teammates must work on feature branches** and open PRs rather than pushing directly to main.
-- **Track PR status.** Monitor the automated Claude Code Action and Security Review comments on each PR. Address any issues flagged before requesting human review.
-- **When a PR is ready for human review**, notify the team lead with the PR URL. Mention if PRs have dependencies or need to be reviewed/merged in a specific order.
-- **Surface architectural decisions.** If any significant design choices are made during implementation (new patterns, interface changes, dependency additions, structural decisions), explicitly flag them to the team lead. This is critical -- don't bury architectural decisions in commit messages.
+- **Every meaningful change must go through a PR.** Agent teammates and sub-agents must drive work to completion by PR submission -- commit, push, create PR, monitor CI, address review, merge.
+- **All CI/tests must pass before merge.** Tests must pass in both spirit and reality. Never disable or skip tests to land a change. If a test is genuinely wrong, fix the test with an explanation -- don't delete it.
+- **Failing tests need root-cause analysis.** If CI fails, investigate the root cause and add an explanation on the PR. Surface the failure to the team lead (TL) agent, who decides whether to fix or escalate to the human reviewer.
+- **Use the code-review agent** before requesting human review. If both CI and code review pass, merge the PR. If something fails or requires a judgment call that wouldn't pass a senior engineer's smell test, tag the human reviewer (@anhad) on the PR.
+- **Surface architectural decisions.** If any significant design choices are made during implementation (new patterns, interface changes, dependency additions, structural decisions), explicitly flag them to the team lead. Don't bury architectural decisions in commit messages.
 - **Code review feedback must be addressed** before merging. Check PR comments and resolve conversations.
+
+## Agent Team Workflow
+
+### Team Lead (TL) Role
+
+The TL agent's primary job is to **stay available to the human** for planning, design, and decision-making. The TL should:
+
+- **Delegate implementation and fix work to sub-agents/teammates.** Don't do coding, lint fixing, CI debugging, or test repairs yourself -- fire off an agent for that.
+- **Never block the main loop.** No `sleep` commands, no `sleep && gh pr checks`, no long-running poll loops on the main conversation. Dispatch a background agent to monitor CI/PRs and notify you when done.
+- **Coordinate and integrate.** After parallel agent work completes, verify integration, open PRs, and monitor CI. If CI fails, dispatch a sub-agent to fix it.
+- **Escalate, don't block.** If something needs human judgment, tag @anhad on the PR or surface it in conversation. Don't sit on blockers.
+- **Persist instructions in CLAUDE.md**, not just memory files. All operational rules, workflow expectations, and team guidelines must be written to CLAUDE.md (and team docs if applicable) so they survive across sessions and agents.
+
+### Teammate / Sub-agent Responsibilities
+
+- **Drive work to PR submission.** Each agent is responsible for committing, pushing, and opening PRs for their workstream.
+- **Monitor CI after pushing.** If CI fails on your PR, investigate and fix. Don't leave broken CI for someone else.
+- **Surface blockers immediately** to the TL agent. If the issue is non-trivial or needs a decision, the TL escalates to the human reviewer via GitHub PR comment or direct conversation.
+
+## Port Allocation
+
+- **Default dev ports:** Express on `3000`, Vite on `5173` — used by `npm run dev`
+- **Local dev ports:** Express on `4000`, Vite on `4001` — used by `npm run local` (for human-facing local instance, avoids conflicts with agent test servers)
+- **Agents should use default ports** for testing. The local dev command uses separate ports so agents and the human's local instance don't interfere with each other.
 
 ## Permissions Note
 

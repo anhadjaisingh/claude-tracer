@@ -39,17 +39,17 @@ describe('BlockSearch', () => {
   it('finds blocks by content', () => {
     const results = search.search('authentication');
     expect(results.length).toBeGreaterThan(0);
-    expect(results.some(r => r.blockId === 'user-1')).toBe(true);
+    expect(results.some((r) => r.blockId === 'user-1')).toBe(true);
   });
 
   it('finds tool blocks by tool name', () => {
     const results = search.search('Read');
-    expect(results.some(r => r.blockId === 'tool-1')).toBe(true);
+    expect(results.some((r) => r.blockId === 'tool-1')).toBe(true);
   });
 
   it('filters by block type', () => {
     const results = search.search('authentication', { types: ['user'] });
-    expect(results.every(r => r.blockId.startsWith('user'))).toBe(true);
+    expect(results.every((r) => r.blockId.startsWith('user'))).toBe(true);
   });
 
   it('respects limit option', () => {
@@ -66,7 +66,7 @@ describe('BlockSearch', () => {
     };
     search.addBlock(newBlock);
     const results = search.search('tests');
-    expect(results.some(r => r.blockId === 'user-2')).toBe(true);
+    expect(results.some((r) => r.blockId === 'user-2')).toBe(true);
   });
 
   it('can clear the index', () => {
