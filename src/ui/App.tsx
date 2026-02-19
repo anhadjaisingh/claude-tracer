@@ -6,14 +6,14 @@ import { IndexSidebar } from './components/IndexSidebar';
 import { Footer } from './components/Footer';
 import { BlockOverlay } from './components/BlockOverlay';
 import { useSession } from './hooks/useSession';
-import { useSearch } from './hooks/useSearch';
+import { useHybridSearch } from './hooks/useHybridSearch';
 import { useSettings } from './hooks/useSettings';
 import { useOverlay } from './hooks/useOverlay';
 import { useResizable } from './hooks/useResizable';
 
 export default function App() {
   const { blocks, chunks, isConnected, scrollToBlock } = useSession();
-  const search = useSearch(blocks);
+  const search = useHybridSearch(blocks);
   const { themeName, setThemeName } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const overlay = useOverlay();
@@ -57,6 +57,10 @@ export default function App() {
           currentResultIndex={search.currentIndex}
           onSearchNext={search.next}
           onSearchPrev={search.prev}
+          searchMode={search.mode}
+          onSearchModeChange={search.setMode}
+          embeddingProgress={search.embeddingProgress}
+          isVectorReady={search.isVectorReady}
         />
 
         <div className="flex-1 flex overflow-hidden">
