@@ -19,3 +19,18 @@ body {
   font-family: var(--font-mono);
   background-color: var(--color-claude-peach);
 }
+
+@keyframes tracer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tracer-spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border-width: 3px;
+  border-style: solid;
+  animation: tracer-spin 0.8s linear infinite;
+}

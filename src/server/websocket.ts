@@ -14,6 +14,7 @@ export interface WsMessage {
     | 'embeddings:ready';
   blocks?: AnyBlock[];
   chunks?: Chunk[];
+  filePath?: string;
   error?: string;
   [key: string]: unknown;
 }
@@ -22,6 +23,7 @@ export interface TracerWebSocketServer {
   broadcast(message: WsMessage): void;
   close(): void;
   setSearchEngine(engine: HybridSearchEngine): void;
+  setFilePath(filePath: string): void;
 }
 
 let queryCounter = 0;
@@ -30,6 +32,7 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
   const wss = new WebSocketServer({ server, path: '/ws' });
   const clients = new Set<WebSocket>();
   let searchEngine: HybridSearchEngine | null = null;
+  let sessionFilePath: string | undefined;
 
   let latestBlocks: AnyBlock[] = [];
   let latestChunks: Chunk[] = [];
@@ -40,7 +43,14 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
 
     // Send current state to new client
     if (latestBlocks.length > 0) {
-      ws.send(JSON.stringify({ type: 'session:init', blocks: latestBlocks, chunks: latestChunks }));
+      ws.send(
+        JSON.stringify({
+          type: 'session:init',
+          blocks: latestBlocks,
+          chunks: latestChunks,
+          filePath: sessionFilePath,
+        }),
+      );
     }
 
     ws.on('message', (rawData: Buffer) => {
@@ -118,6 +128,9 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
     },
     setSearchEngine(engine: HybridSearchEngine) {
       searchEngine = engine;
+    },
+    setFilePath(filePath: string) {
+      sessionFilePath = filePath;
     },
   };
 }

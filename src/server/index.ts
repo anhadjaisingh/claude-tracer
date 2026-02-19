@@ -9,6 +9,7 @@ import { Chunker } from '../core/chunker';
 import { EmbeddingEngine } from '../core/embeddings';
 import { HybridSearchEngine } from '../core/hybrid-search';
 import { parseArgs, printHelp, printVersion } from './cli';
+import path from 'path';
 import type { AnyBlock } from '../types';
 
 async function main() {
@@ -44,6 +45,7 @@ async function main() {
     });
 
   if (args.file) {
+    wss.setFilePath(path.resolve(args.file));
     const watcher = new SessionWatcher({ parser: new ClaudeCodeParser() });
     let allBlocks: AnyBlock[] = [];
 

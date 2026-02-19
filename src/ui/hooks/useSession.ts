@@ -1,16 +1,20 @@
 import { useState, useEffect } from 'react';
 import type { AnyBlock, Chunk } from '@/types';
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'error';
+
 interface WsMessage {
   type: 'blocks:update' | 'blocks:new' | 'session:init' | 'error';
   blocks?: AnyBlock[];
   chunks?: Chunk[];
+  filePath?: string;
 }
 
 export function useSession() {
   const [blocks, setBlocks] = useState<AnyBlock[]>([]);
   const [chunks, setChunks] = useState<Chunk[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
+  const [filePath, setFilePath] = useState<string | undefined>();
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -19,16 +23,17 @@ export function useSession() {
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      setIsConnected(true);
+      setConnectionStatus('connected');
       console.log('WebSocket connected');
     };
 
     ws.onclose = () => {
-      setIsConnected(false);
+      setConnectionStatus('connecting');
       console.log('WebSocket disconnected');
     };
 
     ws.onerror = (error) => {
+      setConnectionStatus('error');
       console.error('WebSocket error:', error);
     };
 
@@ -38,6 +43,17 @@ export function useSession() {
 
         switch (message.type) {
           case 'session:init':
+            if (message.filePath) {
+              setFilePath(message.filePath);
+            }
+            if (message.blocks) {
+              setBlocks(message.blocks);
+            }
+            if (message.chunks) {
+              setChunks(message.chunks);
+            }
+            break;
+
           case 'blocks:update':
             if (message.blocks) {
               setBlocks(message.blocks);
@@ -66,6 +82,8 @@ export function useSession() {
   return {
     blocks,
     chunks,
-    isConnected,
+    connectionStatus,
+    isConnected: connectionStatus === 'connected',
+    filePath,
   };
 }

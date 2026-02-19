@@ -104,6 +104,7 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady }: Props) {
   const { setViewport, setCenter } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
+
   const initialViewportSet = useRef(false);
   const nodesRef = useRef<Node[]>([]);
 
@@ -191,8 +192,27 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady }: Props) {
     );
   }
 
+  const showLoadingOverlay = blocks.length > 0 && nodes.length === 0;
+
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      {showLoadingOverlay && (
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center z-10"
+          style={{ backgroundColor: theme.colors.background }}
+        >
+          <div
+            className="tracer-spinner"
+            style={{ borderColor: `${theme.colors.accent}33`, borderTopColor: theme.colors.accent }}
+          />
+          <span
+            className="mt-4 text-sm font-mono opacity-80"
+            style={{ color: theme.colors.agentText }}
+          >
+            Computing layout...
+          </span>
+        </div>
+      )}
       <ReactFlow
         nodes={nodes}
         edges={edges}

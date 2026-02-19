@@ -5,15 +5,22 @@ import type { ThemeName } from '../hooks/useSettings';
 interface Props {
   blockCount: number;
   isConnected: boolean;
+  filePath?: string;
   settingsOpen: boolean;
   onToggleSettings: () => void;
   themeName: ThemeName;
   onThemeChange: (name: ThemeName) => void;
 }
 
+function extractFileName(fullPath: string): string {
+  const parts = fullPath.split('/');
+  return parts[parts.length - 1] || fullPath;
+}
+
 export function Footer({
   blockCount,
   isConnected,
+  filePath,
   settingsOpen,
   onToggleSettings,
   themeName,
@@ -37,6 +44,11 @@ export function Footer({
           <span className="w-2 h-2 rounded-full bg-current"></span>
           {isConnected ? 'Connected' : 'Disconnected'}
         </span>
+        {filePath && (
+          <span className="opacity-50 truncate max-w-xs" title={filePath}>
+            {extractFileName(filePath)}
+          </span>
+        )}
       </div>
       <div className="relative">
         <button

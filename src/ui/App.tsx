@@ -13,7 +13,7 @@ import { useOverlay } from './hooks/useOverlay';
 import { useResizable } from './hooks/useResizable';
 
 export default function App() {
-  const { blocks, chunks, isConnected } = useSession();
+  const { blocks, chunks, isConnected, connectionStatus, filePath } = useSession();
   const search = useHybridSearch(blocks);
   const { themeName, setThemeName } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -75,6 +75,26 @@ export default function App() {
 
         <div className="flex-1 flex overflow-hidden">
           <main className="flex-1 relative" style={{ minHeight: 0 }}>
+            {connectionStatus === 'connecting' && blocks.length === 0 && (
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center z-20"
+                style={{ backgroundColor: theme.colors.background }}
+              >
+                <div
+                  className="tracer-spinner"
+                  style={{
+                    borderColor: `${theme.colors.accent}33`,
+                    borderTopColor: theme.colors.accent,
+                  }}
+                />
+                <span
+                  className="mt-4 text-sm font-mono opacity-80"
+                  style={{ color: theme.colors.agentText }}
+                >
+                  Connecting...
+                </span>
+              </div>
+            )}
             <GraphView
               blocks={blocks}
               onExpandBlock={overlay.open}
@@ -102,6 +122,7 @@ export default function App() {
         <Footer
           blockCount={blocks.length}
           isConnected={isConnected}
+          filePath={filePath}
           settingsOpen={settingsOpen}
           onToggleSettings={toggleSettings}
           themeName={themeName}
