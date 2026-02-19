@@ -1,5 +1,5 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { AnyBlock } from '@/types';
+import type { AnyBlock, Chunk } from '@/types';
 import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock } from '@/types';
 
 function getNodeType(block: AnyBlock): string {
@@ -12,26 +12,101 @@ function getNodeType(block: AnyBlock): string {
   return 'user';
 }
 
+export interface BuildGraphOptions {
+  chunks?: Chunk[];
+  collapsedGroups?: ReadonlySet<string>;
+  onToggleCollapse?: (groupId: string) => void;
+}
+
 export function buildGraph(
   blocks: AnyBlock[],
   onExpandBlock: (block: AnyBlock) => void,
+  options: BuildGraphOptions = {},
 ): { nodes: Node[]; edges: Edge[] } {
+  const { chunks, collapsedGroups, onToggleCollapse } = options;
+
   const blockMap = new Map<string, AnyBlock>();
   for (const block of blocks) {
     blockMap.set(block.id, block);
   }
 
-  const nodes: Node[] = blocks.map((block) => ({
-    id: block.id,
-    type: getNodeType(block),
-    data: { block, onExpandBlock },
-    position: { x: 0, y: 0 }, // layoutGraph will set this
-  }));
+  // Build block-to-chunk lookup
+  const blockToChunk = new Map<string, Chunk>();
+  if (chunks) {
+    for (const chunk of chunks) {
+      for (const blockId of chunk.blockIds) {
+        blockToChunk.set(blockId, chunk);
+      }
+    }
+  }
 
+  const nodes: Node[] = [];
   const edges: Edge[] = [];
   const edgeIds = new Set<string>();
 
-  function addEdge(source: string, target: string, sourceHandle?: string, targetHandle?: string): void {
+  // Track which blocks belong to collapsed groups
+  const hiddenBlockIds = new Set<string>();
+  if (chunks && collapsedGroups) {
+    for (const chunk of chunks) {
+      if (collapsedGroups.has(chunk.id)) {
+        for (const blockId of chunk.blockIds) {
+          hiddenBlockIds.add(blockId);
+        }
+      }
+    }
+  }
+
+  // Create group nodes (one per chunk)
+  if (chunks && chunks.length > 0 && onToggleCollapse) {
+    for (const chunk of chunks) {
+      const isCollapsed = collapsedGroups?.has(chunk.id) ?? false;
+      nodes.push({
+        id: chunk.id,
+        type: 'chunkGroup',
+        data: {
+          label: chunk.label,
+          blockCount: chunk.blockIds.length,
+          totalTokens: chunk.totalTokensIn + chunk.totalTokensOut,
+          durationMs: chunk.totalWallTimeMs,
+          collapsed: isCollapsed,
+          onToggleCollapse,
+          groupId: chunk.id,
+          expandedWidth: 0, // Will be set by layout
+          expandedHeight: 0, // Will be set by layout
+        },
+        position: { x: 0, y: 0 },
+      });
+    }
+  }
+
+  // Create block nodes
+  for (const block of blocks) {
+    const chunk = blockToChunk.get(block.id);
+    const isHidden = hiddenBlockIds.has(block.id);
+
+    const node: Node = {
+      id: block.id,
+      type: getNodeType(block),
+      data: { block, onExpandBlock },
+      position: { x: 0, y: 0 },
+      hidden: isHidden,
+    };
+
+    // Assign parentId if this block belongs to a chunk and we have group nodes
+    if (chunk && chunks && chunks.length > 0 && onToggleCollapse) {
+      node.parentId = chunk.id;
+      node.extent = 'parent';
+    }
+
+    nodes.push(node);
+  }
+
+  function addEdge(
+    source: string,
+    target: string,
+    sourceHandle?: string,
+    targetHandle?: string,
+  ): void {
     const edgeId = `${source}->${target}`;
     if (edgeIds.has(edgeId)) return;
     edgeIds.add(edgeId);
@@ -43,6 +118,11 @@ export function buildGraph(
     };
     if (sourceHandle) edge.sourceHandle = sourceHandle;
     if (targetHandle) edge.targetHandle = targetHandle;
+
+    // Hide edges connected to hidden blocks
+    if (hiddenBlockIds.has(source) || hiddenBlockIds.has(target)) {
+      edge.hidden = true;
+    }
 
     edges.push(edge);
   }
@@ -63,9 +143,6 @@ export function buildGraph(
     if ((isToolBlock(block) || isMcpBlock(block)) && block.parentId) {
       const parent = blockMap.get(block.parentId);
       if (parent) {
-        // The agent->tool edge was already added above via toolCalls.
-        // We don't add a reverse tool->agent edge to keep the DAG clean.
-        // If this tool was not in the parent's toolCalls, add the link.
         const edgeId = `${block.parentId}->${block.id}`;
         if (!edgeIds.has(edgeId)) {
           addEdge(block.parentId, block.id, 'tool-out', 'agent-in');
@@ -75,8 +152,6 @@ export function buildGraph(
   }
 
   // 3. Sequential conversation flow edges
-  //    When a user block follows an agent block (or vice versa) in sequence,
-  //    create a flow edge -- but skip tool blocks (they're linked via parentId).
   const topLevelBlocks = blocks.filter((b) => !isToolBlock(b) && !isMcpBlock(b));
   for (let i = 0; i < topLevelBlocks.length - 1; i++) {
     const current = topLevelBlocks[i];
@@ -85,18 +160,38 @@ export function buildGraph(
     const currentType = getNodeType(current);
     const nextType = getNodeType(next);
 
-    // Connect user->agent or agent->user in conversation flow
     if ((currentType === 'user' || currentType === 'meta') && nextType === 'agent') {
       addEdge(current.id, next.id);
     } else if (currentType === 'agent' && (nextType === 'user' || nextType === 'meta')) {
       addEdge(current.id, next.id);
     } else if (currentType === 'agent' && nextType === 'agent') {
-      // Consecutive agent blocks (e.g., after tool results come back)
       addEdge(current.id, next.id);
     } else {
-      // Any other sequential pair
       addEdge(current.id, next.id);
     }
+  }
+
+  // 4. Sequential edges between groups (connect last block of one group to first block of next)
+  // These edges are visible even when groups are collapsed (connecting the group containers)
+  if (chunks && chunks.length > 1) {
+    for (let i = 0; i < chunks.length - 1; i++) {
+      const current = chunks[i];
+      const next = chunks[i + 1];
+      // Add an edge between the group nodes themselves
+      addGroupEdge(current.id, next.id);
+    }
+  }
+
+  function addGroupEdge(source: string, target: string): void {
+    const edgeId = `group:${source}->${target}`;
+    if (edgeIds.has(edgeId)) return;
+    edgeIds.add(edgeId);
+    edges.push({
+      id: edgeId,
+      source,
+      target,
+      style: { strokeDasharray: '5 5', opacity: 0.4 },
+    });
   }
 
   return { nodes, edges };

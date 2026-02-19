@@ -16,6 +16,10 @@ export const claudeTheme = {
     teamMessageText: '#e0d4f5', // light lavender
     teamMessageAccent: '#7c3aed', // violet-600
     edgeColor: '#000000', // black
+    groupBg: 'rgba(249,115,22,0.06)', // orange tint
+    groupBorder: 'rgba(249,115,22,0.25)',
+    groupText: '#f3f4f6',
+    groupBadgeBg: 'rgba(249,115,22,0.15)',
   },
 };
 

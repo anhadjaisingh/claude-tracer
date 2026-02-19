@@ -16,7 +16,13 @@ const themeOptions: { value: ThemeName; label: string }[] = [
   { value: 'claude', label: 'Claude' },
 ];
 
-export function SettingsPanel({ themeName, onThemeChange, nodesDraggable, onNodesDraggableChange, onClose }: Props) {
+export function SettingsPanel({
+  themeName,
+  onThemeChange,
+  nodesDraggable,
+  onNodesDraggableChange,
+  onClose,
+}: Props) {
   const theme = useTheme();
   const panelRef = useRef<HTMLDivElement>(null);
 

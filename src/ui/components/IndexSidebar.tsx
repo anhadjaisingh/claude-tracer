@@ -8,6 +8,11 @@ interface Props {
   onChunkClick?: (chunkId: string) => void;
 }
 
+function formatTokens(count: number): string {
+  if (count < 1000) return String(count);
+  return `${(count / 1000).toFixed(1)}k`;
+}
+
 export function IndexSidebar({ chunks, blocks = [], onChunkClick }: Props) {
   const theme = useTheme();
 
@@ -34,10 +39,16 @@ export function IndexSidebar({ chunks, blocks = [], onChunkClick }: Props) {
             >
               <div className="flex items-center gap-2 text-sm">
                 <span className="opacity-60">{hasTeamMessage(chunk) ? 'team' : '\u25CB'}</span>
-                <span className="truncate">{chunk.label}</span>
+                <span className="truncate flex-1">{chunk.label}</span>
+                <span className="text-xs opacity-40">{String(chunk.blockIds.length)}</span>
               </div>
               <div className="text-xs opacity-50 ml-5">
-                {chunk.totalTokensIn + chunk.totalTokensOut} tokens
+                {formatTokens(chunk.totalTokensIn + chunk.totalTokensOut)} tokens
+                {chunk.boundarySignals && chunk.boundarySignals.length > 0 && (
+                  <span className="ml-2 opacity-40">
+                    {chunk.boundarySignals.map((s) => s.type).join(', ')}
+                  </span>
+                )}
               </div>
             </li>
           ))}

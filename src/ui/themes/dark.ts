@@ -18,5 +18,9 @@ export const darkTheme: Theme = {
     teamMessageText: '#c7d2fe', // indigo-200
     teamMessageAccent: '#818cf8', // indigo-400
     edgeColor: '#9ca3af', // gray-400
+    groupBg: 'rgba(96,165,250,0.06)', // blue tint
+    groupBorder: 'rgba(96,165,250,0.25)',
+    groupText: '#d1d5db',
+    groupBadgeBg: 'rgba(96,165,250,0.15)',
   },
 };
