@@ -140,36 +140,29 @@ function GraphViewInner({ blocks, onExpandBlock, onNavigateReady }: Props) {
 
     const { nodes: rawNodes, edges: rawEdges } = buildGraph(blocks, onExpandBlock);
 
-    let cancelled = false;
-    void layoutGraph(rawNodes, rawEdges).then((result) => {
-      if (cancelled) return;
-      setNodes(result.nodes);
-      setEdges(result.edges);
+    const result = layoutGraph(rawNodes, rawEdges);
+    setNodes(result.nodes);
+    setEdges(result.edges);
 
-      // Set initial viewport to show the first node near the top-right
-      if (!initialViewportSet.current && result.nodes.length > 0) {
-        initialViewportSet.current = true;
+    // Set initial viewport to show the first node near the top-right
+    if (!initialViewportSet.current && result.nodes.length > 0) {
+      initialViewportSet.current = true;
 
-        // Find the topmost node (smallest y)
-        let topNode = result.nodes[0];
-        for (const node of result.nodes) {
-          if (node.position.y < topNode.position.y) {
-            topNode = node;
-          }
+      // Find the topmost node (smallest y)
+      let topNode = result.nodes[0];
+      for (const node of result.nodes) {
+        if (node.position.y < topNode.position.y) {
+          topNode = node;
         }
-
-        // Position viewport so the top node is visible with some padding
-        void setViewport({
-          x: -(topNode.position.x - 100),
-          y: -(topNode.position.y - 50),
-          zoom: 1,
-        });
       }
-    });
 
-    return () => {
-      cancelled = true;
-    };
+      // Position viewport so the top node is visible with some padding
+      void setViewport({
+        x: -(topNode.position.x - 100),
+        y: -(topNode.position.y - 50),
+        zoom: 1,
+      });
+    }
   }, [blocks, onExpandBlock, setNodes, setEdges, setViewport]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
