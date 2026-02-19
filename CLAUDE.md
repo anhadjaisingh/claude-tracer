@@ -83,15 +83,25 @@ npm run typecheck    # TypeScript type checking
 
 ## Agent Team Workflow
 
+### CRITICAL: Always Use Team Agents for Implementation Work
+
+**Use TeamCreate + team agents (with SendMessage)** for all implementation and feature work. Do NOT use background Task agents for implementation — they are fire-and-forget with no communication channel.
+
+- **Team agents** support mid-flight messaging via SendMessage. The human will add feedback, requirements, and tweaks while agents are running. Team agents can receive and act on these. Background agents cannot.
+- **Background Task agents** are ONLY for truly one-shot monitoring tasks: CI status checks, PR merge monitoring, simple git operations. Never for coding or feature work.
+- **The team infrastructure is documented in `docs/team-setup.md`.** Read it and use it.
+- **If in doubt, use a team agent.** The overhead is minimal and the communication benefit is significant.
+
 ### Team Lead (TL) Role
 
 The TL agent's primary job is to **stay available to the human** for planning, design, and decision-making. The TL should:
 
-- **Delegate implementation and fix work to sub-agents/teammates.** Don't do coding, lint fixing, CI debugging, or test repairs yourself -- fire off an agent for that.
+- **Delegate implementation and fix work to team agents/teammates.** Don't do coding, lint fixing, CI debugging, or test repairs yourself -- fire off a team agent for that.
 - **Never block the main loop.** No `sleep` commands, no `sleep && gh pr checks`, no long-running poll loops on the main conversation. Dispatch a background agent to monitor CI/PRs and notify you when done.
-- **Coordinate and integrate.** After parallel agent work completes, verify integration, open PRs, and monitor CI. If CI fails, dispatch a sub-agent to fix it.
+- **Coordinate and integrate.** After parallel agent work completes, verify integration, open PRs, and monitor CI. If CI fails, dispatch a team agent to fix it.
 - **Escalate, don't block.** If something needs human judgment, tag @anhad on the PR or surface it in conversation. Don't sit on blockers.
 - **Persist instructions in CLAUDE.md**, not just memory files. All operational rules, workflow expectations, and team guidelines must be written to CLAUDE.md (and team docs if applicable) so they survive across sessions and agents.
+- **Use SendMessage to relay human feedback** to running team agents in real-time. When the human adds requirements or tweaks during a task, forward them immediately to the relevant teammate.
 
 ### PR Shepherd Role
 
