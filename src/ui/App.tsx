@@ -1,15 +1,24 @@
-import { useEffect } from 'react';
-import { ThemeContext, claudeTheme } from './themes';
+import { useEffect, useState, useCallback } from 'react';
+import { ThemeContext, getTheme } from './themes';
 import { Header } from './components/Header';
 import { TraceView } from './components/TraceView';
 import { IndexSidebar } from './components/IndexSidebar';
 import { Footer } from './components/Footer';
 import { useSession } from './hooks/useSession';
 import { useSearch } from './hooks/useSearch';
+import { useSettings } from './hooks/useSettings';
 
 export default function App() {
   const { blocks, chunks, isConnected, scrollToBlock } = useSession();
   const search = useSearch(blocks);
+  const { themeName, setThemeName } = useSettings();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const theme = getTheme(themeName);
+
+  const toggleSettings = useCallback(() => {
+    setSettingsOpen((prev) => !prev);
+  }, []);
 
   // Scroll to current search result
   useEffect(() => {
@@ -19,11 +28,8 @@ export default function App() {
   }, [search.currentBlockId, scrollToBlock]);
 
   return (
-    <ThemeContext.Provider value={claudeTheme}>
-      <div
-        className="h-screen flex flex-col"
-        style={{ backgroundColor: claudeTheme.colors.background }}
-      >
+    <ThemeContext.Provider value={theme}>
+      <div className="h-screen flex flex-col" style={{ backgroundColor: theme.colors.background }}>
         <Header
           searchQuery={search.query}
           onSearchChange={search.handleSearch}
@@ -43,7 +49,14 @@ export default function App() {
           </aside>
         </div>
 
-        <Footer blockCount={blocks.length} isConnected={isConnected} />
+        <Footer
+          blockCount={blocks.length}
+          isConnected={isConnected}
+          settingsOpen={settingsOpen}
+          onToggleSettings={toggleSettings}
+          themeName={themeName}
+          onThemeChange={setThemeName}
+        />
       </div>
     </ThemeContext.Provider>
   );
