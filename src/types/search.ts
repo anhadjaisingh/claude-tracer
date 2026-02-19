@@ -23,3 +23,29 @@ export interface SearchEngine {
   search(query: string, options?: SearchOptions): SearchResult[];
   clear(): void;
 }
+
+export type SearchMode = 'keyword' | 'smart';
+
+export interface SearchRequest {
+  type: 'search';
+  query: string;
+  mode: SearchMode;
+  limit?: number;
+}
+
+export interface SearchResultsMessage {
+  type: 'search:results';
+  results: SearchResult[];
+  mode: SearchMode;
+  queryId: string;
+}
+
+export interface EmbeddingProgressMessage {
+  type: 'embeddings:progress';
+  indexed: number;
+  total: number;
+}
+
+export interface EmbeddingReadyMessage {
+  type: 'embeddings:ready';
+}
