@@ -44,7 +44,11 @@ export function QueueOperationNode({ data }: NodeProps) {
         <span className="font-semibold">{block.operation}</span>
         {contentPreview && <span className="opacity-40 truncate flex-1">{contentPreview}</span>}
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 0, height: 0 }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ opacity: 0, width: 0, height: 0 }}
+      />
     </div>
   );
 }

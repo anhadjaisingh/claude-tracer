@@ -182,9 +182,7 @@ export class ClaudeCodeParser extends BaseParser {
     if (entry.isSidechain) {
       const msgContent = entry.message.content;
       const textContent =
-        typeof msgContent === 'string'
-          ? msgContent
-          : this.extractTextContent(msgContent);
+        typeof msgContent === 'string' ? msgContent : this.extractTextContent(msgContent);
       const teamBlock: TeamMessageBlock = {
         id: this.generateBlockId(),
         timestamp,

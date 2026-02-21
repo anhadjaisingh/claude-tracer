@@ -36,7 +36,11 @@ export function SystemNode({ data }: NodeProps) {
         <span className="font-semibold">{block.subtype}</span>
         {keySummary && <span className="opacity-40 truncate flex-1">{keySummary}</span>}
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 0, height: 0 }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ opacity: 0, width: 0, height: 0 }}
+      />
     </div>
   );
 }
