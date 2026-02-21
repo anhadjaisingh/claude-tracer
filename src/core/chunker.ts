@@ -1,8 +1,14 @@
 import type { AnyBlock, BoundarySignal, Chunk, ChunkLevel } from '@/types';
 import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock, isTeamMessageBlock } from '@/types';
 
-/** Time gap threshold for boundary detection (3 minutes in ms) */
+/** Time gap threshold for turn-level boundary detection (3 minutes in ms) */
 const TIME_GAP_THRESHOLD_MS = 3 * 60 * 1000;
+
+/** Time gap threshold for task-level boundary detection (5 minutes in ms) */
+const TASK_TIME_GAP_THRESHOLD_MS = 5 * 60 * 1000;
+
+/** Time gap threshold for theme-level boundary detection (30 minutes in ms) */
+const THEME_TIME_GAP_THRESHOLD_MS = 30 * 60 * 1000;
 
 /** Maximum label length */
 const MAX_LABEL_LENGTH = 80;
@@ -18,6 +24,9 @@ const NEW_TASK_PATTERNS: { regex: RegExp; name: string }[] = [
   { regex: /^todo[:\s]/i, name: 'TODO:' },
   { regex: /^\/[a-z]/i, name: 'Slash command' },
 ];
+
+/** Boundary signal types that indicate end-of-task boundaries */
+const TASK_BOUNDARY_SIGNAL_TYPES = new Set(['git-commit', 'git-push', 'pr-creation']);
 
 /**
  * Detects if a Bash tool call command represents a task boundary.
@@ -137,6 +146,65 @@ function extractLabel(content: string): string {
 }
 
 /**
+ * Checks if a chunk has any task-boundary signals (commit, push, PR creation).
+ */
+function hasTaskBoundarySignal(chunk: Chunk): boolean {
+  const signals = chunk.boundarySignals ?? [];
+  return signals.some((s) => TASK_BOUNDARY_SIGNAL_TYPES.has(s.type));
+}
+
+/**
+ * Checks if a chunk has a time gap exceeding the given threshold.
+ */
+function hasTimeGapExceeding(chunk: Chunk, thresholdMs: number): boolean {
+  const signals = chunk.boundarySignals ?? [];
+  return signals.some((s) => s.type === 'time-gap' && s.gapMs > thresholdMs);
+}
+
+/**
+ * Checks if a chunk has a user-direction-change signal.
+ */
+function hasUserDirectionChange(chunk: Chunk): boolean {
+  const signals = chunk.boundarySignals ?? [];
+  return signals.some((s) => s.type === 'user-pattern');
+}
+
+/**
+ * Generates a label for a task-level chunk from its child turn chunks.
+ * Priority: commit message > PR title > first user content.
+ */
+function generateTaskLabel(childChunks: Chunk[]): string {
+  // Look for commit message in boundary signals
+  for (const chunk of childChunks) {
+    for (const signal of chunk.boundarySignals ?? []) {
+      if (signal.type === 'git-commit' && signal.message) {
+        return signal.message;
+      }
+      if (signal.type === 'pr-creation' && signal.prNumber) {
+        return `PR: ${signal.prNumber}`;
+      }
+    }
+  }
+
+  // Fall back to the first child chunk's label
+  if (childChunks.length > 0) {
+    return childChunks[0].label;
+  }
+
+  return 'Task';
+}
+
+/**
+ * Generates a label for a theme-level chunk from its child task chunks.
+ */
+function generateThemeLabel(childChunks: Chunk[]): string {
+  if (childChunks.length > 0) {
+    return childChunks[0].label;
+  }
+  return 'Theme';
+}
+
+/**
  * Creates hierarchical chunks from blocks with heuristic boundary detection.
  *
  * Boundary signals detected:
@@ -148,14 +216,20 @@ export class Chunker {
   private chunkIdCounter = 0;
 
   /**
-   * Create chunks from blocks with heuristic boundary detection.
-   * Enhances turn-level chunking with:
-   * - Time gap detection (> 3 min)
-   * - Tool boundary signals (git commit/push/PR/branch)
-   * - User message pattern detection
-   * - Improved labels (first sentence, commit messages, PR titles)
-   * - Timestamps (start/end)
-   * - Boundary signal recording
+   * Create chunks at a specified granularity level.
+   *
+   * - 'turn': one chunk per user-agent exchange (existing behavior)
+   * - 'task': merges consecutive turns into task groups, split at commits/PRs/time gaps
+   * - 'theme': merges consecutive tasks into theme groups, split at large time gaps
+   */
+  createChunksAtLevel(blocks: AnyBlock[], level: ChunkLevel): Chunk[] {
+    if (level === 'turn') return this.createChunks(blocks);
+    if (level === 'task') return this.createTaskChunks(blocks);
+    return this.createThemeChunks(blocks);
+  }
+
+  /**
+   * Create turn-level chunks from blocks with heuristic boundary detection.
    */
   createChunks(blocks: AnyBlock[]): Chunk[] {
     const chunks: Chunk[] = [];
@@ -248,6 +322,139 @@ export class Chunker {
     }
 
     return chunks;
+  }
+
+  /**
+   * Create task-level chunks by merging consecutive turn chunks.
+   *
+   * Boundaries (split points):
+   * - Git commit, git push, PR creation signals on the NEXT chunk
+   * - Time gaps > 5 minutes
+   * - Explicit user direction changes ("Now let's...", "Next:", etc.)
+   *
+   * Each task chunk contains `childChunkIds` pointing to its constituent turn chunks.
+   */
+  createTaskChunks(blocks: AnyBlock[]): Chunk[] {
+    const turnChunks = this.createChunks(blocks);
+    if (turnChunks.length === 0) return [];
+
+    const taskChunks: Chunk[] = [];
+    let currentGroup: Chunk[] = [turnChunks[0]];
+
+    for (let i = 1; i < turnChunks.length; i++) {
+      const chunk = turnChunks[i];
+      const shouldSplit =
+        hasTaskBoundarySignal(chunk) ||
+        hasTimeGapExceeding(chunk, TASK_TIME_GAP_THRESHOLD_MS) ||
+        hasUserDirectionChange(chunk);
+
+      if (shouldSplit) {
+        // Finalize current group
+        taskChunks.push(this.mergeIntoTaskChunk(currentGroup));
+        currentGroup = [chunk];
+      } else {
+        currentGroup.push(chunk);
+      }
+    }
+
+    // Finalize last group
+    if (currentGroup.length > 0) {
+      taskChunks.push(this.mergeIntoTaskChunk(currentGroup));
+    }
+
+    return taskChunks;
+  }
+
+  /**
+   * Create theme-level chunks by merging consecutive task chunks.
+   *
+   * Boundaries (split points):
+   * - Time gaps > 30 minutes between tasks
+   *
+   * Each theme chunk contains `childChunkIds` pointing to its constituent task chunks.
+   */
+  createThemeChunks(blocks: AnyBlock[]): Chunk[] {
+    const taskChunks = this.createTaskChunks(blocks);
+    if (taskChunks.length === 0) return [];
+
+    const themeChunks: Chunk[] = [];
+    let currentGroup: Chunk[] = [taskChunks[0]];
+
+    for (let i = 1; i < taskChunks.length; i++) {
+      const taskChunk = taskChunks[i];
+      // Check time gap between end of previous task and start of current task
+      const prevTask = taskChunks[i - 1];
+      const prevEnd = prevTask.endTimestamp ?? 0;
+      const currStart = taskChunk.startTimestamp ?? 0;
+      const gap = currStart - prevEnd;
+
+      if (gap > THEME_TIME_GAP_THRESHOLD_MS) {
+        themeChunks.push(this.mergeIntoThemeChunk(currentGroup));
+        currentGroup = [taskChunk];
+      } else {
+        currentGroup.push(taskChunk);
+      }
+    }
+
+    // Finalize last group
+    if (currentGroup.length > 0) {
+      themeChunks.push(this.mergeIntoThemeChunk(currentGroup));
+    }
+
+    return themeChunks;
+  }
+
+  private mergeIntoTaskChunk(turnChunks: Chunk[]): Chunk {
+    const taskChunk = this.createChunk('task', generateTaskLabel(turnChunks));
+    taskChunk.childChunkIds = turnChunks.map((c) => c.id);
+
+    // Merge block IDs from all child turns
+    for (const turn of turnChunks) {
+      taskChunk.blockIds.push(...turn.blockIds);
+      turn.parentChunkId = taskChunk.id;
+    }
+
+    // Aggregate stats
+    taskChunk.totalTokensIn = turnChunks.reduce((sum, c) => sum + c.totalTokensIn, 0);
+    taskChunk.totalTokensOut = turnChunks.reduce((sum, c) => sum + c.totalTokensOut, 0);
+    taskChunk.totalWallTimeMs = turnChunks.reduce((sum, c) => sum + c.totalWallTimeMs, 0);
+
+    // Set timestamps from first and last child
+    if (turnChunks.length > 0) {
+      taskChunk.startTimestamp = turnChunks[0].startTimestamp;
+      taskChunk.endTimestamp = turnChunks[turnChunks.length - 1].endTimestamp;
+    }
+
+    // Carry boundary signals from the first child chunk
+    if (turnChunks[0].boundarySignals && turnChunks[0].boundarySignals.length > 0) {
+      taskChunk.boundarySignals = turnChunks[0].boundarySignals;
+    }
+
+    return taskChunk;
+  }
+
+  private mergeIntoThemeChunk(taskChunks: Chunk[]): Chunk {
+    const themeChunk = this.createChunk('theme', generateThemeLabel(taskChunks));
+    themeChunk.childChunkIds = taskChunks.map((c) => c.id);
+
+    // Merge block IDs from all child tasks
+    for (const task of taskChunks) {
+      themeChunk.blockIds.push(...task.blockIds);
+      task.parentChunkId = themeChunk.id;
+    }
+
+    // Aggregate stats
+    themeChunk.totalTokensIn = taskChunks.reduce((sum, c) => sum + c.totalTokensIn, 0);
+    themeChunk.totalTokensOut = taskChunks.reduce((sum, c) => sum + c.totalTokensOut, 0);
+    themeChunk.totalWallTimeMs = taskChunks.reduce((sum, c) => sum + c.totalWallTimeMs, 0);
+
+    // Set timestamps
+    if (taskChunks.length > 0) {
+      themeChunk.startTimestamp = taskChunks[0].startTimestamp;
+      themeChunk.endTimestamp = taskChunks[taskChunks.length - 1].endTimestamp;
+    }
+
+    return themeChunk;
   }
 
   private createChunk(level: ChunkLevel, label: string): Chunk {
