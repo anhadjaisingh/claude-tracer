@@ -22,7 +22,8 @@ export function AgentNode({ data }: NodeProps) {
   const { block, onExpandBlock } = data as unknown as AgentNodeData;
 
   // Truncate to ~200 chars (2-3 lines)
-  const preview = block.content.length > 200 ? block.content.slice(0, 200) + '\u2026' : block.content;
+  const preview =
+    block.content.length > 200 ? block.content.slice(0, 200) + '\u2026' : block.content;
   const tokens = formatTokens(block.tokensIn, block.tokensOut);
   const time = block.wallTimeMs != null ? `${(block.wallTimeMs / 1000).toFixed(1)}s` : '';
 
