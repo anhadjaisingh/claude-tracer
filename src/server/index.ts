@@ -6,6 +6,7 @@ import { createWebSocketServer } from './websocket';
 import { SessionWatcher } from './watcher';
 import { ClaudeCodeParser } from '../parser/claude-code';
 import { Chunker } from '../core/chunker';
+import { filterBlocks } from '../core/filter';
 import { EmbeddingEngine } from '../core/embeddings';
 import { HybridSearchEngine } from '../core/hybrid-search';
 import { parseArgs, printHelp, printVersion } from './cli';
@@ -57,8 +58,9 @@ async function main() {
       }
       allBlocks = Array.from(blockMap.values());
 
-      const chunks = new Chunker().createChunks(allBlocks);
-      wss.broadcast({ type: 'blocks:update', blocks: allBlocks, chunks });
+      const filteredBlocks = filterBlocks(allBlocks);
+      const chunks = new Chunker().createChunks(filteredBlocks);
+      wss.broadcast({ type: 'blocks:update', blocks: filteredBlocks, chunks });
 
       // Background-index all blocks for hybrid search
       hybridSearch

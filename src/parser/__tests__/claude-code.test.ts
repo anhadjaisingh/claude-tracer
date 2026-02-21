@@ -1,6 +1,15 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ClaudeCodeParser } from '../claude-code';
-import type { UserBlock, AgentBlock, ToolBlock, TeamMessageBlock } from '@/types';
+import type {
+  UserBlock,
+  AgentBlock,
+  ToolBlock,
+  TeamMessageBlock,
+  SystemBlock,
+  ProgressBlock,
+  FileSnapshotBlock,
+  QueueOperationBlock,
+} from '@/types';
 
 describe('ClaudeCodeParser', () => {
   let parser: ClaudeCodeParser;
@@ -374,29 +383,332 @@ describe('ClaudeCodeParser', () => {
     });
   });
 
-  describe('skips non-block entries', () => {
-    it('returns null for file-history-snapshot entries', () => {
+  describe('system entry parsing', () => {
+    it('parses system entry with subtype turn_duration', () => {
+      const line = JSON.stringify({
+        type: 'system',
+        subtype: 'turn_duration',
+        durationMs: 31869,
+        isMeta: false,
+        timestamp: '2026-02-18T10:00:00Z',
+        uuid: 'sys-uuid-1',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('system');
+      const sysBlock = block as SystemBlock;
+      expect(sysBlock.subtype).toBe('turn_duration');
+      expect(sysBlock.data.durationMs).toBe(31869);
+      expect(sysBlock.uuid).toBe('sys-uuid-1');
+    });
+
+    it('parses system entry with subtype compact_boundary', () => {
+      const line = JSON.stringify({
+        type: 'system',
+        subtype: 'compact_boundary',
+        timestamp: '2026-02-18T10:05:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('system');
+      const sysBlock = block as SystemBlock;
+      expect(sysBlock.subtype).toBe('compact_boundary');
+    });
+
+    it('parses system entry with subtype stop_hook_summary', () => {
+      const line = JSON.stringify({
+        type: 'system',
+        subtype: 'stop_hook_summary',
+        hookCount: 2,
+        hookInfos: [{ command: 'terminal-notifier -title "Claude Code" -message "Done"' }],
+        hookErrors: [],
+        preventedContinuation: false,
+        timestamp: '2026-02-18T10:02:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('system');
+      const sysBlock = block as SystemBlock;
+      expect(sysBlock.subtype).toBe('stop_hook_summary');
+      expect(sysBlock.data.hookCount).toBe(2);
+    });
+
+    it('handles system entry without subtype', () => {
+      const line = JSON.stringify({
+        type: 'system',
+        timestamp: '2026-02-18T10:00:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('system');
+      const sysBlock = block as SystemBlock;
+      expect(sysBlock.subtype).toBe('unknown');
+    });
+  });
+
+  describe('progress entry parsing', () => {
+    it('parses bash_progress entry', () => {
+      const line = JSON.stringify({
+        type: 'progress',
+        data: {
+          type: 'bash_progress',
+          output: '',
+          fullOutput: '',
+          elapsedTimeSeconds: 2,
+          totalLines: 0,
+          timeoutMs: 120000,
+        },
+        toolUseID: 'bash-progress-0',
+        parentToolUseID: 'toolu_01BkANrSv5xki5QCvhGJUfvo',
+        timestamp: '2026-02-18T10:00:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('progress');
+      const progBlock = block as ProgressBlock;
+      expect(progBlock.progressType).toBe('bash_progress');
+      expect(progBlock.parentToolUseId).toBe('toolu_01BkANrSv5xki5QCvhGJUfvo');
+      expect(progBlock.data.elapsedTimeSeconds).toBe(2);
+    });
+
+    it('parses agent_progress entry', () => {
+      const line = JSON.stringify({
+        type: 'progress',
+        data: {
+          type: 'agent_progress',
+          message: {
+            type: 'user',
+            message: {
+              role: 'user',
+              content: [{ type: 'text', text: 'Research the trade-offs...' }],
+            },
+          },
+        },
+        timestamp: '2026-02-18T10:01:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('progress');
+      const progBlock = block as ProgressBlock;
+      expect(progBlock.progressType).toBe('agent_progress');
+    });
+
+    it('parses hook_progress entry', () => {
+      const line = JSON.stringify({
+        type: 'progress',
+        data: {
+          type: 'hook_progress',
+          hookEvent: 'SessionStart',
+          hookName: 'SessionStart:startup',
+          command: '${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh',
+        },
+        parentToolUseID: '7ca761bc-test',
+        toolUseID: '7ca761bc-test',
+        timestamp: '2026-02-18T10:00:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('progress');
+      const progBlock = block as ProgressBlock;
+      expect(progBlock.progressType).toBe('hook_progress');
+      expect(progBlock.parentToolUseId).toBe('7ca761bc-test');
+    });
+
+    it('handles progress entry without data', () => {
+      const line = JSON.stringify({
+        type: 'progress',
+        timestamp: '2026-02-18T10:00:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('progress');
+      const progBlock = block as ProgressBlock;
+      expect(progBlock.progressType).toBe('unknown');
+    });
+  });
+
+  describe('file-history-snapshot entry parsing', () => {
+    it('parses file-history-snapshot with tracked files', () => {
+      const line = JSON.stringify({
+        type: 'file-history-snapshot',
+        messageId: '613a3e70-test',
+        snapshot: {
+          messageId: '613a3e70-test',
+          trackedFileBackups: {
+            'src/auth.ts': {
+              backupFileName: '2f36e7b54885556b@v2',
+              version: 2,
+              backupTime: '2026-02-18T12:14:30.527Z',
+            },
+          },
+          timestamp: '2026-02-18T12:14:30.526Z',
+        },
+        timestamp: '2026-02-18T12:14:30.526Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('file-snapshot');
+      const fsBlock = block as FileSnapshotBlock;
+      expect(fsBlock.messageId).toBe('613a3e70-test');
+      expect(fsBlock.trackedFiles['src/auth.ts']).toBeDefined();
+      expect(fsBlock.trackedFiles['src/auth.ts'].version).toBe(2);
+    });
+
+    it('parses file-history-snapshot with empty tracked files', () => {
+      const line = JSON.stringify({
+        type: 'file-history-snapshot',
+        messageId: 'empty-test',
+        snapshot: {
+          messageId: 'empty-test',
+          trackedFileBackups: {},
+          timestamp: '2026-02-18T12:00:00.000Z',
+        },
+        timestamp: '2026-02-18T12:00:00.000Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('file-snapshot');
+      const fsBlock = block as FileSnapshotBlock;
+      expect(Object.keys(fsBlock.trackedFiles).length).toBe(0);
+    });
+
+    it('handles file-history-snapshot without snapshot field', () => {
       const line = JSON.stringify({
         type: 'file-history-snapshot',
         timestamp: '2026-02-18T10:00:00Z',
       });
-      expect(parser.parseLine(line)).toBeNull();
-    });
 
-    it('returns null for progress entries', () => {
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('file-snapshot');
+      const fsBlock = block as FileSnapshotBlock;
+      expect(fsBlock.messageId).toBe('');
+      expect(Object.keys(fsBlock.trackedFiles).length).toBe(0);
+    });
+  });
+
+  describe('queue-operation entry parsing', () => {
+    it('parses queue-operation enqueue entry', () => {
       const line = JSON.stringify({
-        type: 'progress',
-        message: { role: 'assistant', content: '' },
+        type: 'queue-operation',
+        operation: 'enqueue',
+        sessionId: 'test-session',
+        content: 'Before you transition...',
+        timestamp: '2026-02-18T10:00:00Z',
       });
-      expect(parser.parseLine(line)).toBeNull();
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('queue-operation');
+      const qBlock = block as QueueOperationBlock;
+      expect(qBlock.operation).toBe('enqueue');
+      expect(qBlock.content).toBe('Before you transition...');
     });
 
-    it('returns null for system entries', () => {
+    it('parses queue-operation remove entry', () => {
+      const line = JSON.stringify({
+        type: 'queue-operation',
+        operation: 'remove',
+        sessionId: 'test-session',
+        timestamp: '2026-02-18T10:00:01Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.type).toBe('queue-operation');
+      const qBlock = block as QueueOperationBlock;
+      expect(qBlock.operation).toBe('remove');
+      expect(qBlock.content).toBeUndefined();
+    });
+  });
+
+  describe('uuid and sourceParentUuid propagation', () => {
+    it('populates uuid and sourceParentUuid on user blocks', () => {
+      const line = JSON.stringify({
+        type: 'user',
+        message: { role: 'user', content: 'Hello' },
+        uuid: 'user-uuid-123',
+        parentUuid: 'parent-uuid-456',
+        timestamp: '2026-02-18T10:00:00Z',
+      });
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.uuid).toBe('user-uuid-123');
+      expect(block?.sourceParentUuid).toBe('parent-uuid-456');
+    });
+
+    it('populates uuid on system blocks', () => {
       const line = JSON.stringify({
         type: 'system',
-        message: { role: 'system', content: 'System init' },
+        subtype: 'turn_duration',
+        durationMs: 1000,
+        uuid: 'sys-uuid-789',
+        timestamp: '2026-02-18T10:00:00Z',
       });
-      expect(parser.parseLine(line)).toBeNull();
+
+      const block = parser.parseLine(line);
+      expect(block).not.toBeNull();
+      expect(block?.uuid).toBe('sys-uuid-789');
+    });
+  });
+
+  describe('complete session with all entry types', () => {
+    it('parses a session with mixed entry types', () => {
+      const content = [
+        JSON.stringify({
+          type: 'user',
+          message: { role: 'user', content: 'Hello' },
+          timestamp: '2026-02-18T10:00:00Z',
+        }),
+        JSON.stringify({
+          type: 'assistant',
+          message: { role: 'assistant', content: [{ type: 'text', text: 'Hi!' }] },
+          timestamp: '2026-02-18T10:00:01Z',
+        }),
+        JSON.stringify({
+          type: 'system',
+          subtype: 'turn_duration',
+          durationMs: 5000,
+          timestamp: '2026-02-18T10:00:02Z',
+        }),
+        JSON.stringify({
+          type: 'progress',
+          data: { type: 'bash_progress', output: 'running...' },
+          timestamp: '2026-02-18T10:00:03Z',
+        }),
+        JSON.stringify({
+          type: 'file-history-snapshot',
+          messageId: 'msg-1',
+          snapshot: { messageId: 'msg-1', trackedFileBackups: {} },
+          timestamp: '2026-02-18T10:00:04Z',
+        }),
+        JSON.stringify({
+          type: 'queue-operation',
+          operation: 'enqueue',
+          content: 'queued msg',
+          timestamp: '2026-02-18T10:00:05Z',
+        }),
+      ].join('\n');
+
+      const session = parser.parse(content);
+      expect(session.blocks.length).toBe(6);
+      expect(session.blocks[0].type).toBe('user');
+      expect(session.blocks[1].type).toBe('agent');
+      expect(session.blocks[2].type).toBe('system');
+      expect(session.blocks[3].type).toBe('progress');
+      expect(session.blocks[4].type).toBe('file-snapshot');
+      expect(session.blocks[5].type).toBe('queue-operation');
     });
   });
 
