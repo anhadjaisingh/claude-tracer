@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import type { AnyBlock, Chunk } from '@/types';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import type { AnyBlock, Chunk, ChunkLevel } from '@/types';
 
 export type ConnectionStatus = 'connecting' | 'connected' | 'error';
 
@@ -15,15 +15,38 @@ export function useSession() {
   const [chunks, setChunks] = useState<Chunk[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
   const [filePath, setFilePath] = useState<string | undefined>();
+  const [granularity, setGranularityState] = useState<ChunkLevel>(() => {
+    const stored = localStorage.getItem('claude-tracer-granularity');
+    if (stored === 'turn' || stored === 'task' || stored === 'theme') {
+      return stored;
+    }
+    return 'turn';
+  });
+
+  const wsRef = useRef<WebSocket | null>(null);
+
+  const setGranularity = useCallback((level: ChunkLevel) => {
+    setGranularityState(level);
+    localStorage.setItem('claude-tracer-granularity', level);
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: 'granularity:set', level }));
+    }
+  }, []);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
     const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
 
     ws.onopen = () => {
       setConnectionStatus('connected');
+      // Send current granularity on connect so server uses the right level
+      const stored = localStorage.getItem('claude-tracer-granularity');
+      if (stored === 'task' || stored === 'theme') {
+        ws.send(JSON.stringify({ type: 'granularity:set', level: stored }));
+      }
       console.log('WebSocket connected');
     };
 
@@ -75,6 +98,7 @@ export function useSession() {
     };
 
     return () => {
+      wsRef.current = null;
       ws.close();
     };
   }, []);
@@ -85,5 +109,7 @@ export function useSession() {
     connectionStatus,
     isConnected: connectionStatus === 'connected',
     filePath,
+    granularity,
+    setGranularity,
   };
 }
