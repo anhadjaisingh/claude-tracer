@@ -118,10 +118,10 @@ Also parse `uuid` and `parentUuid` from entries and store them on the Block base
 
 ```typescript
 export interface FilterConfig {
-  showSystem: boolean;        // default: true (needed for compaction)
-  showProgress: boolean;      // default: false (noisy, hide by default)
+  showSystem: boolean; // default: true (needed for compaction)
+  showProgress: boolean; // default: false (noisy, hide by default)
   showFileSnapshots: boolean; // default: false (noisy, hide by default)
-  showQueueOps: boolean;      // default: false (rare, hide by default)
+  showQueueOps: boolean; // default: false (rare, hide by default)
 }
 
 export const DEFAULT_FILTER_CONFIG: FilterConfig = {
@@ -131,7 +131,10 @@ export const DEFAULT_FILTER_CONFIG: FilterConfig = {
   showQueueOps: false,
 };
 
-export function filterBlocks(blocks: AnyBlock[], config: FilterConfig = DEFAULT_FILTER_CONFIG): AnyBlock[] {
+export function filterBlocks(
+  blocks: AnyBlock[],
+  config: FilterConfig = DEFAULT_FILTER_CONFIG,
+): AnyBlock[] {
   return blocks.filter((block) => {
     if (isSystemBlock(block)) return config.showSystem;
     if (isProgressBlock(block)) return config.showProgress;
@@ -176,6 +179,7 @@ In `themes/index.ts` line 6: change `createContext<Theme>(claudeTheme)` to `crea
 **Files:** `src/ui/components/graph/GraphView.tsx`
 
 Add to the `<ReactFlow>` component (around line 292):
+
 ```
 zoomOnScroll={false}
 panOnScroll={true}
@@ -205,6 +209,7 @@ Redesign the ToolNode component to show a single-line summary:
 ```
 
 Key arg extraction per tool:
+
 - **Bash**: `input.command` (first 60 chars)
 - **Read**: `input.file_path`
 - **Grep/Glob**: `input.pattern`
@@ -229,6 +234,7 @@ Show stats at bottom: `[token count] · [time] · [N tool calls]`
 **Files:** `src/ui/__tests__/nodes.test.ts` (or create if needed)
 
 Test that:
+
 - ToolNode renders one-liner with tool name and key arg
 - ToolNode shows success/error badge
 - AgentNode truncates text to ~200 chars
@@ -251,6 +257,7 @@ Run tests, lint, typecheck. Start a dev server, open in Playwright, take screens
 **Files:** `src/ui/components/graph/nodes/CompactionNode.tsx` (new), `src/ui/components/graph/nodes/index.ts`, `src/ui/components/graph/buildGraph.ts`, `src/ui/components/graph/layout.ts`, `src/ui/components/graph/GraphView.tsx`
 
 Create `CompactionNode` — a full-width amber divider:
+
 - Background: `rgba(245, 158, 11, 0.15)`, border: `#f59e0b`
 - Label: "Context Compacted" centered
 - No expand/overlay behavior
@@ -275,6 +282,7 @@ Add `isCommand?: boolean` and `commandName?: string` to `UserBlock` in `src/type
 **Files:** `src/ui/components/graph/nodes/CommandNode.tsx` (new), `src/ui/components/graph/nodes/index.ts`, `src/ui/components/graph/buildGraph.ts`, `src/ui/components/graph/GraphView.tsx`
 
 Create `CommandNode` — user-side pill showing `/command-name` with chevron:
+
 - Render on the right column (user side)
 - Chevron to expand/collapse child nodes (the injected user/agent messages following the command)
 - When collapsed: just the command pill
@@ -290,6 +298,7 @@ Reuse the same collapse pattern as `ChunkGroupNode` (chevron toggle, `collapsedG
 **Files:** `src/ui/components/graph/nodes/SubAgentNode.tsx` (new), `src/ui/components/graph/nodes/index.ts`, `src/ui/components/graph/buildGraph.ts`
 
 Create `SubAgentNode` for `ToolBlock` where `toolName === 'Task'`:
+
 - Shows: agent type badge, description/prompt first line
 - Status badge (from output)
 - Chevron for future sub-tree expansion (disabled for now — JSONL loading deferred)
@@ -328,6 +337,7 @@ Add `granularity` concept — the Chunker should accept a level parameter.
 **Files:** `src/core/__tests__/chunker.test.ts`
 
 Test that task-level chunking:
+
 - Merges consecutive turns that don't cross commit/PR/time-gap boundaries
 - Splits at git commits, PR creation, time gaps > 5 min
 - Produces fewer chunks than turn-level for the same input
@@ -346,6 +356,7 @@ Approach: first create turn-level chunks, then merge consecutive turns that don'
 **Files:** `src/core/__tests__/chunker.test.ts`
 
 Test that theme-level chunking:
+
 - Merges consecutive task-level chunks
 - Splits at time gaps > 30 min, major topic shifts
 - Produces the fewest chunks
@@ -364,6 +375,7 @@ Approach: first create task-level chunks, then merge into themes. Boundaries: ti
 **Files:** `src/core/chunker.ts`
 
 Add `createChunksAtLevel(blocks: AnyBlock[], level: ChunkLevel): Chunk[]` dispatcher:
+
 - `'turn'` → existing `createChunks()`
 - `'task'` → `createTaskChunks()`
 - `'theme'` → `createThemeChunks()`
@@ -397,6 +409,7 @@ Add `granularity: ChunkLevel` to settings (default: `'turn'`). Persist to localS
 **Files:** `src/ui/components/GranularitySelector.tsx` (new)
 
 A horizontal row at the bottom of the sidebar:
+
 - 3 dots (small circles), equally spaced
 - Active dot: filled with accent color, slightly larger
 - Inactive dots: outline only, muted color
@@ -423,18 +436,18 @@ Test the selector renders correctly. Take screenshots at each granularity level.
 
 ## Worktree Assignment
 
-| PR | Agent Role | Worktree | Phase |
-|----|-----------|----------|-------|
-| PR 1 | Parser | `claude-tracer-parser` | 1 |
-| PR 2 | UI | `claude-tracer-ui` | 1 |
-| PR 3 | UI | `claude-tracer-ui` | 2 |
-| PR 4 | Core | `claude-tracer-core` | 2 |
-| PR 5 | UI | `claude-tracer-ui` | 3 |
+| PR   | Agent Role | Worktree               | Phase |
+| ---- | ---------- | ---------------------- | ----- |
+| PR 1 | Parser     | `claude-tracer-parser` | 1     |
+| PR 2 | UI         | `claude-tracer-ui`     | 1     |
+| PR 3 | UI         | `claude-tracer-ui`     | 2     |
+| PR 4 | Core       | `claude-tracer-core`   | 2     |
+| PR 5 | UI         | `claude-tracer-ui`     | 3     |
 
 ## Port Allocation
 
-| Agent | Express | Vite |
-|-------|---------|------|
-| Parser | 5000 | 5001 |
-| Core | 5002 | 5003 |
-| UI | 5006 | 5007 |
+| Agent  | Express | Vite |
+| ------ | ------- | ---- |
+| Parser | 5000    | 5001 |
+| Core   | 5002    | 5003 |
+| UI     | 5006    | 5007 |

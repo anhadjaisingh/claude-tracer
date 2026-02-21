@@ -14,9 +14,11 @@
 ## Pending Cleanup
 
 - **ui-tweaks team agent** is still alive but unresponsive to shutdown. The team `ui-and-grouping` needs cleanup:
+
   ```bash
   rm -rf ~/.claude/teams/ui-and-grouping ~/.claude/tasks/ui-and-grouping
   ```
+
   May also need to kill any lingering tmux panes (`tmux list-panes -a` to check).
 
 - **Remote branch cleanup**: `feat/ui-graph-tweaks` deleted locally, may still exist on remote:
@@ -54,14 +56,14 @@
 
 ## Key Files
 
-| Area | File |
-|------|------|
-| Layout engine | `src/ui/components/graph/layout.ts` |
-| Graph builder | `src/ui/components/graph/buildGraph.ts` |
-| Main graph view | `src/ui/components/graph/GraphView.tsx` |
-| Node components | `src/ui/components/graph/nodes/` |
-| Tool renderers | `src/ui/renderers/registry.ts` |
-| Parser | `src/parser/claude-code.ts` |
-| Chunker | `src/core/chunker.ts` |
-| Types | `src/types/blocks.ts`, `src/types/chunks.ts` |
-| App shell | `src/ui/App.tsx` |
+| Area            | File                                         |
+| --------------- | -------------------------------------------- |
+| Layout engine   | `src/ui/components/graph/layout.ts`          |
+| Graph builder   | `src/ui/components/graph/buildGraph.ts`      |
+| Main graph view | `src/ui/components/graph/GraphView.tsx`      |
+| Node components | `src/ui/components/graph/nodes/`             |
+| Tool renderers  | `src/ui/renderers/registry.ts`               |
+| Parser          | `src/parser/claude-code.ts`                  |
+| Chunker         | `src/core/chunker.ts`                        |
+| Types           | `src/types/blocks.ts`, `src/types/chunks.ts` |
+| App shell       | `src/ui/App.tsx`                             |

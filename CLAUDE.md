@@ -71,12 +71,12 @@ When saying something is "done", "ready for review", or needs "manual verificati
 
 Each teammate role has a **permanent named worktree** that persists across sessions. Agents do NOT create or destroy worktrees — they use their assigned one.
 
-| Role    | Worktree Path                              | Branch Pattern        | Port (Express/Vite) |
-| ------- | ------------------------------------------ | --------------------- | ------------------- |
-| Parser  | `/Users/anhad/Projects/claude-tracer-parser` | `parser-worktree`   | 5000 / 5001         |
-| Core    | `/Users/anhad/Projects/claude-tracer-core`   | `core-worktree`     | 5002 / 5003         |
-| Server  | `/Users/anhad/Projects/claude-tracer-server`  | `server-worktree`   | 5004 / 5005         |
-| UI      | `/Users/anhad/Projects/claude-tracer-ui`      | `ui-worktree`       | 5006 / 5007         |
+| Role   | Worktree Path                                | Branch Pattern    | Port (Express/Vite) |
+| ------ | -------------------------------------------- | ----------------- | ------------------- |
+| Parser | `/Users/anhad/Projects/claude-tracer-parser` | `parser-worktree` | 5000 / 5001         |
+| Core   | `/Users/anhad/Projects/claude-tracer-core`   | `core-worktree`   | 5002 / 5003         |
+| Server | `/Users/anhad/Projects/claude-tracer-server` | `server-worktree` | 5004 / 5005         |
+| UI     | `/Users/anhad/Projects/claude-tracer-ui`     | `ui-worktree`     | 5006 / 5007         |
 
 ### Agent Worktree Protocol
 
@@ -103,6 +103,7 @@ When a teammate agent starts work:
    ```
 
 **Rules:**
+
 - **Never delete worktrees.** They are permanent infrastructure.
 - **Never work on the worktree branch directly.** Always create a feature branch from it.
 - **Always reset to main before starting new work.** Stale worktrees cause merge conflicts.
