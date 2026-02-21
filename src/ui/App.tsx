@@ -13,7 +13,8 @@ import { useOverlay } from './hooks/useOverlay';
 import { useResizable } from './hooks/useResizable';
 
 export default function App() {
-  const { blocks, chunks, isConnected, connectionStatus, filePath } = useSession();
+  const { blocks, chunks, isConnected, connectionStatus, filePath, granularity, setGranularity } =
+    useSession();
   const search = useHybridSearch(blocks);
   const { themeName, setThemeName, nodesDraggable, setNodesDraggable } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -115,10 +116,15 @@ export default function App() {
           />
 
           <aside
-            className="overflow-auto p-4 border-l border-white/20 flex-shrink-0"
+            className="overflow-hidden p-4 border-l border-white/20 flex-shrink-0"
             style={{ width: sidebar.width }}
           >
-            <IndexSidebar chunks={chunks} onChunkClick={handleChunkClick} />
+            <IndexSidebar
+              chunks={chunks}
+              onChunkClick={handleChunkClick}
+              granularity={granularity}
+              onGranularityChange={setGranularity}
+            />
           </aside>
         </div>
 
