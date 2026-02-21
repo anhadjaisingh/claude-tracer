@@ -39,7 +39,11 @@ export function ProgressNode({ data }: NodeProps) {
         <span className="font-semibold">{block.progressType}</span>
         {dataPreview && <span className="opacity-40 truncate flex-1">{dataPreview}</span>}
       </div>
-      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 0, height: 0 }} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        style={{ opacity: 0, width: 0, height: 0 }}
+      />
     </div>
   );
 }
