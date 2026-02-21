@@ -9,6 +9,8 @@ interface Props {
   onChunkClick?: (chunkId: string) => void;
   granularity: ChunkLevel;
   onGranularityChange: (level: ChunkLevel) => void;
+  onCollapseAll?: () => void;
+  onExpandAll?: () => void;
 }
 
 function formatTokens(count: number): string {
@@ -22,6 +24,8 @@ export function IndexSidebar({
   onChunkClick,
   granularity,
   onGranularityChange,
+  onCollapseAll,
+  onExpandAll,
 }: Props) {
   const theme = useTheme();
 
@@ -67,7 +71,12 @@ export function IndexSidebar({
       </div>
 
       <div className="flex-shrink-0" style={{ borderTop: `1px solid ${theme.colors.accent}26` }}>
-        <GranularitySelector granularity={granularity} onGranularityChange={onGranularityChange} />
+        <GranularitySelector
+          granularity={granularity}
+          onGranularityChange={onGranularityChange}
+          onCollapseAll={onCollapseAll}
+          onExpandAll={onExpandAll}
+        />
       </div>
     </div>
   );

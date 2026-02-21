@@ -19,11 +19,15 @@ export function getColumnIndex(nodeType: string | undefined): number {
   const map: Record<string, number> = {
     tool: 0,
     subagent: 0, // sub-agent nodes go in the tool column
+    progress: 0,
+    'file-snapshot': 0,
     'team-message': 1,
+    'queue-operation': 1,
     agent: 2,
     meta: 3, // same as user
     user: 3,
     command: 3, // command nodes go in the user column
+    system: 3,
   };
   return map[nodeType ?? 'user'] ?? 3;
 }
@@ -39,8 +43,9 @@ export function buildColumnX(nodes: Node[]): Record<string, number> {
     blockNodes.map((n) => {
       // Normalize types that share columns
       const type = n.type ?? 'user';
-      if (type === 'meta' || type === 'command') return 'user';
-      if (type === 'subagent') return 'tool';
+      if (type === 'meta' || type === 'command' || type === 'system') return 'user';
+      if (type === 'subagent' || type === 'progress' || type === 'file-snapshot') return 'tool';
+      if (type === 'queue-operation') return 'team-message';
       return type;
     }),
   );
@@ -56,9 +61,15 @@ export function buildColumnX(nodes: Node[]): Record<string, number> {
   if ('user' in columnX) {
     columnX.meta = columnX.user;
     columnX.command = columnX.user;
+    columnX.system = columnX.user;
   }
   if ('tool' in columnX) {
     columnX.subagent = columnX.tool;
+    columnX.progress = columnX.tool;
+    columnX['file-snapshot'] = columnX.tool;
+  }
+  if ('team-message' in columnX) {
+    columnX['queue-operation'] = columnX['team-message'];
   }
   return columnX;
 }
@@ -80,6 +91,11 @@ function estimateHeight(node: Node): number {
       return 48; // compact pill
     case 'agent':
       return 80; // trimmed to 2-3 lines
+    case 'system':
+    case 'progress':
+    case 'file-snapshot':
+    case 'queue-operation':
+      return 40;
     default:
       return 80;
   }

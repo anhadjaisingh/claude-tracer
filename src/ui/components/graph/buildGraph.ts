@@ -1,6 +1,15 @@
 import type { Node, Edge } from '@xyflow/react';
 import type { AnyBlock, Chunk } from '@/types';
-import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock, isSystemBlock } from '@/types';
+import {
+  isUserBlock,
+  isAgentBlock,
+  isToolBlock,
+  isMcpBlock,
+  isSystemBlock,
+  isProgressBlock,
+  isFileSnapshotBlock,
+  isQueueOperationBlock,
+} from '@/types';
 
 function getNodeType(block: AnyBlock): string {
   if (isUserBlock(block)) {
@@ -13,7 +22,12 @@ function getNodeType(block: AnyBlock): string {
     return 'tool';
   }
   if (isMcpBlock(block)) return 'tool';
-  if (isSystemBlock(block) && block.subtype === 'compact_boundary') return 'compaction';
+  if (isSystemBlock(block)) {
+    return block.subtype === 'compact_boundary' ? 'compaction' : 'system';
+  }
+  if (isProgressBlock(block)) return 'progress';
+  if (isFileSnapshotBlock(block)) return 'file-snapshot';
+  if (isQueueOperationBlock(block)) return 'queue-operation';
   return 'user';
 }
 
@@ -253,7 +267,6 @@ export function buildGraph(
       id: edgeId,
       source,
       target,
-      style: { strokeDasharray: '5 5', opacity: 0.4 },
     });
   }
 

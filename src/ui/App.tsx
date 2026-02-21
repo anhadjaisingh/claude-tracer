@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ThemeContext, getTheme } from './themes';
 import { Header } from './components/Header';
 import { GraphView } from './components/graph/GraphView';
@@ -36,6 +36,17 @@ export default function App() {
   const handleNavigateReady = useCallback((fn: NavigateToBlockFn) => {
     navigateToBlockRef.current = fn;
   }, []);
+
+  const [collapseControls, setCollapseControls] = useState<{
+    collapseAll: () => void;
+    expandAll: () => void;
+  } | null>(null);
+  const handleCollapseControlsReady = useCallback(
+    (controls: { collapseAll: () => void; expandAll: () => void }) => {
+      setCollapseControls(controls);
+    },
+    [],
+  );
 
   const toggleSettings = useCallback(() => {
     setSettingsOpen((prev) => !prev);
@@ -103,6 +114,7 @@ export default function App() {
               onNavigateReady={handleNavigateReady}
               nodesDraggable={nodesDraggable}
               highlightedBlockId={search.currentBlockId}
+              onCollapseControlsReady={handleCollapseControlsReady}
             />
           </main>
 
@@ -124,6 +136,8 @@ export default function App() {
               onChunkClick={handleChunkClick}
               granularity={granularity}
               onGranularityChange={setGranularity}
+              onCollapseAll={collapseControls?.collapseAll}
+              onExpandAll={collapseControls?.expandAll}
             />
           </aside>
         </div>

@@ -7,3 +7,7 @@ export { ChunkGroupNode, COLLAPSED_WIDTH, COLLAPSED_HEIGHT } from './ChunkGroupN
 export { CompactionNode } from './CompactionNode';
 export { SubAgentNode } from './SubAgentNode';
 export { CommandNode } from './CommandNode';
+export { SystemNode } from './SystemNode';
+export { ProgressNode } from './ProgressNode';
+export { FileSnapshotNode } from './FileSnapshotNode';
+export { QueueOperationNode } from './QueueOperationNode';
