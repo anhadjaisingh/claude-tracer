@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
-import type { AnyBlock, Chunk, SearchRequest } from '@/types';
+import type { AnyBlock, Chunk, ChunkLevel, SearchRequest } from '@/types';
 import type { HybridSearchEngine } from '@/core';
 
 export interface WsMessage {
@@ -24,6 +24,9 @@ export interface TracerWebSocketServer {
   close(): void;
   setSearchEngine(engine: HybridSearchEngine): void;
   setFilePath(filePath: string): void;
+  setGranularity(level: ChunkLevel): void;
+  getGranularity(): ChunkLevel;
+  setRechunkCallback(cb: (level: ChunkLevel) => void): void;
 }
 
 let queryCounter = 0;
@@ -33,6 +36,8 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
   const clients = new Set<WebSocket>();
   let searchEngine: HybridSearchEngine | null = null;
   let sessionFilePath: string | undefined;
+  let granularity: ChunkLevel = 'turn';
+  let rechunkCallback: ((level: ChunkLevel) => void) | null = null;
 
   let latestBlocks: AnyBlock[] = [];
   let latestChunks: Chunk[] = [];
@@ -84,6 +89,14 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
                 );
               }
             });
+        } else if (raw.type === 'granularity:set') {
+          const level = raw.level as string;
+          if (level === 'turn' || level === 'task' || level === 'theme') {
+            granularity = level;
+            if (rechunkCallback) {
+              rechunkCallback(level);
+            }
+          }
         }
       } catch {
         // Ignore malformed messages
@@ -131,6 +144,15 @@ export function createWebSocketServer(server: Server): TracerWebSocketServer {
     },
     setFilePath(filePath: string) {
       sessionFilePath = filePath;
+    },
+    setGranularity(level: ChunkLevel) {
+      granularity = level;
+    },
+    getGranularity(): ChunkLevel {
+      return granularity;
+    },
+    setRechunkCallback(cb: (level: ChunkLevel) => void) {
+      rechunkCallback = cb;
     },
   };
 }

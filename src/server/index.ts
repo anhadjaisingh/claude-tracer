@@ -50,6 +50,18 @@ async function main() {
     const watcher = new SessionWatcher({ parser: new ClaudeCodeParser() });
     let allBlocks: AnyBlock[] = [];
 
+    // Helper to re-chunk and broadcast at the current granularity level
+    const rechunkAndBroadcast = () => {
+      const filteredBlocks = filterBlocks(allBlocks);
+      const chunks = new Chunker().createChunksAtLevel(filteredBlocks, wss.getGranularity());
+      wss.broadcast({ type: 'blocks:update', blocks: filteredBlocks, chunks });
+    };
+
+    // Register rechunk callback for granularity changes from the client
+    wss.setRechunkCallback(() => {
+      rechunkAndBroadcast();
+    });
+
     await watcher.watch(args.file, (newBlocks) => {
       // Merge by id (updated blocks replace, new ones append)
       const blockMap = new Map(allBlocks.map((b) => [b.id, b]));
@@ -58,9 +70,7 @@ async function main() {
       }
       allBlocks = Array.from(blockMap.values());
 
-      const filteredBlocks = filterBlocks(allBlocks);
-      const chunks = new Chunker().createChunks(filteredBlocks);
-      wss.broadcast({ type: 'blocks:update', blocks: filteredBlocks, chunks });
+      rechunkAndBroadcast();
 
       // Background-index all blocks for hybrid search
       hybridSearch
