@@ -3,7 +3,7 @@ import { claudeTheme, type Theme } from './claude';
 import { darkTheme } from './dark';
 import { lightTheme } from './light';
 
-export const ThemeContext = createContext<Theme>(claudeTheme);
+export const ThemeContext = createContext<Theme>(darkTheme);
 
 export function useTheme() {
   return useContext(ThemeContext);

@@ -16,17 +16,30 @@ function getToolName(block: ToolBlock | McpBlock): string {
   return `${block.serverName}/${block.method}`;
 }
 
-function getStatusColor(status: string): string {
+function getStatusBadge(status: string): { label: string; color: string } {
   switch (status) {
     case 'success':
-      return '#166534';
+      return { label: '\u2713', color: '#166534' };
     case 'error':
-      return '#991b1b';
+      return { label: '\u2717', color: '#991b1b' };
     case 'pending':
-      return '#854d0e';
+      return { label: '\u2026', color: '#854d0e' };
     default:
-      return '#6b7280';
+      return { label: '?', color: '#6b7280' };
   }
+}
+
+function formatTime(ms: number | undefined): string {
+  if (ms == null) return '';
+  if (ms < 1000) return `${String(ms)}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function formatTokens(tokensIn: number | undefined, tokensOut: number | undefined): string {
+  const total = (tokensIn ?? 0) + (tokensOut ?? 0);
+  if (total === 0) return '';
+  if (total < 1000) return `${String(total)} tok`;
+  return `${(total / 1000).toFixed(1)}k tok`;
 }
 
 export function ToolNode({ data }: NodeProps) {
@@ -35,11 +48,11 @@ export function ToolNode({ data }: NodeProps) {
 
   const toolName = getToolName(block);
   const renderer = getToolRenderer(toolName);
-  const statusColor = getStatusColor(block.status);
-
+  const status = getStatusBadge(block.status);
   const headerText = renderer.headerSummary(block.input, block.output);
-  // Truncate header for the compact node view
-  const headerTruncated = headerText.length > 60 ? headerText.slice(0, 60) + '...' : headerText;
+  const keyArg = headerText.length > 50 ? headerText.slice(0, 50) + '\u2026' : headerText;
+  const time = formatTime(block.wallTimeMs);
+  const tokens = formatTokens(block.tokensIn, block.tokensOut);
 
   return (
     <div
@@ -47,10 +60,10 @@ export function ToolNode({ data }: NodeProps) {
       className="rounded cursor-pointer transition-shadow hover:shadow-lg font-mono"
       style={{
         width: 300,
-        padding: '10px 14px',
+        padding: '6px 10px',
         backgroundColor: theme.colors.toolBg,
         color: theme.colors.toolText,
-        border: `2px solid ${theme.colors.accent}60`,
+        border: `1px solid ${theme.colors.accent}40`,
       }}
       onClick={() => {
         onExpandBlock(block);
@@ -64,24 +77,26 @@ export function ToolNode({ data }: NodeProps) {
         style={{ opacity: 0, width: 0, height: 0 }}
       />
 
-      <div className="flex items-center gap-2 mb-1">
-        <span className="shrink-0 text-xs">{renderer.icon}</span>
-        <span
-          className="px-2 py-0.5 rounded text-xs font-bold"
-          style={{ backgroundColor: statusColor, color: '#ffffff' }}
-        >
-          {toolName}
+      <div className="flex items-center gap-1.5 text-xs">
+        <span className="shrink-0">{renderer.icon}</span>
+        <span className="font-bold shrink-0">{toolName}</span>
+        <span className="opacity-60 truncate flex-1" title={headerText}>
+          {keyArg}
         </span>
-        <span className="text-xs opacity-50">{block.status}</span>
+        <span
+          className="shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold"
+          style={{ backgroundColor: status.color, color: '#fff' }}
+        >
+          {status.label}
+        </span>
       </div>
 
-      {headerTruncated && (
-        <div className="text-xs opacity-70 truncate" title={headerText}>
-          {headerTruncated}
+      {(time || tokens) && (
+        <div className="flex items-center gap-2 mt-0.5 text-[10px] opacity-40">
+          {time && <span>{time}</span>}
+          {tokens && <span>{tokens}</span>}
         </div>
       )}
-
-      <div className="mt-1">{renderer.preview(block.input, block.output)}</div>
 
       <Handle
         type="source"

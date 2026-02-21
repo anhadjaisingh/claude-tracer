@@ -1,3 +1,4 @@
+import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { useTheme } from '../../../themes';
 
@@ -55,6 +56,8 @@ export function ChunkGroupNode({ data, id }: NodeProps) {
         overflow: 'hidden',
       }}
     >
+      <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
+
       {/* Header bar */}
       <div
         className="flex items-center gap-2 px-3 py-2 cursor-pointer select-none"
@@ -95,6 +98,8 @@ export function ChunkGroupNode({ data, id }: NodeProps) {
         )}
         {durationMs > 0 && <span className="text-xs opacity-60">{formatDuration(durationMs)}</span>}
       </div>
+
+      <Handle type="source" position={Position.Bottom} style={{ opacity: 0, width: 0, height: 0 }} />
     </div>
   );
 }

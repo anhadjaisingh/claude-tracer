@@ -10,11 +10,21 @@ interface AgentNodeData {
   [key: string]: unknown;
 }
 
+function formatTokens(tokensIn: number | undefined, tokensOut: number | undefined): string {
+  const total = (tokensIn ?? 0) + (tokensOut ?? 0);
+  if (total === 0) return '';
+  if (total < 1000) return `${String(total)} tok`;
+  return `${(total / 1000).toFixed(1)}k tok`;
+}
+
 export function AgentNode({ data }: NodeProps) {
   const theme = useTheme();
   const { block, onExpandBlock } = data as unknown as AgentNodeData;
 
-  const preview = block.content.length > 100 ? block.content.slice(0, 100) + '...' : block.content;
+  // Truncate to ~200 chars (2-3 lines)
+  const preview = block.content.length > 200 ? block.content.slice(0, 200) + '\u2026' : block.content;
+  const tokens = formatTokens(block.tokensIn, block.tokensOut);
+  const time = block.wallTimeMs != null ? `${(block.wallTimeMs / 1000).toFixed(1)}s` : '';
 
   return (
     <div
@@ -22,7 +32,7 @@ export function AgentNode({ data }: NodeProps) {
       className="rounded-lg cursor-pointer transition-shadow hover:shadow-lg"
       style={{
         width: 300,
-        padding: '12px 16px',
+        padding: '10px 14px',
         backgroundColor: theme.colors.agentBg,
         color: theme.colors.agentText,
         border: `2px solid ${theme.colors.accent}`,
@@ -33,30 +43,20 @@ export function AgentNode({ data }: NodeProps) {
     >
       <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
 
-      <div className="flex items-center gap-2 mb-1 text-xs opacity-60">
-        <span className="font-semibold uppercase">Agent</span>
-        {block.tokensIn != null && <span>{block.tokensIn} in</span>}
-        {block.tokensOut != null && <span>{block.tokensOut} out</span>}
-        {block.wallTimeMs != null && <span>{(block.wallTimeMs / 1000).toFixed(1)}s</span>}
-      </div>
-
-      {block.thinking && (
-        <div className="text-xs opacity-50 mb-1 truncate" style={{ maxWidth: 268 }}>
-          thinking...
-        </div>
-      )}
-
       <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>
 
-      {block.toolCalls.length > 0 && (
-        <div
-          className="mt-1 text-xs px-2 py-0.5 rounded-full inline-block"
-          style={{ backgroundColor: 'rgba(249,115,22,0.2)', color: '#fb923c' }}
-        >
-          {block.toolCalls.length} tool call
-          {block.toolCalls.length > 1 ? 's' : ''}
-        </div>
-      )}
+      <div className="flex items-center gap-2 mt-1.5 text-[10px] opacity-50">
+        {tokens && <span>{tokens}</span>}
+        {time && <span>{time}</span>}
+        {block.toolCalls.length > 0 && (
+          <span
+            className="px-1.5 py-0.5 rounded-full"
+            style={{ backgroundColor: 'rgba(249,115,22,0.2)', color: '#fb923c' }}
+          >
+            {String(block.toolCalls.length)} tool call{block.toolCalls.length > 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
 
       <Handle
         type="source"
