@@ -67,10 +67,52 @@ When saying something is "done", "ready for review", or needs "manual verificati
 - **Clean up Playwright browsers.** After finishing with Playwright (screenshots, snapshots, testing), close the browser. Use a 60s background delay so the human can glance at the window: `sleep 60 && <close browser>` as a background bash task. Never leave Chrome windows open and cluttering the desktop.
 - **Agents must self-verify.** Sub-agents working on UI features must take screenshots as part of their verification step before submitting a PR. "Tests pass" is necessary but not sufficient — the feature must also visually look correct.
 
+## Permanent Git Worktrees
+
+Each teammate role has a **permanent named worktree** that persists across sessions. Agents do NOT create or destroy worktrees — they use their assigned one.
+
+| Role    | Worktree Path                              | Branch Pattern        | Port (Express/Vite) |
+| ------- | ------------------------------------------ | --------------------- | ------------------- |
+| Parser  | `/Users/anhad/Projects/claude-tracer-parser` | `parser-worktree`   | 5000 / 5001         |
+| Core    | `/Users/anhad/Projects/claude-tracer-core`   | `core-worktree`     | 5002 / 5003         |
+| Server  | `/Users/anhad/Projects/claude-tracer-server`  | `server-worktree`   | 5004 / 5005         |
+| UI      | `/Users/anhad/Projects/claude-tracer-ui`      | `ui-worktree`       | 5006 / 5007         |
+
+### Agent Worktree Protocol
+
+When a teammate agent starts work:
+
+1. **Identify your worktree.** Based on your assigned role name (parser, core, server, ui), your worktree is at `/Users/anhad/Projects/claude-tracer-<role>`.
+2. **Sync with main.** Before starting any feature work:
+   ```bash
+   cd /Users/anhad/Projects/claude-tracer-<role>
+   git fetch origin
+   git checkout <role>-worktree
+   git reset --hard origin/main
+   ```
+3. **Create a feature branch from the worktree branch.** Do NOT work directly on the worktree branch:
+   ```bash
+   git checkout -b feat/<feature-name>
+   ```
+4. **Install dependencies.** Run `npm install` to ensure node_modules are current.
+5. **Do your work.** Commit, push, open PR. Use the port assigned to your role (see table above).
+6. **Clean up after merge.** After your PR is merged, reset the worktree to main:
+   ```bash
+   git checkout <role>-worktree
+   git reset --hard origin/main
+   ```
+
+**Rules:**
+- **Never delete worktrees.** They are permanent infrastructure.
+- **Never work on the worktree branch directly.** Always create a feature branch from it.
+- **Always reset to main before starting new work.** Stale worktrees cause merge conflicts.
+- **Run `npm install` after resetting.** Dependencies may have changed.
+- **Use your assigned ports.** Don't use default ports (3000/5173) or local ports (4000/4001).
+
 ## Resource Cleanup
 
 - **Don't blanket-kill processes on ports.** Pick an unused port or let the tool find one. Never run `lsof -ti:PORT | xargs kill -9` against ports that might have other users' processes.
-- **Clean up worktrees** after PRs are merged: `git worktree remove <path>`.
+- **Don't delete permanent worktrees.** They persist across sessions. Only reset them to main.
 - **Clean up background servers** you started for testing. Track the port you used and kill only that specific process when done.
 
 ## Git Workflow
