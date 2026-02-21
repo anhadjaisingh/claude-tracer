@@ -1,11 +1,10 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import { useTheme } from '../../../themes';
-import type { UserBlock } from '@/types';
 import type { AnyBlock } from '@/types';
 
 interface UserNodeData {
-  block: UserBlock;
+  block: AnyBlock;
   onExpandBlock: (block: AnyBlock) => void;
   [key: string]: unknown;
 }
@@ -14,7 +13,8 @@ export function UserNode({ data }: NodeProps) {
   const theme = useTheme();
   const { block, onExpandBlock } = data as unknown as UserNodeData;
 
-  const preview = block.content.length > 80 ? block.content.slice(0, 80) + '...' : block.content;
+  const content = 'content' in block ? String(block.content) : '';
+  const preview = content.length > 80 ? content.slice(0, 80) + '...' : content;
 
   return (
     <div

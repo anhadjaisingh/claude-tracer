@@ -2,7 +2,7 @@ import type { Node, Edge } from '@xyflow/react';
 import type { AnyBlock, Chunk } from '@/types';
 import { isUserBlock, isAgentBlock, isToolBlock, isMcpBlock, isSystemBlock } from '@/types';
 
-function getNodeType(block: AnyBlock): string | null {
+function getNodeType(block: AnyBlock): string {
   if (isUserBlock(block)) {
     if (block.isCommand) return 'command';
     return block.isMeta ? 'meta' : 'user';
@@ -14,8 +14,7 @@ function getNodeType(block: AnyBlock): string | null {
   }
   if (isMcpBlock(block)) return 'tool';
   if (isSystemBlock(block) && block.subtype === 'compact_boundary') return 'compaction';
-  if (isSystemBlock(block)) return null;
-  return null;
+  return 'user';
 }
 
 export interface BuildGraphOptions {
@@ -131,7 +130,6 @@ export function buildGraph(
     const chunk = blockToChunk.get(block.id);
     const isHidden = hiddenBlockIds.has(block.id);
     const nodeType = getNodeType(block);
-    if (nodeType === null) continue;
 
     const nodeData: Record<string, unknown> = { block, onExpandBlock };
 
