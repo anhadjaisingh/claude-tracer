@@ -122,8 +122,10 @@ export class ClaudeCodeParser extends BaseParser {
     const blocks: AnyBlock[] = [];
 
     for (const line of lines) {
-      const block = this.parseLine(line);
-      if (block) {
+      const result = this.parseLine(line);
+      if (!result) continue;
+      const parsed = Array.isArray(result) ? result : [result];
+      for (const block of parsed) {
         // If merged block, check if already in array by id
         const existingIndex = blocks.findIndex((b) => b.id === block.id);
         if (existingIndex >= 0) {
@@ -137,7 +139,7 @@ export class ClaudeCodeParser extends BaseParser {
     return this.createSession('session.jsonl', blocks);
   }
 
-  parseLine(line: string): AnyBlock | null {
+  parseLine(line: string): AnyBlock | AnyBlock[] | null {
     try {
       const entry = JSON.parse(line) as ClaudeCodeEntry;
       return this.parseEntry(entry);
@@ -146,7 +148,7 @@ export class ClaudeCodeParser extends BaseParser {
     }
   }
 
-  private parseEntry(entry: ClaudeCodeEntry): AnyBlock | null {
+  private parseEntry(entry: ClaudeCodeEntry): AnyBlock | AnyBlock[] | null {
     const timestamp = entry.timestamp ? new Date(entry.timestamp).getTime() : Date.now();
 
     if (entry.type === 'user') return this.parseUserEntry(entry, timestamp);
@@ -207,6 +209,13 @@ export class ClaudeCodeParser extends BaseParser {
     };
     this.setUuidFields(userBlock, entry);
 
+    // Detect slash commands: <command-name>...</command-name> XML wrapper
+    const commandMatch = /<command-name>([\s\S]*?)<\/command-name>/.exec(textContent);
+    if (commandMatch) {
+      userBlock.isCommand = true;
+      userBlock.commandName = commandMatch[1].trim();
+    }
+
     // Handle isMeta user entries
     if (entry.isMeta) {
       userBlock.isMeta = true;
@@ -221,7 +230,10 @@ export class ClaudeCodeParser extends BaseParser {
     return userBlock;
   }
 
-  private parseAssistantEntry(entry: ClaudeCodeEntry, timestamp: number): AnyBlock | null {
+  private parseAssistantEntry(
+    entry: ClaudeCodeEntry,
+    timestamp: number,
+  ): AnyBlock | AnyBlock[] | null {
     if (!entry.message) return null;
     const content = entry.message.content;
     const requestId = entry.requestId;
@@ -264,6 +276,7 @@ export class ClaudeCodeParser extends BaseParser {
     if (sendMessageBlock && !textContent && newToolCallIds.length === 0 && !existing) {
       return sendMessageBlock;
     }
+
     if (existing) {
       // Merge text content
       if (textContent) {
@@ -298,6 +311,10 @@ export class ClaudeCodeParser extends BaseParser {
       }
 
       this.currentAgentBlockId = existing.id;
+      // Return both agent and team message if SendMessage was alongside other content
+      if (sendMessageBlock) {
+        return [existing, sendMessageBlock];
+      }
       return existing;
     }
 
@@ -336,6 +353,10 @@ export class ClaudeCodeParser extends BaseParser {
       this.activeAgentBlocks.set(requestId, agentBlock);
     }
 
+    // Return both agent and team message if SendMessage was alongside other content
+    if (sendMessageBlock) {
+      return [agentBlock, sendMessageBlock];
+    }
     return agentBlock;
   }
 

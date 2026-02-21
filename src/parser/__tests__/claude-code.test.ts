@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ClaudeCodeParser } from '../claude-code';
 import type {
+  AnyBlock,
   UserBlock,
   AgentBlock,
   ToolBlock,
@@ -10,6 +11,13 @@ import type {
   FileSnapshotBlock,
   QueueOperationBlock,
 } from '@/types';
+
+/** Extract the first (or only) block from a parseLine result */
+function firstBlock(result: AnyBlock | AnyBlock[] | null): AnyBlock | null {
+  if (result === null) return null;
+  if (Array.isArray(result)) return result[0] ?? null;
+  return result;
+}
 
 describe('ClaudeCodeParser', () => {
   let parser: ClaudeCodeParser;
@@ -40,7 +48,7 @@ describe('ClaudeCodeParser', () => {
       timestamp: '2026-02-18T10:00:00Z',
     });
 
-    const block = parser.parseLine(line);
+    const block = firstBlock(parser.parseLine(line));
     expect(block).not.toBeNull();
     expect(block?.type).toBe('user');
     expect((block as UserBlock).content).toBe('Hello Claude');
@@ -56,7 +64,7 @@ describe('ClaudeCodeParser', () => {
       timestamp: '2026-02-18T10:00:01Z',
     });
 
-    const block = parser.parseLine(line);
+    const block = firstBlock(parser.parseLine(line));
     expect(block).not.toBeNull();
     expect(block?.type).toBe('agent');
     expect((block as AgentBlock).content).toBe('Hi there!');
@@ -79,7 +87,7 @@ describe('ClaudeCodeParser', () => {
       timestamp: '2026-02-18T10:00:02Z',
     });
 
-    const block = parser.parseLine(line);
+    const block = firstBlock(parser.parseLine(line));
     expect(block).not.toBeNull();
     expect(block?.type).toBe('agent');
   });
@@ -117,7 +125,7 @@ describe('ClaudeCodeParser', () => {
       timestamp: '2026-02-18T10:00:03Z',
     });
 
-    const block = parser.parseLine(resultLine);
+    const block = firstBlock(parser.parseLine(resultLine));
     expect(block).not.toBeNull();
     expect(block?.type).toBe('tool');
     expect((block as ToolBlock).toolName).toBeDefined();
@@ -298,7 +306,7 @@ describe('ClaudeCodeParser', () => {
         },
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.tokensIn).toBe(100);
       expect(block?.tokensOut).toBe(50);
@@ -347,7 +355,7 @@ describe('ClaudeCodeParser', () => {
         uuid: '45d8-test',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('user');
       expect((block as UserBlock).isMeta).toBe(true);
@@ -360,7 +368,7 @@ describe('ClaudeCodeParser', () => {
         message: { role: 'user', content: 'Hello Claude' },
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect((block as UserBlock).isMeta).toBeUndefined();
     });
@@ -377,7 +385,7 @@ describe('ClaudeCodeParser', () => {
         isMeta: true,
       });
 
-      const block = parser.parseLine(line) as UserBlock;
+      const block = firstBlock(parser.parseLine(line)) as UserBlock;
       expect(block.metaLabel?.length).toBeLessThanOrEqual(40);
       expect(block.metaLabel).toBe(longText.slice(0, 37) + '...');
     });
@@ -394,7 +402,7 @@ describe('ClaudeCodeParser', () => {
         uuid: 'sys-uuid-1',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('system');
       const sysBlock = block as SystemBlock;
@@ -410,7 +418,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:05:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('system');
       const sysBlock = block as SystemBlock;
@@ -428,7 +436,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:02:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('system');
       const sysBlock = block as SystemBlock;
@@ -442,7 +450,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('system');
       const sysBlock = block as SystemBlock;
@@ -467,7 +475,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('progress');
       const progBlock = block as ProgressBlock;
@@ -492,7 +500,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:01:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('progress');
       const progBlock = block as ProgressBlock;
@@ -513,7 +521,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('progress');
       const progBlock = block as ProgressBlock;
@@ -527,7 +535,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('progress');
       const progBlock = block as ProgressBlock;
@@ -554,7 +562,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T12:14:30.526Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('file-snapshot');
       const fsBlock = block as FileSnapshotBlock;
@@ -575,7 +583,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T12:00:00.000Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('file-snapshot');
       const fsBlock = block as FileSnapshotBlock;
@@ -588,7 +596,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('file-snapshot');
       const fsBlock = block as FileSnapshotBlock;
@@ -607,7 +615,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('queue-operation');
       const qBlock = block as QueueOperationBlock;
@@ -623,7 +631,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:01Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('queue-operation');
       const qBlock = block as QueueOperationBlock;
@@ -642,7 +650,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.uuid).toBe('user-uuid-123');
       expect(block?.sourceParentUuid).toBe('parent-uuid-456');
@@ -657,7 +665,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:00Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.uuid).toBe('sys-uuid-789');
     });
@@ -735,7 +743,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:05Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('team-message');
       const teamBlock = block as TeamMessageBlock;
@@ -766,7 +774,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:06Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('team-message');
       const teamBlock = block as TeamMessageBlock;
@@ -795,7 +803,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:07Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('team-message');
       const teamBlock = block as TeamMessageBlock;
@@ -824,7 +832,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:08Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       const teamBlock = block as TeamMessageBlock;
       expect(teamBlock.content).toBe('Quick status update');
@@ -847,7 +855,7 @@ describe('ClaudeCodeParser', () => {
         timestamp: '2026-02-18T10:00:09Z',
       });
 
-      const block = parser.parseLine(line);
+      const block = firstBlock(parser.parseLine(line));
       expect(block).not.toBeNull();
       expect(block?.type).toBe('agent');
     });

@@ -7,7 +7,7 @@ export abstract class BaseParser implements TraceParser {
   private blockIdCounter = 0;
 
   abstract parse(content: string): ParsedSession;
-  abstract parseLine(line: string): AnyBlock | null;
+  abstract parseLine(line: string): AnyBlock | AnyBlock[] | null;
   abstract canParse(content: string): boolean;
 
   /**

@@ -18,6 +18,6 @@ export interface ParsedSession {
 
 export interface TraceParser {
   parse(content: string): ParsedSession;
-  parseLine(line: string): AnyBlock | null;
+  parseLine(line: string): AnyBlock | AnyBlock[] | null;
   canParse(content: string): boolean;
 }
