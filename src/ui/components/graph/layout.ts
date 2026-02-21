@@ -62,15 +62,9 @@ function estimateHeight(node: Node): number {
     case 'meta':
       return 40;
     case 'tool':
-      return 90;
-    case 'agent': {
-      const toolCalls = block.toolCalls as string[] | undefined;
-      const hasThinking = Boolean(block.thinking);
-      let height = 80;
-      if (toolCalls && toolCalls.length > 0) height += 20;
-      if (hasThinking) height += 16;
-      return height;
-    }
+      return 48; // compact one-liner
+    case 'agent':
+      return 80; // trimmed to 2-3 lines
     default:
       return 80;
   }

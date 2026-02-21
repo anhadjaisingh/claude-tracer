@@ -8,7 +8,7 @@ export function useSettings() {
     if (stored === 'dark' || stored === 'light' || stored === 'claude') {
       return stored;
     }
-    return 'claude';
+    return 'dark';
   });
 
   const [nodesDraggable, setNodesDraggableState] = useState<boolean>(() => {

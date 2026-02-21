@@ -310,6 +310,8 @@ function GraphViewInner({
           style: { stroke: theme.colors.edgeColor, strokeWidth: 1.5 },
         }}
         proOptions={{ hideAttribution: true }}
+        zoomOnScroll={false}
+        panOnScroll={true}
       >
         <Controls
           style={{
