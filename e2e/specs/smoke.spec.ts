@@ -22,7 +22,7 @@ test.describe('Smoke tests', () => {
     const userBlock = page.locator('text=user').first();
     await expect(userBlock).toBeVisible({ timeout: 10_000 });
 
-    const agentBlock = page.locator('text=agent').first();
+    const agentBlock = page.locator('text=Of course').first();
     await expect(agentBlock).toBeVisible({ timeout: 10_000 });
   });
 
