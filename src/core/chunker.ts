@@ -230,6 +230,12 @@ export class Chunker {
         if (currentTurn) {
           currentTurn.blockIds.push(block.id);
         }
+      } else {
+        // System, progress, file-snapshot, queue-operation blocks
+        // don't start new turns — add to current chunk
+        if (currentTurn) {
+          currentTurn.blockIds.push(block.id);
+        }
       }
 
       previousBlock = block;

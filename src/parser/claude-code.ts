@@ -6,6 +6,10 @@ import type {
   AgentBlock,
   ToolBlock,
   TeamMessageBlock,
+  SystemBlock,
+  ProgressBlock,
+  FileSnapshotBlock,
+  QueueOperationBlock,
 } from '@/types';
 
 interface ClaudeCodeEntry {
@@ -31,6 +35,26 @@ interface ClaudeCodeEntry {
   durationMs?: number;
   inputTokens?: number;
   outputTokens?: number;
+  // system entry fields
+  subtype?: string;
+  // progress entry fields
+  data?: Record<string, unknown>;
+  toolUseID?: string;
+  parentToolUseID?: string;
+  // file-history-snapshot fields
+  messageId?: string;
+  snapshot?: {
+    messageId?: string;
+    trackedFileBackups?: Record<
+      string,
+      { backupFileName: string; version: number; backupTime: string }
+    >;
+    timestamp?: string;
+  };
+  // queue-operation fields
+  operation?: string;
+  content?: string;
+  sessionId?: string;
 }
 
 interface ContentBlock {
@@ -125,16 +149,24 @@ export class ClaudeCodeParser extends BaseParser {
   private parseEntry(entry: ClaudeCodeEntry): AnyBlock | null {
     const timestamp = entry.timestamp ? new Date(entry.timestamp).getTime() : Date.now();
 
-    if (entry.type === 'user') {
-      return this.parseUserEntry(entry, timestamp);
-    }
+    if (entry.type === 'user') return this.parseUserEntry(entry, timestamp);
+    if (entry.type === 'assistant') return this.parseAssistantEntry(entry, timestamp);
+    if (entry.type === 'system') return this.parseSystemEntry(entry, timestamp);
+    if (entry.type === 'progress') return this.parseProgressEntry(entry, timestamp);
+    if (entry.type === 'file-history-snapshot')
+      return this.parseFileSnapshotEntry(entry, timestamp);
 
-    if (entry.type === 'assistant') {
-      return this.parseAssistantEntry(entry, timestamp);
-    }
+    // entry.type must be 'queue-operation' at this point (all other types handled above)
+    return this.parseQueueOperationEntry(entry, timestamp);
+  }
 
-    // Skip system, progress, file-history-snapshot, queue-operation entries
-    return null;
+  private setUuidFields(block: AnyBlock, entry: ClaudeCodeEntry): void {
+    if (entry.uuid) {
+      block.uuid = entry.uuid;
+    }
+    if (entry.parentUuid) {
+      block.sourceParentUuid = entry.parentUuid;
+    }
   }
 
   private parseUserEntry(entry: ClaudeCodeEntry, timestamp: number): AnyBlock | null {
@@ -158,6 +190,7 @@ export class ClaudeCodeParser extends BaseParser {
               output: block.content,
               status: 'success',
             };
+            this.setUuidFields(toolBlock, entry);
             return toolBlock;
           }
         }
@@ -172,6 +205,7 @@ export class ClaudeCodeParser extends BaseParser {
       type: 'user',
       content: textContent,
     };
+    this.setUuidFields(userBlock, entry);
 
     // Handle isMeta user entries
     if (entry.isMeta) {
@@ -295,6 +329,7 @@ export class ClaudeCodeParser extends BaseParser {
       tokensOut,
       wallTimeMs: entry.durationMs,
     };
+    this.setUuidFields(agentBlock, entry);
 
     // Store in active blocks map if we have a requestId
     if (requestId) {
@@ -302,6 +337,70 @@ export class ClaudeCodeParser extends BaseParser {
     }
 
     return agentBlock;
+  }
+
+  private parseSystemEntry(entry: ClaudeCodeEntry, timestamp: number): SystemBlock {
+    // Build data from entry, excluding fields that go into block metadata
+    const excludeKeys = new Set(['type', 'timestamp', 'uuid', 'parentUuid', 'subtype']);
+    const data: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(entry)) {
+      if (!excludeKeys.has(key)) {
+        data[key] = value;
+      }
+    }
+    const block: SystemBlock = {
+      id: this.generateBlockId(),
+      timestamp,
+      type: 'system',
+      subtype: entry.subtype ?? 'unknown',
+      data,
+    };
+    this.setUuidFields(block, entry);
+    if (entry.durationMs !== undefined) {
+      block.wallTimeMs = entry.durationMs;
+    }
+    return block;
+  }
+
+  private parseProgressEntry(entry: ClaudeCodeEntry, timestamp: number): ProgressBlock {
+    const data = entry.data ?? {};
+    const progressType = typeof data.type === 'string' ? data.type : 'unknown';
+    const block: ProgressBlock = {
+      id: this.generateBlockId(),
+      timestamp,
+      type: 'progress',
+      progressType,
+      data,
+      parentToolUseId: entry.parentToolUseID ?? entry.toolUseID,
+    };
+    this.setUuidFields(block, entry);
+    return block;
+  }
+
+  private parseFileSnapshotEntry(entry: ClaudeCodeEntry, timestamp: number): FileSnapshotBlock {
+    const trackedFiles = entry.snapshot?.trackedFileBackups ?? {};
+    const block: FileSnapshotBlock = {
+      id: this.generateBlockId(),
+      timestamp,
+      type: 'file-snapshot',
+      messageId: entry.messageId ?? entry.snapshot?.messageId ?? '',
+      trackedFiles,
+    };
+    this.setUuidFields(block, entry);
+    return block;
+  }
+
+  private parseQueueOperationEntry(entry: ClaudeCodeEntry, timestamp: number): QueueOperationBlock {
+    const operation = entry.operation === 'remove' ? 'remove' : 'enqueue';
+    const block: QueueOperationBlock = {
+      id: this.generateBlockId(),
+      timestamp,
+      type: 'queue-operation',
+      operation,
+      content: entry.content,
+    };
+    this.setUuidFields(block, entry);
+    return block;
   }
 
   private parseSendMessageBlock(block: ContentBlock, timestamp: number): TeamMessageBlock | null {
