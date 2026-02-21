@@ -319,7 +319,7 @@ function GraphViewInner({
         minZoom={0.1}
         maxZoom={2}
         defaultEdgeOptions={{
-          type: 'bezier',
+          type: 'default',
           markerEnd: {
             type: MarkerType.ArrowClosed,
             width: 15,
