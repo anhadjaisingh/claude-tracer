@@ -55,6 +55,9 @@ interface ClaudeCodeEntry {
   operation?: string;
   content?: string;
   sessionId?: string;
+  // teammate / sidechain fields
+  isSidechain?: boolean;
+  agentId?: string;
 }
 
 interface ContentBlock {
@@ -174,6 +177,25 @@ export class ClaudeCodeParser extends BaseParser {
   private parseUserEntry(entry: ClaudeCodeEntry, timestamp: number): AnyBlock | null {
     if (!entry.message) return null;
     const content = entry.message.content;
+
+    // Detect teammate input messages (from other agents via SendMessage)
+    if (entry.isSidechain) {
+      const msgContent = entry.message.content;
+      const textContent =
+        typeof msgContent === 'string'
+          ? msgContent
+          : this.extractTextContent(msgContent);
+      const teamBlock: TeamMessageBlock = {
+        id: this.generateBlockId(),
+        timestamp,
+        type: 'team-message',
+        sender: entry.agentId ?? 'teammate',
+        content: textContent,
+        messageType: 'message',
+      };
+      this.setUuidFields(teamBlock, entry);
+      return teamBlock;
+    }
 
     // Check if it's a tool result
     if (Array.isArray(content)) {

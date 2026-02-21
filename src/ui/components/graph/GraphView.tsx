@@ -69,6 +69,10 @@ import {
   CompactionNode,
   SubAgentNode,
   CommandNode,
+  SystemNode,
+  ProgressNode,
+  FileSnapshotNode,
+  QueueOperationNode,
 } from './nodes';
 import type { AnyBlock, Chunk } from '@/types';
 
@@ -84,6 +88,10 @@ const nodeTypes = {
   compaction: CompactionNode,
   subagent: SubAgentNode,
   command: CommandNode,
+  system: SystemNode,
+  progress: ProgressNode,
+  'file-snapshot': FileSnapshotNode,
+  'queue-operation': QueueOperationNode,
 };
 
 function minimapNodeColor(node: { type?: string }): string {
@@ -106,6 +114,14 @@ function minimapNodeColor(node: { type?: string }): string {
       return '#6366f1';
     case 'command':
       return '#3b82f6';
+    case 'system':
+      return '#6b7280';
+    case 'progress':
+      return '#14b8a6';
+    case 'file-snapshot':
+      return '#22c55e';
+    case 'queue-operation':
+      return '#818cf8';
     default:
       return '#6b7280';
   }
@@ -118,6 +134,7 @@ interface Props {
   onNavigateReady?: (navigateToBlock: NavigateToBlockFn) => void;
   nodesDraggable?: boolean;
   highlightedBlockId?: string | null;
+  onCollapseControlsReady?: (controls: { collapseAll: () => void; expandAll: () => void }) => void;
 }
 
 /** Half the default node width, used to compute node center for setCenter(). */
@@ -132,6 +149,7 @@ function GraphViewInner({
   onNavigateReady,
   nodesDraggable = false,
   highlightedBlockId,
+  onCollapseControlsReady,
 }: Props) {
   const theme = useTheme();
   const { setCenter } = useReactFlow();
@@ -144,10 +162,29 @@ function GraphViewInner({
   const initialViewportSet = useRef(false);
   const nodesRef = useRef<Node[]>([]);
 
+  const chunksRef = useRef<Chunk[]>([]);
+  useEffect(() => {
+    chunksRef.current = chunks ?? [];
+  }, [chunks]);
+
   // Keep nodesRef in sync so the navigate callback always has current positions
   useEffect(() => {
     nodesRef.current = nodes;
   }, [nodes]);
+
+  // Expose collapse/expand controls to parent
+  useEffect(() => {
+    if (!onCollapseControlsReady) return;
+    onCollapseControlsReady({
+      collapseAll: () => {
+        if (!chunks) return;
+        setCollapsedGroups(new Set(chunks.map((c) => c.id)));
+      },
+      expandAll: () => {
+        setCollapsedGroups(new Set());
+      },
+    });
+  }, [onCollapseControlsReady, chunks]);
 
   // Expose the navigateToBlock function to the parent whenever setCenter is available
   useEffect(() => {
@@ -158,22 +195,17 @@ function GraphViewInner({
       let targetNode = nodesRef.current.find((n) => n.id === blockId);
 
       if (!targetNode || targetNode.hidden) {
-        // If the block is hidden (collapsed), find its parent group and expand it
-        const parentGroup = nodesRef.current.find(
-          (n) =>
-            n.type === 'chunkGroup' &&
-            nodesRef.current.some((child) => child.id === blockId && child.parentId === n.id),
-        );
-
-        if (parentGroup) {
-          // Expand the group, then navigate will happen on next render
+        const containingChunk = chunksRef.current.find((c) => c.blockIds.includes(blockId));
+        if (containingChunk) {
           setCollapsedGroups((prev) => {
             const next = new Set(prev);
-            next.delete(parentGroup.id);
+            next.delete(containingChunk.id);
             return next;
           });
-          // Navigate to the group node for now; re-render will fix positions
-          targetNode = parentGroup;
+          const groupNode = nodesRef.current.find((n) => n.id === containingChunk.id);
+          if (groupNode) {
+            targetNode = groupNode;
+          }
         }
       }
 

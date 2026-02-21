@@ -1,14 +1,6 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import type { AnyBlock } from '@/types';
-
-interface TeamMessageBlock {
-  id: string;
-  type: string;
-  content: string;
-  sender?: string;
-  recipient?: string;
-}
+import type { TeamMessageBlock, AnyBlock } from '@/types';
 
 interface TeamMessageNodeData {
   block: TeamMessageBlock;
@@ -20,8 +12,7 @@ export function TeamMessageNode({ data }: NodeProps) {
   const { block, onExpandBlock } = data as unknown as TeamMessageNodeData;
 
   const preview = block.content.length > 80 ? block.content.slice(0, 80) + '...' : block.content;
-
-  const label = [block.sender, block.recipient].filter(Boolean).join(' -> ');
+  const direction = block.recipient ? `\u2192 ${block.recipient}` : '';
 
   return (
     <div
@@ -41,8 +32,9 @@ export function TeamMessageNode({ data }: NodeProps) {
       <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
 
       <div className="flex items-center gap-2 mb-1 text-xs opacity-70">
-        <span className="font-semibold uppercase">Team Message</span>
-        {label && <span>{label}</span>}
+        <span className="font-semibold">{block.sender}</span>
+        {direction && <span>{direction}</span>}
+        <span className="ml-auto opacity-50">{block.messageType}</span>
       </div>
 
       <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>

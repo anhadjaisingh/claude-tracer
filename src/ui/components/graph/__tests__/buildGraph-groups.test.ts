@@ -116,7 +116,8 @@ describe('buildGraph with groups', () => {
 
     const groupEdge = edges.find((e) => e.id === 'group:chunk-1->chunk-2');
     expect(groupEdge).toBeDefined();
-    expect(groupEdge?.style).toEqual(expect.objectContaining({ strokeDasharray: '5 5' }));
+    // Group edges no longer have custom style — they inherit default edge options (solid + arrowheads)
+    expect(groupEdge?.style).toBeUndefined();
   });
 
   it('does not create groups when chunks is empty', () => {

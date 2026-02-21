@@ -10,9 +10,16 @@ const LEVELS: { level: ChunkLevel; label: string }[] = [
 interface Props {
   granularity: ChunkLevel;
   onGranularityChange: (level: ChunkLevel) => void;
+  onCollapseAll?: () => void;
+  onExpandAll?: () => void;
 }
 
-export function GranularitySelector({ granularity, onGranularityChange }: Props) {
+export function GranularitySelector({
+  granularity,
+  onGranularityChange,
+  onCollapseAll,
+  onExpandAll,
+}: Props) {
   const theme = useTheme();
   const activeLabel = LEVELS.find((l) => l.level === granularity)?.label ?? 'Fine';
 
@@ -43,6 +50,38 @@ export function GranularitySelector({ granularity, onGranularityChange }: Props)
       <span className="text-xs opacity-60" style={{ color: theme.colors.indexText }}>
         {activeLabel}
       </span>
+      {(onCollapseAll ?? onExpandAll) && (
+        <div className="flex items-center gap-2 mt-1">
+          {onExpandAll && (
+            <button
+              className="text-xs cursor-pointer px-2 py-0.5 rounded opacity-60 hover:opacity-100 transition-opacity"
+              style={{
+                backgroundColor: 'transparent',
+                color: theme.colors.indexText,
+                border: `1px solid ${theme.colors.accent}40`,
+              }}
+              onClick={onExpandAll}
+              title="Expand all groups"
+            >
+              Expand all
+            </button>
+          )}
+          {onCollapseAll && (
+            <button
+              className="text-xs cursor-pointer px-2 py-0.5 rounded opacity-60 hover:opacity-100 transition-opacity"
+              style={{
+                backgroundColor: 'transparent',
+                color: theme.colors.indexText,
+                border: `1px solid ${theme.colors.accent}40`,
+              }}
+              onClick={onCollapseAll}
+              title="Collapse all groups"
+            >
+              Collapse all
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
