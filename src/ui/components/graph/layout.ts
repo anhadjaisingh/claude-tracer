@@ -18,10 +18,12 @@ const TYPE_ORDER = ['tool', 'team-message', 'agent', 'user'] as const;
 export function getColumnIndex(nodeType: string | undefined): number {
   const map: Record<string, number> = {
     tool: 0,
+    subagent: 0, // sub-agent nodes go in the tool column
     'team-message': 1,
     agent: 2,
     meta: 3, // same as user
     user: 3,
+    command: 3, // command nodes go in the user column
   };
   return map[nodeType ?? 'user'] ?? 3;
 }
@@ -35,9 +37,11 @@ export function buildColumnX(nodes: Node[]): Record<string, number> {
   const blockNodes = nodes.filter((n) => n.type !== 'chunkGroup' && !n.hidden);
   const presentTypes = new Set(
     blockNodes.map((n) => {
-      // Meta nodes share the user column
+      // Normalize types that share columns
       const type = n.type ?? 'user';
-      return type === 'meta' ? 'user' : type;
+      if (type === 'meta' || type === 'command') return 'user';
+      if (type === 'subagent') return 'tool';
+      return type;
     }),
   );
   const columnX: Record<string, number> = {};
@@ -48,8 +52,14 @@ export function buildColumnX(nodes: Node[]): Record<string, number> {
       colIndex++;
     }
   }
-  // Meta nodes use the same X position as user nodes
-  columnX.meta = columnX.user;
+  // Alias columns for types that share positions (only if source exists)
+  if ('user' in columnX) {
+    columnX.meta = columnX.user;
+    columnX.command = columnX.user;
+  }
+  if ('tool' in columnX) {
+    columnX.subagent = columnX.tool;
+  }
   return columnX;
 }
 
@@ -62,7 +72,12 @@ function estimateHeight(node: Node): number {
     case 'meta':
       return 40;
     case 'tool':
+    case 'subagent':
       return 48; // compact one-liner
+    case 'compaction':
+      return 40; // thin divider
+    case 'command':
+      return 48; // compact pill
     case 'agent':
       return 80; // trimmed to 2-3 lines
     default:
@@ -111,7 +126,10 @@ function flatLayout(nodes: Node[], edges: Edge[]): { nodes: Node[]; edges: Edge[
   for (const edge of edges) {
     const sourceNode = nodeMap.get(edge.source);
     const targetNode = nodeMap.get(edge.target);
-    if (sourceNode?.type === 'agent' && targetNode?.type === 'tool') {
+    if (
+      sourceNode?.type === 'agent' &&
+      (targetNode?.type === 'tool' || targetNode?.type === 'subagent')
+    ) {
       const children = childrenOf.get(edge.source) ?? [];
       children.push(edge.target);
       childrenOf.set(edge.source, children);
@@ -208,7 +226,10 @@ function groupedLayout(
   for (const edge of edges) {
     const sourceNode = nodeMap.get(edge.source);
     const targetNode = nodeMap.get(edge.target);
-    if (sourceNode?.type === 'agent' && targetNode?.type === 'tool') {
+    if (
+      sourceNode?.type === 'agent' &&
+      (targetNode?.type === 'tool' || targetNode?.type === 'subagent')
+    ) {
       const children = childrenOf.get(edge.source) ?? [];
       children.push(edge.target);
       childrenOf.set(edge.source, children);

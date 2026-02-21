@@ -8,7 +8,7 @@ class TestParser extends BaseParser {
     return this.createSession('test.jsonl', []);
   }
 
-  parseLine(line: string): AnyBlock | null {
+  parseLine(line: string): AnyBlock | AnyBlock[] | null {
     void line;
     return null;
   }

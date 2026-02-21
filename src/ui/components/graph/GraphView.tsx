@@ -59,7 +59,17 @@ import '@xyflow/react/dist/style.css';
 import { useTheme } from '../../themes';
 import { buildGraph } from './buildGraph';
 import { layoutGraph } from './layout';
-import { UserNode, AgentNode, ToolNode, MetaNode, TeamMessageNode, ChunkGroupNode } from './nodes';
+import {
+  UserNode,
+  AgentNode,
+  ToolNode,
+  MetaNode,
+  TeamMessageNode,
+  ChunkGroupNode,
+  CompactionNode,
+  SubAgentNode,
+  CommandNode,
+} from './nodes';
 import type { AnyBlock, Chunk } from '@/types';
 
 export type NavigateToBlockFn = (blockId: string) => void;
@@ -71,6 +81,9 @@ const nodeTypes = {
   meta: MetaNode,
   'team-message': TeamMessageNode,
   chunkGroup: ChunkGroupNode,
+  compaction: CompactionNode,
+  subagent: SubAgentNode,
+  command: CommandNode,
 };
 
 function minimapNodeColor(node: { type?: string }): string {
@@ -87,6 +100,12 @@ function minimapNodeColor(node: { type?: string }): string {
       return '#8b5cf6';
     case 'chunkGroup':
       return 'rgba(249,115,22,0.3)';
+    case 'compaction':
+      return '#f59e0b';
+    case 'subagent':
+      return '#6366f1';
+    case 'command':
+      return '#3b82f6';
     default:
       return '#6b7280';
   }

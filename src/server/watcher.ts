@@ -140,9 +140,10 @@ export class SessionWatcher {
     const blocks: AnyBlock[] = [];
 
     for (const line of lines) {
-      const block = this.parser.parseLine(line);
-      if (block) {
-        blocks.push(block);
+      const result = this.parser.parseLine(line);
+      if (result) {
+        const parsed = Array.isArray(result) ? result : [result];
+        blocks.push(...parsed);
       }
     }
 

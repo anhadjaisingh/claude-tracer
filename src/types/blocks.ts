@@ -24,6 +24,8 @@ export interface UserBlock extends Block {
   content: string;
   isMeta?: boolean;
   metaLabel?: string;
+  isCommand?: boolean;
+  commandName?: string;
 }
 
 export interface AgentBlock extends Block {
