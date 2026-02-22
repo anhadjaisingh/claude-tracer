@@ -21,26 +21,37 @@ export function BlockFilter({ hiddenTypes, onToggleType }: Props) {
   const theme = useTheme();
 
   return (
-    <div className="flex flex-wrap gap-1.5">
+    <div className="flex flex-col gap-1">
       {BLOCK_TYPES.map((type) => {
-        const isHidden = hiddenTypes.has(type);
+        const isVisible = !hiddenTypes.has(type);
         return (
           <button
             key={type}
-            className="text-xs px-2 py-0.5 rounded cursor-pointer transition-all"
+            className="flex items-center justify-between gap-2 text-xs px-2 py-1.5 rounded cursor-pointer transition-all hover:bg-white/5"
             style={{
-              backgroundColor: isHidden ? 'transparent' : `${theme.colors.accent}20`,
+              backgroundColor: 'transparent',
               color: theme.colors.headerText,
-              border: `1px solid ${theme.colors.accent}${isHidden ? '20' : '60'}`,
-              opacity: isHidden ? 0.4 : 1,
-              textDecoration: isHidden ? 'line-through' : 'none',
+              border: 'none',
+              opacity: isVisible ? 1 : 0.4,
             }}
             onClick={() => {
               onToggleType(type);
             }}
-            title={isHidden ? `Show ${type} blocks` : `Hide ${type} blocks`}
           >
-            {type}
+            <span>{type}</span>
+            <span
+              className="w-7 h-4 rounded-full relative transition-all"
+              style={{
+                backgroundColor: isVisible ? theme.colors.accent : 'rgba(255,255,255,0.15)',
+              }}
+            >
+              <span
+                className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all"
+                style={{
+                  left: isVisible ? '14px' : '2px',
+                }}
+              />
+            </span>
           </button>
         );
       })}

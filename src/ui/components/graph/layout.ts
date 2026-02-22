@@ -38,8 +38,8 @@ export function getColumnIndex(nodeType: string | undefined): number {
  * present in the graph. This avoids wasting horizontal space on empty columns.
  */
 export function buildColumnX(nodes: Node[]): Record<string, number> {
-  // Only consider non-group, non-hidden block nodes for column calculation
-  const blockNodes = nodes.filter((n) => n.type !== 'chunkGroup' && !n.hidden);
+  // Consider ALL non-group block nodes (including hidden) so columns stay stable during filtering
+  const blockNodes = nodes.filter((n) => n.type !== 'chunkGroup');
   const presentTypes = new Set(
     blockNodes.map((n) => {
       // Normalize types that share columns
@@ -214,9 +214,8 @@ function groupedLayout(
   blockNodes: Node[],
   edges: Edge[],
 ): { nodes: Node[]; edges: Edge[] } {
-  // Build column positions from visible block nodes
-  const visibleBlocks = blockNodes.filter((n) => !n.hidden);
-  const columnX = buildColumnX(visibleBlocks.length > 0 ? visibleBlocks : blockNodes);
+  // Always compute columns from ALL blocks to keep layout stable during filtering
+  const columnX = buildColumnX(blockNodes);
   const totalColumnsWidth = computeColumnsWidth(columnX) + GROUP_PADDING_X * 2;
 
   // Build lookup: groupId -> child block nodes (preserving order)
@@ -327,7 +326,8 @@ function groupedLayout(
         }
       }
 
-      const groupHeight = innerY + GROUP_PADDING_BOTTOM;
+      const MIN_GROUP_HEIGHT = GROUP_PADDING_TOP + GROUP_PADDING_BOTTOM + 40; // At least room for one node
+      const groupHeight = Math.max(innerY + GROUP_PADDING_BOTTOM, MIN_GROUP_HEIGHT);
       const groupWidth = totalColumnsWidth;
 
       // Position group node

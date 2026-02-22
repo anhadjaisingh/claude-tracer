@@ -61,36 +61,38 @@ export function Footer({
           </span>
         )}
       </div>
-      <div className="flex items-center gap-2">
-        <div className="relative">
-          <button
-            className="px-2 py-1 rounded transition-colors"
+      <div className="relative">
+        <button
+          className="px-2 py-1 rounded transition-colors"
+          style={{
+            backgroundColor: filterOpen ? 'rgba(255,255,255,0.15)' : 'transparent',
+            opacity: filterOpen ? 1 : 0.6,
+          }}
+          onMouseDown={(e) => {
+            e.stopPropagation();
+          }}
+          onClick={() => {
+            setFilterOpen((prev) => !prev);
+          }}
+        >
+          Filter{hiddenBlockTypes.size > 0 ? ` (${String(hiddenBlockTypes.size)})` : ''}
+        </button>
+        {filterOpen && (
+          <div
+            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 rounded-lg shadow-lg border border-white/10 p-4"
             style={{
-              backgroundColor: filterOpen ? 'rgba(255,255,255,0.15)' : 'transparent',
-              opacity: filterOpen ? 1 : 0.6,
-            }}
-            onMouseDown={(e) => {
-              e.stopPropagation();
-            }}
-            onClick={() => {
-              setFilterOpen((prev) => !prev);
+              backgroundColor: theme.colors.headerBg,
+              color: theme.colors.headerText,
             }}
           >
-            Filter{hiddenBlockTypes.size > 0 ? ` (${String(hiddenBlockTypes.size)})` : ''}
-          </button>
-          {filterOpen && (
-            <div
-              className="absolute bottom-full right-0 mb-2 w-72 rounded-lg shadow-lg border border-white/10 p-4"
-              style={{
-                backgroundColor: theme.colors.headerBg,
-                color: theme.colors.headerText,
-              }}
-            >
-              <h3 className="text-sm font-semibold mb-3">Block Type Filter</h3>
-              <BlockFilter hiddenTypes={hiddenBlockTypes} onToggleType={onToggleBlockType} />
-            </div>
-          )}
-        </div>
+            <h3 className="text-sm font-semibold mb-3">Block Type Filter</h3>
+            <BlockFilter hiddenTypes={hiddenBlockTypes} onToggleType={onToggleBlockType} />
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2">
+        <span className="w-px h-4 bg-white/20" />
         <div className="relative">
           <button
             className="px-2 py-1 rounded transition-colors"

@@ -249,14 +249,35 @@ export function buildGraph(
     }
   }
 
-  // 4. Sequential edges between groups (connect last block of one group to first block of next)
-  // These edges are visible even when groups are collapsed (connecting the group containers)
-  if (chunks && chunks.length > 1) {
+  // 4. Smart edges between adjacent groups based on collapse state
+  if (chunks && chunks.length > 1 && collapsedGroups) {
     for (let i = 0; i < chunks.length - 1; i++) {
-      const current = chunks[i];
-      const next = chunks[i + 1];
-      // Add an edge between the group nodes themselves
-      addGroupEdge(current.id, next.id);
+      const currentChunk = chunks[i];
+      const nextChunk = chunks[i + 1];
+      const currentCollapsed = collapsedGroups.has(currentChunk.id);
+      const nextCollapsed = collapsedGroups.has(nextChunk.id);
+
+      if (currentCollapsed && nextCollapsed) {
+        // Both collapsed: group -> group
+        addGroupEdge(currentChunk.id, nextChunk.id);
+      } else if (currentCollapsed && !nextCollapsed) {
+        // Current collapsed, next expanded: group -> first visible node in next
+        const firstVisibleId = nextChunk.blockIds.find(
+          (id) => blockMap.has(id) && !hiddenBlockIds.has(id),
+        );
+        if (firstVisibleId) {
+          addGroupEdge(currentChunk.id, firstVisibleId);
+        }
+      } else if (!currentCollapsed && nextCollapsed) {
+        // Current expanded, next collapsed: last visible node in current -> group
+        const lastVisibleId = [...currentChunk.blockIds]
+          .reverse()
+          .find((id) => blockMap.has(id) && !hiddenBlockIds.has(id));
+        if (lastVisibleId) {
+          addGroupEdge(lastVisibleId, nextChunk.id);
+        }
+      }
+      // Both expanded: node-to-node edges from section 3 handle it, no group edge needed
     }
   }
 

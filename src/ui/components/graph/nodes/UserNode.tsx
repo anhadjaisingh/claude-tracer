@@ -26,6 +26,7 @@ export function UserNode({ data }: NodeProps) {
         backgroundColor: theme.colors.userBg,
         color: theme.colors.userText,
         border: '2px solid #3b82f6',
+        overflow: 'hidden',
       }}
       onClick={() => {
         onExpandBlock(block);
@@ -38,7 +39,12 @@ export function UserNode({ data }: NodeProps) {
         {block.tokensIn != null && <span>{block.tokensIn} tokens</span>}
       </div>
 
-      <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>
+      <div
+        className="whitespace-pre-wrap font-mono text-xs leading-relaxed"
+        style={{ overflow: 'hidden', overflowWrap: 'anywhere', maxHeight: '4em' }}
+      >
+        {preview}
+      </div>
 
       <Handle
         type="source"

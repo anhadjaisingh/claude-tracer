@@ -95,7 +95,7 @@ describe('buildGraph with groups', () => {
     expect(flowEdge?.hidden).toBe(true);
   });
 
-  it('creates sequential edges between group nodes', () => {
+  it('does not create group edges when both groups are expanded', () => {
     const blocks = [
       makeUserBlock('u1', 'hello'),
       makeAgentBlock('a1', 'hi'),
@@ -114,10 +114,80 @@ describe('buildGraph with groups', () => {
       onToggleCollapse: toggleCollapse,
     });
 
+    // When both groups are expanded, only node-to-node edges exist (no group edge)
+    const groupEdge = edges.find((e) => e.id === 'group:chunk-1->chunk-2');
+    expect(groupEdge).toBeUndefined();
+  });
+
+  it('creates group-to-group edge when both groups are collapsed', () => {
+    const blocks = [
+      makeUserBlock('u1', 'hello'),
+      makeAgentBlock('a1', 'hi'),
+      makeUserBlock('u2', 'next'),
+      makeAgentBlock('a2', 'ok'),
+    ];
+    const chunks = [
+      makeChunk('chunk-1', 'First', ['u1', 'a1']),
+      makeChunk('chunk-2', 'Second', ['u2', 'a2']),
+    ];
+    const toggleCollapse = vi.fn();
+
+    const { edges } = buildGraph(blocks, noop, {
+      chunks,
+      collapsedGroups: new Set(['chunk-1', 'chunk-2']),
+      onToggleCollapse: toggleCollapse,
+    });
+
     const groupEdge = edges.find((e) => e.id === 'group:chunk-1->chunk-2');
     expect(groupEdge).toBeDefined();
-    // Group edges no longer have custom style — they inherit default edge options (solid + arrowheads)
-    expect(groupEdge?.style).toBeUndefined();
+  });
+
+  it('creates group-to-node edge when current collapsed + next expanded', () => {
+    const blocks = [
+      makeUserBlock('u1', 'hello'),
+      makeAgentBlock('a1', 'hi'),
+      makeUserBlock('u2', 'next'),
+      makeAgentBlock('a2', 'ok'),
+    ];
+    const chunks = [
+      makeChunk('chunk-1', 'First', ['u1', 'a1']),
+      makeChunk('chunk-2', 'Second', ['u2', 'a2']),
+    ];
+    const toggleCollapse = vi.fn();
+
+    const { edges } = buildGraph(blocks, noop, {
+      chunks,
+      collapsedGroups: new Set(['chunk-1']),
+      onToggleCollapse: toggleCollapse,
+    });
+
+    // Should connect collapsed group to first visible node in next group
+    const groupEdge = edges.find((e) => e.id === 'group:chunk-1->u2');
+    expect(groupEdge).toBeDefined();
+  });
+
+  it('creates node-to-group edge when current expanded + next collapsed', () => {
+    const blocks = [
+      makeUserBlock('u1', 'hello'),
+      makeAgentBlock('a1', 'hi'),
+      makeUserBlock('u2', 'next'),
+      makeAgentBlock('a2', 'ok'),
+    ];
+    const chunks = [
+      makeChunk('chunk-1', 'First', ['u1', 'a1']),
+      makeChunk('chunk-2', 'Second', ['u2', 'a2']),
+    ];
+    const toggleCollapse = vi.fn();
+
+    const { edges } = buildGraph(blocks, noop, {
+      chunks,
+      collapsedGroups: new Set(['chunk-2']),
+      onToggleCollapse: toggleCollapse,
+    });
+
+    // Should connect last visible node in current group to collapsed next group
+    const groupEdge = edges.find((e) => e.id === 'group:a1->chunk-2');
+    expect(groupEdge).toBeDefined();
   });
 
   it('does not create groups when chunks is empty', () => {
