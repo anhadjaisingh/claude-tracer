@@ -62,7 +62,7 @@ export function IndexSidebar({
                     {hasCompaction(chunk) ? (
                       <span style={{ color: '#f59e0b' }}>&#x26A0; compaction</span>
                     ) : hasTeamMessage(chunk) ? (
-                      'team'
+                      'teammate'
                     ) : (
                       '\u25CB'
                     )}

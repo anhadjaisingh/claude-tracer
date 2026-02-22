@@ -37,6 +37,7 @@ export function AgentNode({ data }: NodeProps) {
         backgroundColor: theme.colors.agentBg,
         color: theme.colors.agentText,
         border: `2px solid ${theme.colors.accent}`,
+        overflow: 'hidden',
       }}
       onClick={() => {
         onExpandBlock(block);
@@ -44,7 +45,12 @@ export function AgentNode({ data }: NodeProps) {
     >
       <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
 
-      <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>
+      <div
+        className="whitespace-pre-wrap font-mono text-xs leading-relaxed"
+        style={{ overflow: 'hidden', overflowWrap: 'anywhere', maxHeight: '4.5em' }}
+      >
+        {preview}
+      </div>
 
       <div className="flex items-center gap-2 mt-1.5 text-[10px] opacity-50">
         {tokens && <span>{tokens}</span>}

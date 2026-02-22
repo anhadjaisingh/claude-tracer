@@ -12,7 +12,10 @@ export function TeamMessageNode({ data }: NodeProps) {
   const { block, onExpandBlock } = data as unknown as TeamMessageNodeData;
 
   const preview = block.content.length > 80 ? block.content.slice(0, 80) + '...' : block.content;
-  const direction = block.recipient ? `\u2192 ${block.recipient}` : '';
+
+  // Build header label: "agent -> recipient" for outgoing, or "sender" for incoming
+  const headerLabel =
+    block.sender === 'agent' && block.recipient ? `agent \u2192 ${block.recipient}` : block.sender;
 
   return (
     <div
@@ -24,6 +27,7 @@ export function TeamMessageNode({ data }: NodeProps) {
         backgroundColor: '#4c1d95',
         color: '#e9d5ff',
         border: '2px solid #8b5cf6',
+        overflow: 'hidden',
       }}
       onClick={() => {
         onExpandBlock(block as unknown as AnyBlock);
@@ -31,13 +35,17 @@ export function TeamMessageNode({ data }: NodeProps) {
     >
       <Handle type="target" position={Position.Top} style={{ opacity: 0, width: 0, height: 0 }} />
 
-      <div className="flex items-center gap-2 mb-1 text-xs opacity-70">
-        <span className="font-semibold">{block.sender}</span>
-        {direction && <span>{direction}</span>}
-        <span className="ml-auto opacity-50">{block.messageType}</span>
+      <div className="flex items-center gap-2 mb-1 text-xs">
+        <span className="font-semibold">{headerLabel}</span>
+        <span className="ml-auto opacity-50 text-[10px]">{block.messageType}</span>
       </div>
 
-      <div className="whitespace-pre-wrap font-mono text-xs leading-relaxed">{preview}</div>
+      <div
+        className="whitespace-pre-wrap font-mono text-xs leading-relaxed"
+        style={{ overflow: 'hidden', overflowWrap: 'anywhere', maxHeight: '4em' }}
+      >
+        {preview}
+      </div>
 
       <Handle
         type="source"
