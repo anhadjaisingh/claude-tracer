@@ -36,5 +36,12 @@ export function useSettings() {
     localStorage.setItem('claude-tracer-show-minimap', String(value));
   }, []);
 
-  return { themeName, setThemeName, nodesDraggable, setNodesDraggable, showMinimap, setShowMinimap };
+  return {
+    themeName,
+    setThemeName,
+    nodesDraggable,
+    setNodesDraggable,
+    showMinimap,
+    setShowMinimap,
+  };
 }
