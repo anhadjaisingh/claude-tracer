@@ -150,7 +150,8 @@ describe('buildGraph with groups', () => {
     const data: Record<string, unknown> = groupNode!.data; // eslint-disable-line @typescript-eslint/no-non-null-assertion
     expect(data.label).toBe('My Label');
     expect(data.blockCount).toBe(1);
-    expect(data.totalTokens).toBe(300); // 100 in + 200 out
+    expect(data.totalTokensIn).toBe(100);
+    expect(data.totalTokensOut).toBe(200);
     expect(data.durationMs).toBe(5000);
   });
 

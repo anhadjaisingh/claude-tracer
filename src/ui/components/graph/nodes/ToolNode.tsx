@@ -35,11 +35,14 @@ function formatTime(ms: number | undefined): string {
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
+function formatCount(n: number): string {
+  if (n < 1000) return String(n);
+  return `${(n / 1000).toFixed(1)}k`;
+}
+
 function formatTokens(tokensIn: number | undefined, tokensOut: number | undefined): string {
-  const total = (tokensIn ?? 0) + (tokensOut ?? 0);
-  if (total === 0) return '';
-  if (total < 1000) return `${String(total)} tok`;
-  return `${(total / 1000).toFixed(1)}k tok`;
+  if ((tokensIn ?? 0) === 0 && (tokensOut ?? 0) === 0) return '';
+  return `${formatCount(tokensIn ?? 0)}in/${formatCount(tokensOut ?? 0)}out`;
 }
 
 export function ToolNode({ data }: NodeProps) {

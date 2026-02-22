@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeContext, getTheme } from './themes';
 import { Header } from './components/Header';
 import { GraphView } from './components/graph/GraphView';
@@ -18,6 +18,23 @@ export default function App() {
   const search = useHybridSearch(blocks);
   const { themeName, setThemeName, nodesDraggable, setNodesDraggable } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [hiddenBlockTypes, setHiddenBlockTypes] = useState<Set<string>>(new Set());
+  const handleToggleBlockType = useCallback((type: string) => {
+    setHiddenBlockTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  }, []);
+
+  const filteredBlocks = useMemo(
+    () => blocks.filter((b) => !hiddenBlockTypes.has(b.type)),
+    [blocks, hiddenBlockTypes],
+  );
   const overlay = useOverlay();
   const sidebar = useResizable({
     minWidth: 200,
@@ -108,7 +125,7 @@ export default function App() {
               </div>
             )}
             <GraphView
-              blocks={blocks}
+              blocks={filteredBlocks}
               chunks={chunks}
               onExpandBlock={overlay.open}
               onNavigateReady={handleNavigateReady}
@@ -152,6 +169,8 @@ export default function App() {
           onThemeChange={setThemeName}
           nodesDraggable={nodesDraggable}
           onNodesDraggableChange={setNodesDraggable}
+          hiddenBlockTypes={hiddenBlockTypes}
+          onToggleBlockType={handleToggleBlockType}
         />
       </div>
 

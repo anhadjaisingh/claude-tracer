@@ -5,7 +5,8 @@ import { useTheme } from '../../../themes';
 interface ChunkGroupNodeData {
   label: string;
   blockCount: number;
-  totalTokens: number;
+  totalTokensIn: number;
+  totalTokensOut: number;
   durationMs: number;
   collapsed: boolean;
   onToggleCollapse: (groupId: string) => void;
@@ -34,7 +35,8 @@ export function ChunkGroupNode({ data, id }: NodeProps) {
   const {
     label,
     blockCount,
-    totalTokens,
+    totalTokensIn,
+    totalTokensOut,
     durationMs,
     collapsed,
     onToggleCollapse,
@@ -93,8 +95,10 @@ export function ChunkGroupNode({ data, id }: NodeProps) {
         >
           {String(blockCount)} blocks
         </span>
-        {totalTokens > 0 && (
-          <span className="text-xs opacity-60">{formatTokens(totalTokens)} tok</span>
+        {(totalTokensIn > 0 || totalTokensOut > 0) && (
+          <span className="text-xs opacity-60">
+            {formatTokens(totalTokensIn)}in/{formatTokens(totalTokensOut)}out
+          </span>
         )}
         {durationMs > 0 && <span className="text-xs opacity-60">{formatDuration(durationMs)}</span>}
       </div>

@@ -98,6 +98,9 @@ function OverlayContent({ block, onClose }: BlockOverlayProps) {
           {isUserBlock(block) && <UserBlockContent block={block} />}
           {isAgentBlock(block) && <AgentBlockContent block={block} />}
           {isToolBlock(block) && <ToolBlockContent block={block} />}
+          {!isUserBlock(block) && !isAgentBlock(block) && !isToolBlock(block) && (
+            <GenericBlockContent block={block} />
+          )}
         </div>
       </div>
     </div>
@@ -214,6 +217,16 @@ function ToolBlockContent({ block }: { block: Extract<AnyBlock, { type: 'tool' }
           {outputText}
         </pre>
       </div>
+    </div>
+  );
+}
+
+function GenericBlockContent({ block }: { block: AnyBlock }) {
+  return (
+    <div className="p-4">
+      <pre className="text-xs font-mono whitespace-pre-wrap opacity-80 overflow-auto max-h-96">
+        {JSON.stringify(block, null, 2)}
+      </pre>
     </div>
   );
 }
