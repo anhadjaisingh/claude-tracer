@@ -13,6 +13,9 @@ const THEME_TIME_GAP_THRESHOLD_MS = 30 * 60 * 1000;
 /** Maximum label length */
 const MAX_LABEL_LENGTH = 80;
 
+/** Maximum number of task chunks before forcing a theme split */
+const MAX_TASKS_PER_THEME = 6;
+
 /** Patterns that signal a new task in user messages */
 const NEW_TASK_PATTERNS: { regex: RegExp; name: string }[] = [
   { regex: /^now\s+let['\u2019]?s\s/i, name: "Now let's..." },
@@ -29,6 +32,52 @@ const NEW_TASK_PATTERNS: { regex: RegExp; name: string }[] = [
 const TASK_BOUNDARY_SIGNAL_TYPES = new Set(['git-commit', 'git-push', 'pr-creation']);
 
 /**
+ * Extracts a git commit message from a bash command string.
+ * Handles double-quoted, single-quoted, and HEREDOC-style commits.
+ * Returns null if no commit message is found.
+ */
+function extractCommitMessage(cmd: string): string | null {
+  const doubleQuoted = /git\s+commit\s+(?:-[^m]*\s+)*-m\s+"([^"]*)"/i;
+  const singleQuoted = /git\s+commit\s+(?:-[^m]*\s+)*-m\s+'([^']*)'/i;
+  let match = doubleQuoted.exec(cmd);
+  match ??= singleQuoted.exec(cmd);
+  if (match) {
+    const msg = match[1];
+    // Check if the extracted message is a HEREDOC wrapper like $(cat <<'EOF'...)
+    if (/^\$\(cat\s+<</i.test(msg)) {
+      // Try to extract the actual message from inside the HEREDOC
+      const heredocMatch = /git\s+commit\s+-m\s+"\$\(cat\s+<<'?EOF'?\n([^\n]+)/i.exec(cmd);
+      if (heredocMatch) {
+        return heredocMatch[1].trim();
+      }
+      return null; // Can't extract meaningful message
+    }
+    return msg;
+  }
+  return null;
+}
+
+/**
+ * Extracts a PR title from a gh pr create command.
+ * Handles double-quoted and single-quoted titles.
+ * Returns null if no title is found.
+ */
+function extractPrTitle(cmd: string): string | null {
+  const doubleQuoted = /gh\s+pr\s+create\s+.*--title\s+"([^"]*)"/i;
+  const singleQuoted = /gh\s+pr\s+create\s+.*--title\s+'([^']*)'/i;
+  let match = doubleQuoted.exec(cmd);
+  match ??= singleQuoted.exec(cmd);
+  if (match) {
+    const title = match[1];
+    if (/^\$\(cat\s+<</i.test(title)) {
+      return null;
+    }
+    return title;
+  }
+  return null;
+}
+
+/**
  * Detects if a Bash tool call command represents a task boundary.
  * Returns boundary signals if the command matches known patterns.
  */
@@ -41,9 +90,9 @@ function detectToolBoundarySignals(block: AnyBlock): BoundarySignal[] {
   const signals: BoundarySignal[] = [];
 
   // Git commit
-  const commitMatch = /git\s+commit\s+(?:-[^m]*\s+)*-m\s+["']([^"']*)["']/i.exec(cmd);
-  if (commitMatch) {
-    signals.push({ type: 'git-commit', message: commitMatch[1] });
+  const commitMsg = extractCommitMessage(cmd);
+  if (commitMsg !== null) {
+    signals.push({ type: 'git-commit', message: commitMsg });
   } else if (/git\s+commit/i.test(cmd)) {
     signals.push({ type: 'git-commit' });
   }
@@ -54,9 +103,9 @@ function detectToolBoundarySignals(block: AnyBlock): BoundarySignal[] {
   }
 
   // PR creation
-  const prTitleMatch = /gh\s+pr\s+create\s+.*--title\s+["']([^"']*)["']/i.exec(cmd);
-  if (prTitleMatch) {
-    signals.push({ type: 'pr-creation', prNumber: prTitleMatch[1] });
+  const prTitle = extractPrTitle(cmd);
+  if (prTitle !== null) {
+    signals.push({ type: 'pr-creation', prNumber: prTitle });
   } else if (/gh\s+pr\s+create/i.test(cmd)) {
     signals.push({ type: 'pr-creation' });
   }
@@ -101,15 +150,15 @@ function generateLabel(userContent: string | null, chunkBlocks: AnyBlock[]): str
     const cmd = typeof input?.command === 'string' ? input.command : '';
 
     // Extract commit message
-    const commitMatch = /git\s+commit\s+(?:-[^m]*\s+)*-m\s+["']([^"']*)["']/i.exec(cmd);
-    if (commitMatch) {
-      return commitMatch[1];
+    const commitMsg = extractCommitMessage(cmd);
+    if (commitMsg !== null) {
+      return commitMsg;
     }
 
     // Extract PR title
-    const prMatch = /gh\s+pr\s+create\s+.*--title\s+["']([^"']*)["']/i.exec(cmd);
-    if (prMatch) {
-      return `PR: ${prMatch[1]}`;
+    const prTitle = extractPrTitle(cmd);
+    if (prTitle !== null) {
+      return `PR: ${prTitle}`;
     }
   }
 
@@ -370,6 +419,8 @@ export class Chunker {
    *
    * Boundaries (split points):
    * - Time gaps > 30 minutes between tasks
+   * - PR creation or git push signals (theme-level significant boundaries)
+   * - Accumulated group exceeds MAX_TASKS_PER_THEME task chunks
    *
    * Each theme chunk contains `childChunkIds` pointing to its constituent task chunks.
    */
@@ -388,7 +439,14 @@ export class Chunker {
       const currStart = taskChunk.startTimestamp ?? 0;
       const gap = currStart - prevEnd;
 
-      if (gap > THEME_TIME_GAP_THRESHOLD_MS) {
+      // Check if the current task has a significant theme-level boundary signal
+      // (PR creation or git push signals indicate the previous unit of work completed)
+      const hasSignificantBoundary = (taskChunk.boundarySignals ?? []).some(
+        (s) => s.type === 'pr-creation' || s.type === 'git-push',
+      );
+      const groupTooLarge = currentGroup.length >= MAX_TASKS_PER_THEME;
+
+      if (gap > THEME_TIME_GAP_THRESHOLD_MS || hasSignificantBoundary || groupTooLarge) {
         themeChunks.push(this.mergeIntoThemeChunk(currentGroup));
         currentGroup = [taskChunk];
       } else {

@@ -5,6 +5,7 @@ const NODE_WIDTH = 320;
 const COLUMN_GAP = 80;
 const COLUMN_SPACING = NODE_WIDTH + COLUMN_GAP; // 400px between column starts
 const ROW_GAP = 40;
+const TOOL_SIBLING_GAP = 12; // Tighter gap between parallel tool calls from same agent
 
 /** Padding inside group containers */
 const GROUP_PADDING_TOP = 44; // header height + margin
@@ -185,10 +186,10 @@ function flatLayout(nodes: Node[], edges: Edge[]): { nodes: Node[]; edges: Edge[
           if (!childNode) continue;
           const childHeight = estimateHeight(childNode);
           positions.set(childId, { x: toolX, y: toolY });
-          toolY += childHeight + ROW_GAP;
-          totalToolHeight += childHeight + ROW_GAP;
+          toolY += childHeight + TOOL_SIBLING_GAP;
+          totalToolHeight += childHeight + TOOL_SIBLING_GAP;
         }
-        if (totalToolHeight > 0) totalToolHeight -= ROW_GAP;
+        if (totalToolHeight > 0) totalToolHeight -= TOOL_SIBLING_GAP;
 
         positions.set(node.id, { x, y: globalY });
         globalY += Math.max(agentHeight, totalToolHeight) + ROW_GAP;
@@ -312,10 +313,10 @@ function groupedLayout(
               if (!toolNode) continue;
               const toolHeight = estimateHeight(toolNode);
               childPositions.set(toolId, { x: toolRelX, y: toolY });
-              toolY += toolHeight + ROW_GAP;
-              totalToolHeight += toolHeight + ROW_GAP;
+              toolY += toolHeight + TOOL_SIBLING_GAP;
+              totalToolHeight += toolHeight + TOOL_SIBLING_GAP;
             }
-            if (totalToolHeight > 0) totalToolHeight -= ROW_GAP;
+            if (totalToolHeight > 0) totalToolHeight -= TOOL_SIBLING_GAP;
 
             childPositions.set(child.id, { x: relX, y: innerY });
             innerY += Math.max(agentHeight, totalToolHeight) + ROW_GAP;

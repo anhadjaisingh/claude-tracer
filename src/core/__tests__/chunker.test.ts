@@ -130,6 +130,141 @@ describe('Chunker', () => {
     expect(turns[0].blockIds).toContain('a2');
   });
 
+  it('extracts HEREDOC-style commit messages correctly', () => {
+    const chunker = new Chunker();
+    const heredocBlocks: AnyBlock[] = [
+      {
+        id: 'u1',
+        timestamp: 1000,
+        type: 'user',
+        content: 'Commit the changes',
+      } as UserBlock,
+      {
+        id: 'a1',
+        timestamp: 2000,
+        type: 'agent',
+        content: 'Committing',
+        toolCalls: ['t1'],
+      } as AgentBlock,
+      {
+        id: 't1',
+        timestamp: 3000,
+        type: 'tool',
+        parentId: 'a1',
+        toolName: 'Bash',
+        input: {
+          command:
+            'git commit -m "$(cat <<\'EOF\'\nfix: chunker labels and coarse granularity\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)"',
+        },
+        output: '',
+        status: 'success',
+      } as ToolBlock,
+    ];
+
+    const chunks = chunker.createChunks(heredocBlocks);
+    // The label should be the actual commit message, not "$(cat <<"
+    expect(chunks[0].label).toBe('fix: chunker labels and coarse granularity');
+  });
+
+  it('extracts regular double-quoted commit messages correctly', () => {
+    const chunker = new Chunker();
+    const regularBlocks: AnyBlock[] = [
+      {
+        id: 'u1',
+        timestamp: 1000,
+        type: 'user',
+        content: 'Commit the changes',
+      } as UserBlock,
+      {
+        id: 'a1',
+        timestamp: 2000,
+        type: 'agent',
+        content: 'Committing',
+        toolCalls: ['t1'],
+      } as AgentBlock,
+      {
+        id: 't1',
+        timestamp: 3000,
+        type: 'tool',
+        parentId: 'a1',
+        toolName: 'Bash',
+        input: { command: 'git commit -m "fix: simple commit message"' },
+        output: '',
+        status: 'success',
+      } as ToolBlock,
+    ];
+
+    const chunks = chunker.createChunks(regularBlocks);
+    expect(chunks[0].label).toBe('fix: simple commit message');
+  });
+
+  it('coarse granularity splits on PR/push boundaries and group size', () => {
+    const chunker = new Chunker();
+    // Create a session with multiple tasks separated by PR creation signals.
+    // We need enough turns that form separate task chunks, with git-push signals between them.
+    const sessionBlocks: AnyBlock[] = [];
+    let ts = 1000;
+
+    // Create 3 groups of work, each ending with a git push
+    for (let group = 0; group < 3; group++) {
+      // First turn: user asks to do something
+      sessionBlocks.push({
+        id: `u-${String(group)}-1`,
+        timestamp: ts++,
+        type: 'user',
+        content: `Task ${String(group + 1)}: do something`,
+      } as UserBlock);
+      sessionBlocks.push({
+        id: `a-${String(group)}-1`,
+        timestamp: ts++,
+        type: 'agent',
+        content: 'Working on it',
+        toolCalls: [`t-${String(group)}-push`],
+      } as AgentBlock);
+      // Git push tool call (creates end-of-unit signal)
+      sessionBlocks.push({
+        id: `t-${String(group)}-push`,
+        timestamp: ts++,
+        type: 'tool',
+        parentId: `a-${String(group)}-1`,
+        toolName: 'Bash',
+        input: { command: 'git push -u origin feat/my-branch' },
+        output: '',
+        status: 'success',
+      } as ToolBlock);
+      // PR creation tool call
+      sessionBlocks.push({
+        id: `t-${String(group)}-pr`,
+        timestamp: ts++,
+        type: 'tool',
+        parentId: `a-${String(group)}-1`,
+        toolName: 'Bash',
+        input: { command: 'gh pr create --title "PR for task ' + String(group + 1) + '"' },
+        output: '',
+        status: 'success',
+      } as ToolBlock);
+
+      // Second turn in same group (will form next task after boundary)
+      sessionBlocks.push({
+        id: `u-${String(group)}-2`,
+        timestamp: ts++,
+        type: 'user',
+        content: `Continue task ${String(group + 1)}`,
+      } as UserBlock);
+      sessionBlocks.push({
+        id: `a-${String(group)}-2`,
+        timestamp: ts++,
+        type: 'agent',
+        content: 'Continuing',
+        toolCalls: [],
+      } as AgentBlock);
+    }
+
+    const themeChunks = chunker.createChunksAtLevel(sessionBlocks, 'theme');
+    // Should produce multiple theme chunks due to PR/push boundaries
+    expect(themeChunks.length).toBeGreaterThan(1);
+  });
+
   it('chunk blockIds map to renderable block types with correct DOM IDs', () => {
     const chunker = new Chunker();
     const chunks = chunker.createChunks(blocks);
