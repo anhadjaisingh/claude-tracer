@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useTheme } from '../themes';
 import { GranularitySelector } from './GranularitySelector';
 import type { AnyBlock, Chunk, ChunkLevel } from '@/types';
@@ -11,6 +12,7 @@ interface Props {
   onGranularityChange: (level: ChunkLevel) => void;
   onCollapseAll?: () => void;
   onExpandAll?: () => void;
+  activeChunkId?: string | null;
 }
 
 function formatTokens(count: number): string {
@@ -26,8 +28,17 @@ export function IndexSidebar({
   onGranularityChange,
   onCollapseAll,
   onExpandAll,
+  activeChunkId,
 }: Props) {
   const theme = useTheme();
+  const activeItemRef = useRef<HTMLLIElement>(null);
+
+  // Auto-scroll the active chunk into view
+  useEffect(() => {
+    if (activeChunkId && activeItemRef.current) {
+      activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeChunkId]);
 
   const hasTeamMessage = (chunk: Chunk): boolean =>
     chunk.blockIds.some((id) => blocks.find((b) => b.id === id && isTeamMessageBlock(b)));
@@ -47,39 +58,49 @@ export function IndexSidebar({
           <p className="text-xs opacity-60">No chunks yet</p>
         ) : (
           <ul>
-            {chunks.map((chunk, index) => (
-              <li
-                key={chunk.id}
-                className="cursor-pointer hover:opacity-80 transition-opacity py-3"
-                style={{
-                  borderBottom:
-                    index < chunks.length - 1 ? `1px solid ${theme.colors.accent}26` : undefined,
-                }}
-                onClick={() => onChunkClick?.(chunk.id)}
-              >
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="opacity-60">
-                    {hasCompaction(chunk) ? (
-                      <span style={{ color: '#f59e0b' }}>&#x26A0; compaction</span>
-                    ) : hasTeamMessage(chunk) ? (
-                      'teammate'
-                    ) : (
-                      '\u25CB'
-                    )}
-                  </span>
-                  <span className="truncate flex-1">{chunk.label}</span>
-                  <span className="text-xs opacity-40">{String(chunk.blockIds.length)}</span>
-                </div>
-                <div className="text-xs opacity-50 ml-5">
-                  {formatTokens(chunk.totalTokensIn)}in/{formatTokens(chunk.totalTokensOut)}out
-                  {chunk.boundarySignals && chunk.boundarySignals.length > 0 && (
-                    <span className="ml-2 opacity-40">
-                      {chunk.boundarySignals.map((s) => s.type).join(', ')}
+            {chunks.map((chunk, index) => {
+              const isActive = chunk.id === activeChunkId;
+              return (
+                <li
+                  key={chunk.id}
+                  ref={isActive ? activeItemRef : undefined}
+                  className="cursor-pointer hover:opacity-80 transition-opacity py-3"
+                  style={{
+                    borderBottom:
+                      index < chunks.length - 1 ? `1px solid ${theme.colors.accent}26` : undefined,
+                    borderLeft: isActive
+                      ? `2px solid ${theme.colors.accent}`
+                      : '2px solid transparent',
+                    paddingLeft: '8px',
+                    backgroundColor: isActive ? `${theme.colors.accent}10` : undefined,
+                    borderRadius: isActive ? '4px' : undefined,
+                  }}
+                  onClick={() => onChunkClick?.(chunk.id)}
+                >
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="opacity-60">
+                      {hasCompaction(chunk) ? (
+                        <span style={{ color: '#f59e0b' }}>&#x26A0; compaction</span>
+                      ) : hasTeamMessage(chunk) ? (
+                        'teammate'
+                      ) : (
+                        '\u25CB'
+                      )}
                     </span>
-                  )}
-                </div>
-              </li>
-            ))}
+                    <span className="truncate flex-1">{chunk.label}</span>
+                    <span className="text-xs opacity-40">{String(chunk.blockIds.length)}</span>
+                  </div>
+                  <div className="text-xs opacity-50 ml-5">
+                    {formatTokens(chunk.totalTokensIn)}in/{formatTokens(chunk.totalTokensOut)}out
+                    {chunk.boundarySignals && chunk.boundarySignals.length > 0 && (
+                      <span className="ml-2 opacity-40">
+                        {chunk.boundarySignals.map((s) => s.type).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

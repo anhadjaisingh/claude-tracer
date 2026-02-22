@@ -26,6 +26,7 @@ export default function App() {
   } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hiddenBlockTypes, setHiddenBlockTypes] = useState<Set<string>>(new Set());
+  const [activeChunkId, setActiveChunkId] = useState<string | null>(null);
   const handleToggleBlockType = useCallback((type: string) => {
     setHiddenBlockTypes((prev) => {
       const next = new Set(prev);
@@ -140,6 +141,7 @@ export default function App() {
               showMinimap={showMinimap}
               highlightedBlockId={search.currentBlockId}
               onCollapseControlsReady={handleCollapseControlsReady}
+              onActiveChunkChange={setActiveChunkId}
             />
           </main>
 
@@ -163,6 +165,7 @@ export default function App() {
               onGranularityChange={setGranularity}
               onCollapseAll={collapseControls?.collapseAll}
               onExpandAll={collapseControls?.expandAll}
+              activeChunkId={activeChunkId}
             />
           </aside>
         </div>

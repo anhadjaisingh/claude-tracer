@@ -40,18 +40,11 @@ export function BlockFilter({ hiddenTypes, onToggleType }: Props) {
           >
             <span>{type}</span>
             <span
-              className="w-7 h-4 rounded-full relative transition-all"
+              className="w-3 h-3 rounded-full border border-white/30"
               style={{
-                backgroundColor: isVisible ? theme.colors.accent : 'rgba(255,255,255,0.15)',
+                backgroundColor: isVisible ? theme.colors.accent : 'transparent',
               }}
-            >
-              <span
-                className="absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all"
-                style={{
-                  left: isVisible ? '14px' : '2px',
-                }}
-              />
-            </span>
+            />
           </button>
         );
       })}
