@@ -136,6 +136,7 @@ interface Props {
   showMinimap?: boolean;
   highlightedBlockId?: string | null;
   onCollapseControlsReady?: (controls: { collapseAll: () => void; expandAll: () => void }) => void;
+  onActiveChunkChange?: (chunkId: string | null) => void;
 }
 
 /** Half the default node width, used to compute node center for setCenter(). */
@@ -152,11 +153,14 @@ function GraphViewInner({
   showMinimap = true,
   highlightedBlockId,
   onCollapseControlsReady,
+  onActiveChunkChange,
 }: Props) {
   const theme = useTheme();
-  const { setCenter } = useReactFlow();
+  const { setCenter, getViewport } = useReactFlow();
   const [nodes, setNodes, onNodesChange] = useNodesState([] as Node[]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([] as Edge[]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const viewportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Track which groups are collapsed (start all expanded)
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -310,6 +314,65 @@ function GraphViewInner({
     [onExpandBlock],
   );
 
+  // Debounced viewport change handler to track which chunk is in view
+  const handleViewportChange = useCallback(() => {
+    if (!onActiveChunkChange) return;
+
+    if (viewportTimerRef.current !== null) {
+      clearTimeout(viewportTimerRef.current);
+    }
+
+    viewportTimerRef.current = setTimeout(() => {
+      const container = containerRef.current;
+      if (!container) return;
+
+      const viewport = getViewport();
+      const rect = container.getBoundingClientRect();
+      const centerX = (-viewport.x + rect.width / 2) / viewport.zoom;
+      const centerY = (-viewport.y + rect.height / 2) / viewport.zoom;
+
+      // Find the non-group node closest to viewport center
+      const visibleNodes = nodesRef.current.filter((n) => n.type !== 'chunkGroup' && !n.hidden);
+
+      if (visibleNodes.length === 0) {
+        onActiveChunkChange(null);
+        return;
+      }
+
+      let closestNode: Node | null = null;
+      let closestDist = Infinity;
+
+      for (const node of visibleNodes) {
+        // Compute world position (account for parent offset)
+        let worldX = node.position.x;
+        let worldY = node.position.y;
+        if (node.parentId) {
+          const parent = nodesRef.current.find((n) => n.id === node.parentId);
+          if (parent) {
+            worldX += parent.position.x;
+            worldY += parent.position.y;
+          }
+        }
+
+        const dx = worldX - centerX;
+        const dy = worldY - centerY;
+        const dist = dx * dx + dy * dy;
+        if (dist < closestDist) {
+          closestDist = dist;
+          closestNode = node;
+        }
+      }
+
+      if (closestNode) {
+        // The parentId of a child node is the chunk group ID
+        const chunkId = closestNode.parentId ?? null;
+        onActiveChunkChange(chunkId);
+      } else {
+        onActiveChunkChange(null);
+      }
+    }, 200);
+  }, [onActiveChunkChange, getViewport]);
+
   if (blocks.length === 0) {
     return (
       <div
@@ -324,7 +387,7 @@ function GraphViewInner({
   const showLoadingOverlay = blocks.length > 0 && nodes.length === 0;
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {showLoadingOverlay && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center z-10"
@@ -363,6 +426,7 @@ function GraphViewInner({
           style: { stroke: theme.colors.edgeColor, strokeWidth: 1.5 },
         }}
         proOptions={{ hideAttribution: true }}
+        onViewportChange={handleViewportChange}
         zoomOnScroll={false}
         panOnScroll={true}
       >
