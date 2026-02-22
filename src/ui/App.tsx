@@ -16,8 +16,14 @@ export default function App() {
   const { blocks, chunks, isConnected, connectionStatus, filePath, granularity, setGranularity } =
     useSession();
   const search = useHybridSearch(blocks);
-  const { themeName, setThemeName, nodesDraggable, setNodesDraggable, showMinimap, setShowMinimap } =
-    useSettings();
+  const {
+    themeName,
+    setThemeName,
+    nodesDraggable,
+    setNodesDraggable,
+    showMinimap,
+    setShowMinimap,
+  } = useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hiddenBlockTypes, setHiddenBlockTypes] = useState<Set<string>>(new Set());
   const handleToggleBlockType = useCallback((type: string) => {
