@@ -7,3 +7,4 @@ test-results/
 playwright-report/
 testdata/
 *.png
+!docs/screenshots/*.png

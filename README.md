@@ -1,117 +1,83 @@
 # claude-tracer
 
-Trace visualization and debugging tool for Claude Code sessions.
+Parses Claude Code session JSONL files and renders them as interactive node graphs. Understand long agent sessions, debug tool call chains, track token spend, and review multi-agent coordination — all locally.
 
-## What is this?
-
-When you use [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic's CLI for Claude), every session is recorded as a JSONL log file under `~/.claude/projects/`. These files capture the full conversation: user messages, agent responses, tool calls, sub-agent spawns, team messages, token usage, and more. They're comprehensive but difficult to read as raw JSON.
-
-claude-tracer parses these session files and renders them as an interactive graph. Each block in the conversation becomes a node, edges show parent-child relationships, and the columnar layout reveals the structure at a glance -- user messages on the right, agent responses in the middle, tool calls and sub-agents on the left. The wider the graph, the deeper the nesting.
-
-Use it to understand what happened in a long agent session, debug unexpected tool call chains, analyze where tokens were spent, or review how a multi-agent team coordinated. It runs entirely locally -- no data leaves your machine.
-
-## Features
-
-### Graph Visualization
-
-- **React Flow graph** with columnar layout: horizontal position encodes nesting depth, vertical position encodes time
-- **Smart edge routing** with directional arrows (right-to-left for spawning work, left-to-right for returning results)
-- **Collapsible chunk groups** that visually group related blocks into named sections
-- **Minimap** for orientation in large sessions (toggleable)
-- **Node dragging** for manual layout adjustments (toggleable)
-- **Zoom and pan** with configurable scroll behavior (pan-on-scroll, pinch-to-zoom)
-
-### Session Navigation
-
-- **Multi-level granularity** with three chunk levels:
-  - **Turn** -- one chunk per user-agent exchange
-  - **Task** -- merges turns into task groups, split at git commits, PRs, time gaps (>5 min), or explicit user direction changes ("Now let's...", "Next:", slash commands)
-  - **Theme** -- merges tasks into high-level themes, split at large time gaps (>30 min), PR creation, or when groups exceed 6 tasks
-- **Table of contents sidebar** with active-chunk highlighting that tracks your viewport position
-- **Chunk labels** derived from commit messages, PR titles, or the first user message in each chunk
-- **Search** with keyword mode (instant, MiniSearch-powered) and smart mode (hybrid keyword + vector search)
-- **Search result navigation** that pans the graph viewport to each matched block
-
-### Block Types
-
-Every block type in a Claude Code session is parsed and rendered with a dedicated node style:
-
-- **User** -- human messages (right column, light bubble)
-- **Agent** -- Claude's responses with optional extended thinking
-- **Tool** -- tool calls (Bash, Read, Write, Grep, Glob, etc.) with input/output and success/error status
-- **MCP** -- Model Context Protocol calls to external servers, with server name and method
-- **Sub-agent** -- spawned Task agents shown as nested sub-graphs
-- **Command** -- slash commands (/commit, /review-pr, etc.)
-- **Meta** -- system-injected context (skills, caveats, permissions)
-- **Team message** -- inter-agent communication (message, broadcast, shutdown)
-- **System** -- internal system events
-- **Progress** -- progress indicators for long-running operations
-- **File snapshot** -- file history snapshots with tracked file metadata
-- **Queue operation** -- enqueue/remove operations on the message queue
-- **Compaction boundary** -- marks where context compaction occurred
-
-### Filtering and Display
-
-- **Block type filter** with toggle controls to show/hide specific block types
-- **Three themes**: Dark (default), Light, and Claude (terracotta accent)
-- **Block overlay** -- click any node to open a modal with the full content and raw JSON
-- **Collapse/expand all** controls for chunk groups
-- **Resizable sidebar** by dragging its edge
-
-### Token Analytics
-
-- **Per-block token counts** (input and output tokens) displayed on nodes
-- **Per-chunk aggregated tokens** shown in the sidebar table of contents
-- **Duration tracking** (wall time) per block and per chunk
+![Graph overview](docs/screenshots/graph-overview.png)
 
 ## Quickstart
 
 ```bash
-# Clone and install
 git clone https://github.com/anhadjaisingh/claude-tracer.git
 cd claude-tracer
 npm install
 
-# Run with a specific session file
+# Run with a session file
 npm run dev -- -f ~/.claude/projects/<project-hash>/sessions/<session-id>.jsonl
-
-# Or start the server without a file and open the browser
-npm run dev
-# Then open http://localhost:5173
 ```
 
-### Finding your session files
+Then open [http://localhost:5173](http://localhost:5173).
 
-Claude Code stores session logs at:
+### Finding session files
 
-```
-~/.claude/projects/<project-hash>/sessions/<session-id>.jsonl
-```
-
-On macOS and Linux, you can list recent sessions with:
+Claude Code stores sessions at `~/.claude/projects/<project-hash>/sessions/<session-id>.jsonl`. List recent ones with:
 
 ```bash
 ls -lt ~/.claude/projects/*/sessions/*.jsonl | head -20
 ```
 
-Each `.jsonl` file is a complete session recording. Pick one and pass it with the `-f` flag.
+## Features
+
+### Graph visualization
+
+Columnar layout where horizontal position encodes nesting depth (user messages right, agent center, tools left) and vertical position encodes time. Collapsible chunk groups, minimap, node dragging, zoom/pan.
+
+### Search
+
+Keyword search (instant, MiniSearch-powered) and smart mode (hybrid keyword + vector). Results navigate the viewport to matched blocks with visual highlighting.
+
+![Search with highlighted result](docs/screenshots/search.png)
+
+### Block types
+
+Every Claude Code block type gets a dedicated node style: user messages, agent responses, tool calls (Bash, Read, Write, Grep, etc.), MCP calls, sub-agent spawns, slash commands, meta context, team messages, system events, progress indicators, file snapshots, queue operations, and compaction boundaries.
+
+### Block overlay
+
+Click any node to inspect full content, token counts, and tool call details.
+
+![Block detail overlay](docs/screenshots/block-overlay.png)
+
+### Navigation sidebar
+
+Table of contents with active-chunk highlighting that tracks your viewport position. Three granularity levels: **Fine** (per turn), **Medium** (per task, split at commits/PRs/time gaps), **Coarse** (per theme). Chunk labels derived from commit messages, PR titles, or first user message.
+
+### Filtering and settings
+
+Toggle block types on/off. Three themes (Dark, Light, Claude). Configurable minimap and node dragging.
+
+<p float="left">
+  <img src="docs/screenshots/filter-panel.png" width="200" alt="Block type filter" />
+  <img src="docs/screenshots/settings-panel.png" width="200" alt="Settings panel" />
+</p>
+
+### Token analytics
+
+Per-block input/output token counts on nodes. Per-chunk aggregated tokens and wall-clock duration in the sidebar.
 
 ## Development
 
 **Stack:** TypeScript, React 19, Vite 7, Tailwind CSS v4, Express 5, WebSocket, MiniSearch, React Flow v12.
 
 ```bash
-npm run dev          # Start Express + Vite dev servers concurrently
-npm run test:run     # Run unit tests (vitest) once
-npm test             # Run unit tests in watch mode
-npm run test:e2e     # Run E2E tests (Playwright)
-npm run lint         # ESLint check
-npm run format       # Prettier format
-npm run typecheck    # TypeScript type checking
-npm run build        # Production build (server + UI)
+npm run dev          # Start Express + Vite dev servers
+npm run test:run     # Unit tests (vitest)
+npm run test:e2e     # E2E tests (Playwright)
+npm run lint         # ESLint
+npm run typecheck    # TypeScript check
+npm run build        # Production build
 ```
 
-### Project Structure
+### Project structure
 
 ```
 src/
@@ -122,10 +88,6 @@ src/
   ui/         React app (components, hooks, themes)
 e2e/          Playwright E2E tests and fixtures
 ```
-
-### Testing
-
-Unit tests use **vitest** and live alongside source files in `__tests__/` directories. E2E tests use **Playwright** and live in `e2e/specs/`. Test fixtures (sample JSONL sessions) are in `e2e/fixtures/sessions/`.
 
 ## License
 
