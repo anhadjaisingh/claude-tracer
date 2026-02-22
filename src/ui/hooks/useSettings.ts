@@ -16,6 +16,11 @@ export function useSettings() {
     return stored === 'true';
   });
 
+  const [showMinimap, setShowMinimapState] = useState<boolean>(() => {
+    const stored = localStorage.getItem('claude-tracer-show-minimap');
+    return stored !== 'false'; // default to true
+  });
+
   const setThemeName = useCallback((name: ThemeName) => {
     setThemeNameState(name);
     localStorage.setItem('claude-tracer-theme', name);
@@ -26,5 +31,10 @@ export function useSettings() {
     localStorage.setItem('claude-tracer-nodes-draggable', String(value));
   }, []);
 
-  return { themeName, setThemeName, nodesDraggable, setNodesDraggable };
+  const setShowMinimap = useCallback((value: boolean) => {
+    setShowMinimapState(value);
+    localStorage.setItem('claude-tracer-show-minimap', String(value));
+  }, []);
+
+  return { themeName, setThemeName, nodesDraggable, setNodesDraggable, showMinimap, setShowMinimap };
 }
