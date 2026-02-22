@@ -1,7 +1,7 @@
 import { useTheme } from '../themes';
 import { GranularitySelector } from './GranularitySelector';
 import type { AnyBlock, Chunk, ChunkLevel } from '@/types';
-import { isTeamMessageBlock } from '@/types';
+import { isTeamMessageBlock, isSystemBlock } from '@/types';
 
 interface Props {
   chunks: Chunk[];
@@ -32,6 +32,12 @@ export function IndexSidebar({
   const hasTeamMessage = (chunk: Chunk): boolean =>
     chunk.blockIds.some((id) => blocks.find((b) => b.id === id && isTeamMessageBlock(b)));
 
+  const hasCompaction = (chunk: Chunk): boolean =>
+    chunk.blockIds.some((id) => {
+      const block = blocks.find((b) => b.id === id);
+      return block !== undefined && isSystemBlock(block) && block.subtype === 'compact_boundary';
+    });
+
   return (
     <div className="h-full flex flex-col" style={{ color: theme.colors.indexText }}>
       <h2 className="text-sm font-semibold mb-4 opacity-80">INDEX</h2>
@@ -52,12 +58,20 @@ export function IndexSidebar({
                 onClick={() => onChunkClick?.(chunk.id)}
               >
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="opacity-60">{hasTeamMessage(chunk) ? 'team' : '\u25CB'}</span>
+                  <span className="opacity-60">
+                    {hasCompaction(chunk) ? (
+                      <span style={{ color: '#f59e0b' }}>&#x26A0; compaction</span>
+                    ) : hasTeamMessage(chunk) ? (
+                      'team'
+                    ) : (
+                      '\u25CB'
+                    )}
+                  </span>
                   <span className="truncate flex-1">{chunk.label}</span>
                   <span className="text-xs opacity-40">{String(chunk.blockIds.length)}</span>
                 </div>
                 <div className="text-xs opacity-50 ml-5">
-                  {formatTokens(chunk.totalTokensIn + chunk.totalTokensOut)} tokens
+                  {formatTokens(chunk.totalTokensIn)}in/{formatTokens(chunk.totalTokensOut)}out
                   {chunk.boundarySignals && chunk.boundarySignals.length > 0 && (
                     <span className="ml-2 opacity-40">
                       {chunk.boundarySignals.map((s) => s.type).join(', ')}

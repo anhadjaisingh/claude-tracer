@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { useTheme } from '../themes';
 import { SettingsPanel } from './SettingsPanel';
+import { BlockFilter } from './BlockFilter';
 import type { ThemeName } from '../hooks/useSettings';
 
 interface Props {
@@ -12,6 +14,8 @@ interface Props {
   onThemeChange: (name: ThemeName) => void;
   nodesDraggable: boolean;
   onNodesDraggableChange: (value: boolean) => void;
+  hiddenBlockTypes: Set<string>;
+  onToggleBlockType: (type: string) => void;
 }
 
 function extractFileName(fullPath: string): string {
@@ -29,8 +33,11 @@ export function Footer({
   onThemeChange,
   nodesDraggable,
   onNodesDraggableChange,
+  hiddenBlockTypes,
+  onToggleBlockType,
 }: Props) {
   const theme = useTheme();
+  const [filterOpen, setFilterOpen] = useState(false);
 
   return (
     <footer
@@ -54,29 +61,60 @@ export function Footer({
           </span>
         )}
       </div>
-      <div className="relative">
-        <button
-          className="px-2 py-1 rounded transition-colors"
-          style={{
-            backgroundColor: settingsOpen ? 'rgba(255,255,255,0.15)' : 'transparent',
-            opacity: settingsOpen ? 1 : 0.6,
-          }}
-          onMouseDown={(e) => {
-            e.stopPropagation();
-          }}
-          onClick={onToggleSettings}
-        >
-          Settings
-        </button>
-        {settingsOpen && (
-          <SettingsPanel
-            themeName={themeName}
-            onThemeChange={onThemeChange}
-            nodesDraggable={nodesDraggable}
-            onNodesDraggableChange={onNodesDraggableChange}
-            onClose={onToggleSettings}
-          />
-        )}
+      <div className="flex items-center gap-2">
+        <div className="relative">
+          <button
+            className="px-2 py-1 rounded transition-colors"
+            style={{
+              backgroundColor: filterOpen ? 'rgba(255,255,255,0.15)' : 'transparent',
+              opacity: filterOpen ? 1 : 0.6,
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={() => {
+              setFilterOpen((prev) => !prev);
+            }}
+          >
+            Filter{hiddenBlockTypes.size > 0 ? ` (${String(hiddenBlockTypes.size)})` : ''}
+          </button>
+          {filterOpen && (
+            <div
+              className="absolute bottom-full right-0 mb-2 w-72 rounded-lg shadow-lg border border-white/10 p-4"
+              style={{
+                backgroundColor: theme.colors.headerBg,
+                color: theme.colors.headerText,
+              }}
+            >
+              <h3 className="text-sm font-semibold mb-3">Block Type Filter</h3>
+              <BlockFilter hiddenTypes={hiddenBlockTypes} onToggleType={onToggleBlockType} />
+            </div>
+          )}
+        </div>
+        <div className="relative">
+          <button
+            className="px-2 py-1 rounded transition-colors"
+            style={{
+              backgroundColor: settingsOpen ? 'rgba(255,255,255,0.15)' : 'transparent',
+              opacity: settingsOpen ? 1 : 0.6,
+            }}
+            onMouseDown={(e) => {
+              e.stopPropagation();
+            }}
+            onClick={onToggleSettings}
+          >
+            Settings
+          </button>
+          {settingsOpen && (
+            <SettingsPanel
+              themeName={themeName}
+              onThemeChange={onThemeChange}
+              nodesDraggable={nodesDraggable}
+              onNodesDraggableChange={onNodesDraggableChange}
+              onClose={onToggleSettings}
+            />
+          )}
+        </div>
       </div>
     </footer>
   );

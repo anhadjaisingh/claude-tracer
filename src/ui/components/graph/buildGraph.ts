@@ -126,7 +126,8 @@ export function buildGraph(
         data: {
           label: chunk.label,
           blockCount: chunk.blockIds.length,
-          totalTokens: chunk.totalTokensIn + chunk.totalTokensOut,
+          totalTokensIn: chunk.totalTokensIn,
+          totalTokensOut: chunk.totalTokensOut,
           durationMs: chunk.totalWallTimeMs,
           collapsed: isCollapsed,
           onToggleCollapse,
