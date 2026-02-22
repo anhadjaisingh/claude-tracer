@@ -7,6 +7,8 @@ interface Props {
   onThemeChange: (name: ThemeName) => void;
   nodesDraggable: boolean;
   onNodesDraggableChange: (value: boolean) => void;
+  showMinimap: boolean;
+  onShowMinimapChange: (value: boolean) => void;
   onClose: () => void;
 }
 
@@ -21,6 +23,8 @@ export function SettingsPanel({
   onThemeChange,
   nodesDraggable,
   onNodesDraggableChange,
+  showMinimap,
+  onShowMinimapChange,
   onClose,
 }: Props) {
   const theme = useTheme();
@@ -104,6 +108,23 @@ export function SettingsPanel({
             }}
           />
           Node Dragging
+        </button>
+        <button
+          onClick={() => {
+            onShowMinimapChange(!showMinimap);
+          }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded text-sm text-left transition-colors w-full"
+          style={{
+            backgroundColor: showMinimap ? 'rgba(255,255,255,0.15)' : 'transparent',
+          }}
+        >
+          <span
+            className="w-3 h-3 rounded-full border border-white/30"
+            style={{
+              backgroundColor: showMinimap ? theme.colors.accent : 'transparent',
+            }}
+          />
+          Minimap
         </button>
       </div>
     </div>

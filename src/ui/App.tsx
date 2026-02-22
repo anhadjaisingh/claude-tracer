@@ -16,7 +16,8 @@ export default function App() {
   const { blocks, chunks, isConnected, connectionStatus, filePath, granularity, setGranularity } =
     useSession();
   const search = useHybridSearch(blocks);
-  const { themeName, setThemeName, nodesDraggable, setNodesDraggable } = useSettings();
+  const { themeName, setThemeName, nodesDraggable, setNodesDraggable, showMinimap, setShowMinimap } =
+    useSettings();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hiddenBlockTypes, setHiddenBlockTypes] = useState<Set<string>>(new Set());
   const handleToggleBlockType = useCallback((type: string) => {
@@ -130,6 +131,7 @@ export default function App() {
               onExpandBlock={overlay.open}
               onNavigateReady={handleNavigateReady}
               nodesDraggable={nodesDraggable}
+              showMinimap={showMinimap}
               highlightedBlockId={search.currentBlockId}
               onCollapseControlsReady={handleCollapseControlsReady}
             />
@@ -169,6 +171,8 @@ export default function App() {
           onThemeChange={setThemeName}
           nodesDraggable={nodesDraggable}
           onNodesDraggableChange={setNodesDraggable}
+          showMinimap={showMinimap}
+          onShowMinimapChange={setShowMinimap}
           hiddenBlockTypes={hiddenBlockTypes}
           onToggleBlockType={handleToggleBlockType}
         />

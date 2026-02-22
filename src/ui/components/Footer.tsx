@@ -14,6 +14,8 @@ interface Props {
   onThemeChange: (name: ThemeName) => void;
   nodesDraggable: boolean;
   onNodesDraggableChange: (value: boolean) => void;
+  showMinimap: boolean;
+  onShowMinimapChange: (value: boolean) => void;
   hiddenBlockTypes: Set<string>;
   onToggleBlockType: (type: string) => void;
 }
@@ -33,6 +35,8 @@ export function Footer({
   onThemeChange,
   nodesDraggable,
   onNodesDraggableChange,
+  showMinimap,
+  onShowMinimapChange,
   hiddenBlockTypes,
   onToggleBlockType,
 }: Props) {
@@ -113,6 +117,8 @@ export function Footer({
               onThemeChange={onThemeChange}
               nodesDraggable={nodesDraggable}
               onNodesDraggableChange={onNodesDraggableChange}
+              showMinimap={showMinimap}
+              onShowMinimapChange={onShowMinimapChange}
               onClose={onToggleSettings}
             />
           )}

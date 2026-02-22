@@ -133,6 +133,7 @@ interface Props {
   onExpandBlock: (block: AnyBlock) => void;
   onNavigateReady?: (navigateToBlock: NavigateToBlockFn) => void;
   nodesDraggable?: boolean;
+  showMinimap?: boolean;
   highlightedBlockId?: string | null;
   onCollapseControlsReady?: (controls: { collapseAll: () => void; expandAll: () => void }) => void;
 }
@@ -148,6 +149,7 @@ function GraphViewInner({
   onExpandBlock,
   onNavigateReady,
   nodesDraggable = false,
+  showMinimap = true,
   highlightedBlockId,
   onCollapseControlsReady,
 }: Props) {
@@ -370,15 +372,17 @@ function GraphViewInner({
             borderColor: 'rgba(255,255,255,0.2)',
           }}
         />
-        <MiniMap
-          nodeColor={minimapNodeColor}
-          maskColor="rgba(0,0,0,0.3)"
-          pannable
-          zoomable
-          style={{
-            backgroundColor: theme.colors.headerBg,
-          }}
-        />
+        {showMinimap && (
+          <MiniMap
+            nodeColor={minimapNodeColor}
+            maskColor="rgba(0,0,0,0.3)"
+            pannable
+            zoomable
+            style={{
+              backgroundColor: theme.colors.headerBg,
+            }}
+          />
+        )}
         <Background
           variant={BackgroundVariant.Dots}
           gap={20}
